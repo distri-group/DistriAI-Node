@@ -1,0 +1,26 @@
+package wallet
+
+import (
+	"DistriAI-Node/config"
+
+	"github.com/gagliardetto/solana-go"
+)
+
+type Wallet struct {
+	Wallet *solana.Wallet
+}
+
+func InitWallet(cfg *config.SolanaConfig) (*Wallet, error) {
+	payerPrivateKey := solana.MustPrivateKeyFromBase58(cfg.Key)
+	payerAccount, err := solana.WalletFromPrivateKeyBase58(payerPrivateKey.String())
+
+	if err != nil {
+		return nil, err
+	}
+
+	wallet := &Wallet{
+		Wallet: payerAccount,
+	}
+
+	return wallet, nil
+}
