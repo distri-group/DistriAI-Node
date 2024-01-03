@@ -6,6 +6,31 @@ import "github.com/gagliardetto/solana-go/rpc"
 const RPC = rpc.DevNet_RPC  // 开发链
 const WsRPC = rpc.DevNet_WS // 开发链
 
+const PROGRAM_DISTRI_ID = "HF4aT6sho2zTySB8nEeN5ThMvDGtGVRrH3jeBvxFNxit"
+
+const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
+
+const DISTRI_SEED = "machine"
+
+const DISTRI_ORDER = "order"
+
+const DISTRI_VAULT = "vault"
+
+const NO_GPU = "No GPU"
+
+// docer
+const (
+	DOCKER_GROUP = "distrigroup"
+)
+
+// docker: score image
+const (
+	SCORE_IMAGE     = "ml-device-score"
+	SCORE_TAGS      = "v0.0.1"
+	SCORE_CONTAINER = "ml-device-score"
+	SCORE_NAME      = DOCKER_GROUP + "/" + SCORE_IMAGE + ":" + SCORE_TAGS
+)
+
 // DOT is "." character
 const DOT = "."
 
@@ -16,7 +41,6 @@ const (
 
 // Extrinsic
 const (
-
 	// TX_HASHRATE_MARKET_REGISTER
 	TX_HASHRATE_MARKET_REGISTER = HASHRATE_MARKET + DOT + "add_machine"
 
@@ -128,21 +152,3 @@ type FormData struct {
 	CompleteTime string `json:"completeTime"`
 	Evaluate     string `json:"evaluate"`
 }
-
-// datasets
-const (
-	DATASETS_FOLDER = "./server"
-	ZIP_NAME        = "/datasets.zip"
-)
-
-const PROGRAM_DISTRI_ID = "HF4aT6sho2zTySB8nEeN5ThMvDGtGVRrH3jeBvxFNxit"
-
-const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
-
-const DISTRI_SEED = "machine"
-
-const DISTRI_ORDER = "order"
-
-const DISTRI_VAULT = "vault"
-
-const NO_GPU = "No GPU"

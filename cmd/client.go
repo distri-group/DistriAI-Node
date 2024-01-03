@@ -49,13 +49,14 @@ var ClientCommand = cli.Command{
 					}
 				} else {
 					logs.Normal("Machine already exists")
-					if machine.Status.String() != "Idle" {
-						logs.Error(fmt.Sprintf("Machine is not idle, status: %v", machine.Status.String()))
+					if machine.Status.String() == "Renting" {
+						logs.Error(fmt.Sprintf("Machine is Renting, status: %v", machine.Status.String()))
 						return nil
 					}
 				}
 
 				subscribeBlocks := subscribe.NewSubscribeWrapper(chainInfo)
+
 				for {
 					time.Sleep(3 * time.Second)
 
@@ -127,13 +128,6 @@ var ClientCommand = cli.Command{
 		{
 			Name:  "stop",
 			Usage: "Stop the client.",
-			Flags: []cli.Flag{
-				&cli.StringFlag{
-					Name:     "key, k",
-					Required: true,
-					Usage:    "Mnemonics used to complete transactions",
-				},
-			},
 			Action: func(c *cli.Context) error {
 				distriWrapper, hwInfo, _, err := getDistri(false)
 				if err != nil {

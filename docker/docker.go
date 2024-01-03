@@ -2,6 +2,7 @@ package docker
 
 import (
 	docker_utils "DistriAI-Node/docker/utils"
+	"DistriAI-Node/pattern"
 	"bufio"
 	"context"
 	"strconv"
@@ -13,23 +14,20 @@ import (
 )
 
 func RunScoreContainer() (float64, error) {
-
-	image := "distrigroup/ml-device-score:v0.0.1"
-	containerName := "ml-device-score"
-	score := 0.0
+	oldScore := 0.0
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		return score, err
+		return oldScore, err
 	}
 	cli.NegotiateAPIVersion(ctx)
 
-	containerID, err := docker_utils.RunContainer(ctx, cli, containerName,
+	containerID, err := docker_utils.RunContainer(ctx, cli, pattern.SCORE_CONTAINER,
 		&container.Config{
-			Image: image,
+			Image: pattern.SCORE_NAME,
 		},
 		&container.HostConfig{
 			// Easy debugging
@@ -46,7 +44,7 @@ func RunScoreContainer() (float64, error) {
 			AutoRemove: true,
 		})
 	if err != nil {
-		return score, err
+		return oldScore, err
 	}
 
 	reader, err := cli.ContainerLogs(ctx, containerID, types.ContainerLogsOptions{
@@ -55,7 +53,7 @@ func RunScoreContainer() (float64, error) {
 		Follow:     true,
 		Timestamps: true})
 	if err != nil {
-		return score, err
+		return oldScore, err
 	}
 	defer reader.Close()
 
@@ -65,12 +63,12 @@ func RunScoreContainer() (float64, error) {
 		index := strings.Index(out, "Score:")
 		if index > 0 {
 			scoreStr := strings.TrimSpace(out[index+len("Score:"):])
-			score, err = strconv.ParseFloat(scoreStr, 64)
+			newScore, err := strconv.ParseFloat(scoreStr, 64)
+			oldScore = (oldScore + newScore) / 2
 			if err != nil {
-				return score, err
+				return oldScore, err
 			}
-			return score, nil
 		}
 	}
-	return score, nil
+	return oldScore, nil
 }
