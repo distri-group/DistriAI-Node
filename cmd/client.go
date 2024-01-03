@@ -10,11 +10,9 @@ import (
 	"DistriAI-Node/machine_info/disk"
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/pattern"
-	"DistriAI-Node/utils"
 	logs "DistriAI-Node/utils/log_utils"
 	"encoding/json"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/urfave/cli"
@@ -156,28 +154,6 @@ var ClientCommand = cli.Command{
 	},
 }
 
-func getFreeSpace() (disk.InfoDisk, error) {
-	logs.Normal("Getting free space info...")
-
-	dirpath := config.GlobalConfig.Base.WorkDirectory
-	if _, err := os.Stat(dirpath); os.IsNotExist(err) {
-		logs.Normal(fmt.Sprintf("%s does not exist. Using default directory /home", dirpath))
-		dirpath = "/home"
-	}
-
-	freeSpace, err := utils.GetFreeSpace(dirpath)
-	if err != nil {
-		return disk.InfoDisk{}, fmt.Errorf("error calculating free space: %v", err)
-	}
-
-	diskInfo := disk.InfoDisk{
-		Path:       dirpath,
-		TotalSpace: float64(freeSpace) / 1024 / 1024 / 1024,
-	}
-
-	return diskInfo, nil
-}
-
 func getDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *chain.InfoChain, error) {
 
 	key := config.GlobalConfig.Base.PrivateKey
@@ -211,8 +187,12 @@ func getDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 			return nil, nil, nil, err
 		}
 
+		isGPU := false
+		if hwInfo.GPUInfo.Number > 0 {
+			isGPU = true
+		}
 		// Easy debugging
-		score, err := docker.RunScoreContainer()
+		score, err := docker.RunScoreContainer(isGPU)
 		if err != nil {
 			return nil, nil, nil, err
 		}

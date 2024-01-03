@@ -31,6 +31,15 @@ func InitGpuInfos() []GpuInfo {
 		GpuInfo{Name: "NVIDIA RTX 4000 Ada Generation", Fp16: 26.73, Fp32: 26.73, Fp64: 0.417},
 		GpuInfo{Name: "NVIDIA RTX 4500 Ada Generation", Fp16: 39.63, Fp32: 39.63, Fp64: 0.619},
 		GpuInfo{Name: "NVIDIA RTX 5000 Ada Generation", Fp16: 65.28, Fp32: 65.28, Fp64: 1.02},
-		GpuInfo{Name: "NVIDIA GeForce RTX 4060", Fp16: 15.11, Fp32: 15.11, Fp64: 0.236})
+		GpuInfo{Name: "NVIDIA GeForce RTX 4060", Fp16: 15.11, Fp32: 15.11, Fp64: 0.236},
+		GpuInfo{Name: "NVIDIA GeForce RTX 4060 Ti 16 GB", Fp16: 22.06, Fp32: 22.06, Fp64: 0.344},
+		GpuInfo{Name: "NVIDIA GeForce RTX 4060 Ti 8 GB", Fp16: 22.06, Fp32: 22.06, Fp64: 0.344},
+		GpuInfo{Name: "NVIDIA GeForce RTX 4070", Fp16: 29.15, Fp32: 29.15, Fp64: 0.455},
+		GpuInfo{Name: "NVIDIA H100 CNX", Fp16: 215.4, Fp32: 53.84, Fp64: 26.92},
+		GpuInfo{Name: "NVIDIA H100 PCIe 80 GB", Fp16: 204.9, Fp32: 51.22, Fp64: 25.61},
+		GpuInfo{Name: "NVIDIA H100 PCIe 96 GB", Fp16: 248.3, Fp32: 62.08, Fp64: 31.04},
+		GpuInfo{Name: "NVIDIA H100 SXM5 64 GB", Fp16: 267.6, Fp32: 66.91, Fp64: 33.45},
+		GpuInfo{Name: "NVIDIA H100 SXM5 80 GB", Fp16: 267.6, Fp32: 66.91, Fp64: 33.45},
+		GpuInfo{Name: "NVIDIA H100 SXM5 96 GB", Fp16: 248.3, Fp32: 62.08, Fp64: 31.04},)
 	return gpuInfos
 }

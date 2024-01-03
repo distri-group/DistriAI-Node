@@ -13,7 +13,7 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func RunScoreContainer() (float64, error) {
+func RunScoreContainer(isGPU bool) (float64, error) {
 	oldScore := 0.0
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -25,24 +25,26 @@ func RunScoreContainer() (float64, error) {
 	}
 	cli.NegotiateAPIVersion(ctx)
 
+	hostConfig := &container.HostConfig{}
+	if isGPU {
+		hostConfig = &container.HostConfig{
+			Runtime: "nvidia",
+			Resources: container.Resources{
+				DeviceRequests: []container.DeviceRequest{
+					{
+						Count:        -1,
+						Capabilities: [][]string{{"gpu"}},
+					},
+				},
+			},
+		}
+	}
+
 	containerID, err := docker_utils.RunContainer(ctx, cli, pattern.SCORE_CONTAINER,
 		&container.Config{
 			Image: pattern.SCORE_NAME,
 		},
-		&container.HostConfig{
-			// Easy debugging
-			// Pending: Make a decision after debugging on the GPU
-			// Resources: container.Resources{
-			// 	DeviceRequests: []container.DeviceRequest{
-			// 		{
-			// 			Driver:       "", // or "nvidia"
-			// 			Count:        -1,
-			// 			Capabilities: [][]string{{"gpu"}},
-			// 		},
-			// 	},
-			// },
-			AutoRemove: true,
-		})
+		hostConfig)
 	if err != nil {
 		return oldScore, err
 	}

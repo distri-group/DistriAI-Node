@@ -12,7 +12,7 @@ var DebugCommand = cli.Command{
 	Usage: "debug.",
 	Action: func(c *cli.Context) error {
 
-		score, err := docker.RunScoreContainer()
+		score, err := docker.RunScoreContainer(false)
 		if err != nil {
 			return err
 		}
