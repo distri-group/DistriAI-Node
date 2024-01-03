@@ -7,12 +7,10 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-// InfoMemory 定义 InfoMemory 结构体
 type InfoMemory struct {
-	RAM float64 `json:"RAM"` // 总内存大小，单位 GB
+	RAM float64 `json:"RAM"`
 }
 
-// GetMemoryInfo 获取内存信息并返回 InfoMemory 结构体
 func GetMemoryInfo() (InfoMemory, error) {
 	logs.Normal("Getting memory info...")
 

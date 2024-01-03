@@ -2,21 +2,19 @@ package gpu
 
 import (
 	"DistriAI-Node/pattern"
-	"DistriAI-Node/utils/log_utils"
+	logs "DistriAI-Node/utils/log_utils"
 	"bytes"
 	"os/exec"
 	"strconv"
 	"strings"
 )
 
-// InfoGPU 定义 InfoGPU 结构体
 type InfoGPU struct {
-	Model  string `json:"Model"`  // GPU显卡型号
-	Number int    `json:"Number"` // GPU显卡数量
+	Model  string `json:"Model"`
+	Number int    `json:"Number"`
 }
 
-// GetIntelGPUInfo 获取 Intel GPU 信息并返回一个包含 InfoGPU 结构体的切片
-func GetIntelGPUInfo() (InfoGPU, error) {
+func GetGPUInfo() (InfoGPU, error) {
 	logs.Normal("Getting GPU info...")
 
 	var gpuInfo InfoGPU

@@ -182,7 +182,6 @@ func getDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 
 	key := config.GlobalConfig.Base.PrivateKey
 
-	// 获取机器ID信息
 	machineUUID, err := machine_uuid.GetInfoMachineUUID()
 	if err != nil {
 		return nil, nil, nil, err
@@ -207,7 +206,7 @@ func getDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 			return nil, nil, nil, fmt.Errorf("error getting hardware info: %v", err)
 		}
 
-		diskInfo, err := getFreeSpace()
+		diskInfo, err := disk.GetDiskInfo()
 		if err != nil {
 			return nil, nil, nil, err
 		}

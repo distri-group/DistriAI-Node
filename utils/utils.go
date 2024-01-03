@@ -161,6 +161,5 @@ func GetFreeSpace(path string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	// 使用 Bsize * Bavail 获取可用的字节数
 	return stat.Bavail * uint64(stat.Bsize), nil
 }

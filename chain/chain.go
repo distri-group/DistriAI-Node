@@ -21,7 +21,6 @@ type InfoChain struct {
 	ProgramDistriOrder   solana.PublicKey
 }
 
-// GetChainInfo 创建conn\wallet信息并返回ChainInfo
 func GetChainInfo(cfg *config.SolanaConfig, machineUUID machine_uuid.MachineUUID) (*InfoChain, error) {
 	newConn, err := conn.NewConn(cfg)
 	if err != nil {

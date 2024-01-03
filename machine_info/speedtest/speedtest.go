@@ -7,13 +7,11 @@ import (
 	"strings"
 )
 
-// InfoSpeed 定义 InfoSpeed 结构体
 type InfoSpeed struct {
-	Download string `json:"Download"` // 下载速度
-	Upload   string `json:"Upload"`   // 上次速度
+	Download string `json:"Download"`
+	Upload   string `json:"Upload"`
 }
 
-// GetSpeedInfo 测试网络的上传下载速率并返回 InfoSpeed 结构体
 func GetSpeedInfo() (InfoSpeed, error) {
 	logs.Normal("Getting network speed info...")
 

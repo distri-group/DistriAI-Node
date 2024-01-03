@@ -13,7 +13,6 @@ import (
 	"github.com/docker/docker/client"
 )
 
-// 查询镜像是否已存在
 func ImageExist(ctx context.Context, cli *client.Client, imageName string) (bool, string) {
 	images, err := cli.ImageList(ctx, types.ImageListOptions{All: true})
 	if err != nil {
@@ -32,7 +31,6 @@ func ImageExist(ctx context.Context, cli *client.Client, imageName string) (bool
 	return false, ""
 }
 
-// 拉取镜像
 func PullImage(ctx context.Context, cli *client.Client, imageName string) error {
 	cmd := exec.Command("docker", "pull", imageName)
 	cmd.Stdout = os.Stdout
@@ -47,7 +45,6 @@ func PullImage(ctx context.Context, cli *client.Client, imageName string) error 
 	return nil
 }
 
-// 创建容器
 func CreateContainer(ctx context.Context, cli *client.Client, containerName string, config *container.Config, hostConfig *container.HostConfig) (string, error) {
 	resp, err := cli.ContainerCreate(
 		ctx,
@@ -63,7 +60,6 @@ func CreateContainer(ctx context.Context, cli *client.Client, containerName stri
 	return resp.ID, nil
 }
 
-// 运行容器
 func RunContainer(ctx context.Context, cli *client.Client, containerName string, config *container.Config, hostConfig *container.HostConfig) (string, error) {
 	imageName := config.Image
 	isCreated, _ := ImageExist(ctx, cli, imageName)

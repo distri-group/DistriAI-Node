@@ -7,15 +7,13 @@ import (
 	"net/http"
 )
 
-// InfoLocation 定义 InfoLocation 结构体
 type InfoLocation struct {
-	Country string `json:"Country"` // IP 国家
-	Region  string `json:"Region"`  // IP 地区
-	City    string `json:"City"`    // IP 城市
-	IP      string `json:"query"`   // IP 地址
+	Country string `json:"Country"`
+	Region  string `json:"Region"`
+	City    string `json:"City"`
+	IP      string `json:"query"`
 }
 
-// GetLocationInfo 获取IP对应的并返回 InfoMemory 结构体
 func GetLocationInfo() (InfoLocation, error) {
 	logs.Normal("Getting location info...")
 

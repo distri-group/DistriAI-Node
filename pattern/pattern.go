@@ -3,8 +3,8 @@ package pattern
 import "github.com/gagliardetto/solana-go/rpc"
 
 // RPC is the url of the node
-const RPC = rpc.DevNet_RPC  // 开发链
-const WsRPC = rpc.DevNet_WS // 开发链
+const RPC = rpc.DevNet_RPC
+const WsRPC = rpc.DevNet_WS
 
 const PROGRAM_DISTRI_ID = "HF4aT6sho2zTySB8nEeN5ThMvDGtGVRrH3jeBvxFNxit"
 
@@ -56,7 +56,7 @@ type MachineUUID [16]byte
 type OrderPlacedMetadata struct {
 	// MachineInfo MachineInfo `json:"machineInfo"`
 	FormData        FormData `json:"formData"`
-	MachineAccounts string   `json:"MachineAccounts"` // 机器存储地址
+	MachineAccounts string   `json:"MachineAccounts"`
 }
 
 type MachineInfo struct {
