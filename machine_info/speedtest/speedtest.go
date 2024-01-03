@@ -23,7 +23,7 @@ func GetSpeedInfo() (InfoSpeed, error) {
 		return InfoSpeed{
 			Download: "- Mbit/s",
 			Upload:   "- Mbit/s",
-		}, fmt.Errorf("speedtest-cli, Failed to execute command: %v\nout: %v", err, string(out))
+		}, fmt.Errorf("speedtest-cli, Failed to execute command: %v\n %v", err, string(out))
 	}
 
 	output := string(out)

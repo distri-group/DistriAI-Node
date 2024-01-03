@@ -159,6 +159,7 @@ type Order struct {
 	Total     uint64
 	Metadata  string
 	Status    OrderStatus
+	OrderTime int64
 }
 
 var OrderDiscriminator = [8]byte{134, 173, 223, 185, 77, 86, 28, 51}
@@ -211,6 +212,11 @@ func (obj Order) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
 	}
 	// Serialize `Status` param:
 	err = encoder.Encode(obj.Status)
+	if err != nil {
+		return err
+	}
+	// Serialize `OrderTime` param:
+	err = encoder.Encode(obj.OrderTime)
 	if err != nil {
 		return err
 	}
@@ -273,6 +279,11 @@ func (obj *Order) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
 	}
 	// Deserialize `Status`:
 	err = decoder.Decode(&obj.Status)
+	if err != nil {
+		return err
+	}
+	// Deserialize `OrderTime`:
+	err = decoder.Decode(&obj.OrderTime)
 	if err != nil {
 		return err
 	}

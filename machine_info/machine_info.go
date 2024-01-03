@@ -9,6 +9,7 @@ import (
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/machine_info/memory"
 	"DistriAI-Node/machine_info/speedtest"
+	logs "DistriAI-Node/utils/log_utils"
 )
 
 // MachineInfo 用于存储所有硬件(cpu\disk\flops\gpu\memory)信息
@@ -60,7 +61,10 @@ func GetMachineInfo() (MachineInfo, error) {
 
 	// Easy debugging
 	// 测算网络上传下载速率
-	speedInfo, _ := speedtest.GetSpeedInfo()
+	speedInfo, err := speedtest.GetSpeedInfo()
+	if err != nil {
+		logs.Error(err.Error())	
+	}
 	// speedInfo := speedtest.InfoSpeed{
 	// 	Download: "1000 Mbit/s",
 	// 	Upload:   "1000 Mbit/s",

@@ -3,6 +3,7 @@ package docker
 import (
 	docker_utils "DistriAI-Node/docker/utils"
 	"DistriAI-Node/pattern"
+	logs "DistriAI-Node/utils/log_utils"
 	"bufio"
 	"context"
 	"strconv"
@@ -60,6 +61,9 @@ func RunScoreContainer() (float64, error) {
 	scanner1 := bufio.NewScanner(reader)
 	for scanner1.Scan() {
 		out := scanner1.Text()
+		
+		logs.Normal(out)
+
 		index := strings.Index(out, "Score:")
 		if index > 0 {
 			scoreStr := strings.TrimSpace(out[index+len("Score:"):])

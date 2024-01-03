@@ -19,7 +19,7 @@ func SetProgramID(pubkey ag_solanago.PublicKey) {
 	ag_solanago.RegisterInstructionDecoder(ProgramID, registryDecodeInstruction)
 }
 
-const ProgramName = "MatrixAi"
+const ProgramName = "DistriAi"
 
 func init() {
 	if !ProgramID.IsZero() {
