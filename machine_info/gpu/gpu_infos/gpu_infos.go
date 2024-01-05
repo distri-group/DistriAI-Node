@@ -40,6 +40,27 @@ func InitGpuInfos() []GpuInfo {
 		GpuInfo{Name: "NVIDIA H100 PCIe 96 GB", Fp16: 248.3, Fp32: 62.08, Fp64: 31.04},
 		GpuInfo{Name: "NVIDIA H100 SXM5 64 GB", Fp16: 267.6, Fp32: 66.91, Fp64: 33.45},
 		GpuInfo{Name: "NVIDIA H100 SXM5 80 GB", Fp16: 267.6, Fp32: 66.91, Fp64: 33.45},
-		GpuInfo{Name: "NVIDIA H100 SXM5 96 GB", Fp16: 248.3, Fp32: 62.08, Fp64: 31.04},)
+		GpuInfo{Name: "NVIDIA H100 SXM5 96 GB", Fp16: 248.3, Fp32: 62.08, Fp64: 31.04},
+		GpuInfo{Name: "NVIDIA H800 PCIe 80 GB", Fp16: 204.9, Fp32: 51.22, Fp64: 25.61},
+		GpuInfo{Name: "NVIDIA H800 SXM5", Fp16: 237.2, Fp32: 59.3, Fp64: 29.65},
+		GpuInfo{Name: "NVIDIA L4", Fp16: 31.33, Fp32: 31.33, Fp64: 0.489},
+		GpuInfo{Name: "NVIDIA RTX 2000 Embedded Ada Generation", Fp16: 12.99, Fp32: 12.99, Fp64: 0.203},
+		GpuInfo{Name: "NVIDIA RTX 2000 Max-Q Ada Generation", Fp16: 8.94, Fp32: 8.94, Fp64: 0.139},
+		GpuInfo{Name: "NVIDIA RTX 2000 Mobile Ada Generation", Fp16: 12.99, Fp32: 12.99, Fp64: 0.203},
+		GpuInfo{Name: "NVIDIA RTX 3000 Mobile Ada Generation", Fp16: 15.62, Fp32: 15.62, Fp64: 0.244},
+		GpuInfo{Name: "NVIDIA RTX 3500 Mobile Ada Generation", Fp16: 15.82, Fp32: 15.82, Fp64: 0.247},
+		GpuInfo{Name: "NVIDIA RTX 4000 Mobile Ada Generation", Fp16: 24.72, Fp32: 24.72, Fp64: 0.386},
+		GpuInfo{Name: "NVIDIA RTX 4000 SFF Ada Generation", Fp16: 19.17, Fp32: 19.17, Fp64: 0.299},
+		GpuInfo{Name: "NVIDIA RTX 5000 Max-Q Ada Generation", Fp16: 32.69, Fp32: 32.69, Fp64: 0.51},
+		GpuInfo{Name: "NVIDIA RTX 5000 Mobile Ada Embedded", Fp16: 41.15, Fp32: 41.15, Fp64: 0.643},
+		GpuInfo{Name: "NVIDIA RTX 5000 Mobile Ada Generation", Fp16: 41.15, Fp32: 41.15, Fp64: 0.643},
+		GpuInfo{Name: "NVIDIA Jetson AGX Orin 64 GB", Fp16: 10.65, Fp32: 5.32, Fp64: 0.002},
+		GpuInfo{Name: "NVIDIA Jetson Orin NX 8 GB", Fp16: 3.13, Fp32: 1.56, Fp64: 0.783},
+		GpuInfo{Name: "NVIDIA Jetson Orin Nano 4 GB", Fp16: 1.28, Fp32: 0.64, Fp64: 0.32},
+		GpuInfo{Name: "NVIDIA Jetson Orin Nano 8 GB", Fp16: 2.56, Fp32: 1.28, Fp64: 0.64},
+		GpuInfo{Name: "NVIDIA Jetson AGX Orin 32 GB", Fp16: 6.66, Fp32: 3.33, Fp64: 1.66},
+		GpuInfo{Name: "NVIDIA Jetson Orin NX 16 GB", Fp16: 3.76, Fp32: 1.88, Fp64: 0.94},
+		GpuInfo{Name: "NVIDIA GeForce RTX 4090 Ti", Fp16: 93.24, Fp32: 93.24, Fp64: 1.457},
+		GpuInfo{Name: "NVIDIA TITAN Ada", Fp16: 92.9, Fp32: 92.9, Fp64: 1.452})
 	return gpuInfos
 }

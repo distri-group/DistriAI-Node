@@ -1,10 +1,12 @@
 package machine_info
 
 import (
+	"DistriAI-Node/config"
 	"DistriAI-Node/machine_info/cpu"
 	"DistriAI-Node/machine_info/disk"
 	"DistriAI-Node/machine_info/flops"
 	"DistriAI-Node/machine_info/gpu"
+	"DistriAI-Node/machine_info/ip"
 	"DistriAI-Node/machine_info/location"
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/machine_info/memory"
@@ -15,6 +17,7 @@ import (
 type MachineInfo struct {
 	MachineUUID     machine_uuid.MachineUUID `json:"MachineUUID"`
 	Addr            string                   `json:"Addr"`
+	IpInfo          ip.InfoIP                `json:"Ip"`
 	CPUInfo         cpu.InfoCPU              `json:"CPUInfo"`
 	DiskInfo        disk.InfoDisk            `json:"DiskInfo"`
 	Score           float64                  `json:"Score"`
@@ -23,11 +26,18 @@ type MachineInfo struct {
 	LocationInfo    location.InfoLocation    `json:"LocationInfo"`
 	SpeedInfo       speedtest.InfoSpeed      `json:"SpeedInfo"`
 	FlopsInfo       flops.InfoFlop           `json:"InfoFlop"`
+	SecurityLevel   string                   `json:"SecurityLevel"`
 	MachineAccounts string                   `json:"MachineAccounts"`
 }
 
 func GetMachineInfo() (MachineInfo, error) {
 	var hwInfo MachineInfo
+
+	ipInfo, err := ip.GetIpInfo()
+	if err != nil {
+		return hwInfo, err
+	}
+	hwInfo.IpInfo = ipInfo
 
 	cpuInfo, err := cpu.GetCPUInfo()
 	if err != nil {
@@ -66,6 +76,8 @@ func GetMachineInfo() (MachineInfo, error) {
 
 	flopsInfo := flops.GetFlopsInfo(gpuInfo.Model)
 	hwInfo.FlopsInfo = flopsInfo
+
+	hwInfo.SecurityLevel = config.GlobalConfig.Base.SecurityLevel
 
 	return hwInfo, nil
 }

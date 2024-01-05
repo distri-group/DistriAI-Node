@@ -17,7 +17,7 @@ type InfoDisk struct {
 func GetDiskInfo() (InfoDisk, error) {
 	logs.Normal("Getting free space info...")
 
-	dirpath := config.GlobalConfig.Base.WorkDirectory
+	dirpath := config.GlobalConfig.Console.WorkDirectory
 	if _, err := os.Stat(dirpath); os.IsNotExist(err) {
 		logs.Normal(fmt.Sprintf("%s does not exist. Using default directory /home", dirpath))
 		dirpath = "/home"

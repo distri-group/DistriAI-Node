@@ -58,11 +58,6 @@ func (chain *WrapperSubscribe) SubscribeEvents(hardwareInfo *machine_info.Machin
 			}
 			if order.Seller.Equals(chain.Wallet.Wallet.PublicKey()) && order.MachineId == uuid {
 				chain.ProgramDistriOrder = got.Value.Pubkey
-
-				// Easy debugging
-				// logs.Result("Start running training...")
-				// time.Sleep(20 * time.Second)
-
 				return order, nil
 			}
 		}

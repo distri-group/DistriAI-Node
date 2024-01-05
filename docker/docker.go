@@ -1,16 +1,19 @@
 package docker
 
 import (
+	"DistriAI-Node/config"
 	docker_utils "DistriAI-Node/docker/utils"
 	"DistriAI-Node/pattern"
 	"bufio"
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 )
 
 func RunScoreContainer(isGPU bool) (float64, error) {
@@ -37,6 +40,7 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 					},
 				},
 			},
+			AutoRemove: true,
 		}
 	}
 
@@ -73,4 +77,85 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 		}
 	}
 	return oldScore, nil
+}
+
+func RunWorkspaceContainer(isGPU bool) (string, error) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", err
+	}
+	cli.NegotiateAPIVersion(ctx)
+
+	containerName := pattern.ML_WORKSPACE_CONTAINER
+	containerConfig := &container.Config{
+		Image: pattern.ML_WORKSPACE_NAME,
+		Tty:   true,
+	}
+
+	var port = "8080"
+	if config.GlobalConfig.Console.Port != "" {
+		port = config.GlobalConfig.Console.Port
+	}
+
+	hostConfig := &container.HostConfig{
+		PortBindings: map[nat.Port][]nat.PortBinding{
+			nat.Port("8080"): {
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: port,
+				},
+			},
+		},
+		Binds: []string{
+			fmt.Sprintf("%s:/workspace", config.GlobalConfig.Console.WorkDirectory),
+			"myvolume:/data",
+		},
+		RestartPolicy: container.RestartPolicy{
+			Name: "always",
+		},
+		ShmSize: 512 * 1024 * 1024, // 512MB
+	}
+	if isGPU {
+		containerName = pattern.ML_WORKSPACE_GPU_CONTAINER
+		containerConfig.Image = pattern.ML_WORKSPACE_GPU_NAME
+		hostConfig = &container.HostConfig{
+			Runtime: "nvidia",
+			Resources: container.Resources{
+				DeviceRequests: []container.DeviceRequest{
+					{
+						Count:        -1,
+						Capabilities: [][]string{{"gpu"}},
+					},
+				},
+			},
+		}
+	}
+
+	containerID, err := docker_utils.RunContainer(ctx, cli, containerName,
+		containerConfig,
+		hostConfig)
+	if err != nil {
+		return "", err
+	}
+	return containerID, nil
+}
+
+func StopWorkspaceContainer(containerID string) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+	cli.NegotiateAPIVersion(ctx)
+
+	if err := docker_utils.StopAndRemoveContainer(ctx, cli, containerID); err != nil {
+		return err
+	}
+	return nil
 }

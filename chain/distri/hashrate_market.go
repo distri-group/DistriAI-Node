@@ -3,6 +3,7 @@ package distri
 import (
 	"DistriAI-Node/chain"
 	"DistriAI-Node/chain/distri/distri_ai"
+	"DistriAI-Node/docker"
 	"DistriAI-Node/machine_info"
 	"DistriAI-Node/pattern"
 	"DistriAI-Node/utils"
@@ -90,8 +91,14 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 	return sig.String(), nil
 }
 
-func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlacedMetadata) (string, error) {
+func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlacedMetadata, isGPU bool) (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %v", pattern.TX_HASHRATE_MARKET_ORDER_COMPLETED))
+
+	score, err := docker.RunScoreContainer(isGPU)
+	if err != nil {
+		return "", err
+	}
+	scoreUint8 := uint8(score)
 
 	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
 	if err != nil {
@@ -128,7 +135,7 @@ func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlace
 		[]solana.Instruction{
 			distri_ai.NewOrderCompletedInstruction(
 				string(jsonData),
-				80,
+				scoreUint8,
 				chain.ProgramDistriMachine,
 				chain.ProgramDistriOrder,
 				seller,
@@ -312,13 +319,35 @@ func (chain WrapperDistri) RemoveMachine(hardwareInfo machine_info.MachineInfo) 
 	return sig.String(), nil
 }
 
-func (chain WrapperDistri) GetMachine(hardwareInfo machine_info.MachineInfo) (distri_ai.Machine, error) {
+func (chain WrapperDistri) GetMachine() (distri_ai.Machine, error) {
 
 	var data distri_ai.Machine
 
 	resp, err := chain.Conn.RpcClient.GetAccountInfo(
 		context.TODO(),
 		chain.ProgramDistriMachine,
+	)
+	if err != nil {
+		return data, nil
+	}
+
+	borshDec := bin.NewBorshDecoder(resp.GetBinary())
+
+	err = data.UnmarshalWithDecoder(borshDec)
+	if err != nil {
+		return data, fmt.Errorf("error unmarshaling data: %v", err)
+	}
+
+	return data, nil
+}
+
+func (chain WrapperDistri) GetOrder() (distri_ai.Order, error) {
+
+	var data distri_ai.Order
+
+	resp, err := chain.Conn.RpcClient.GetAccountInfo(
+		context.TODO(),
+		chain.ProgramDistriOrder,
 	)
 	if err != nil {
 		return data, nil

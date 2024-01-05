@@ -31,6 +31,22 @@ const (
 	SCORE_NAME      = DOCKER_GROUP + "/" + SCORE_IMAGE + ":" + SCORE_TAGS
 )
 
+// docker: ml-workspace image
+const (
+	ML_WORKSPACE_IMAGE     = "ml-workspace"
+	ML_WORKSPACE_TAGS      = "0.1"
+	ML_WORKSPACE_CONTAINER = "ml-workspace"
+	ML_WORKSPACE_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_IMAGE + ":" + ML_WORKSPACE_TAGS
+)
+
+// docker: ml-workspace-gpu image
+const (
+	ML_WORKSPACE_GPU_IMAGE     = "ml-workspace-gpu"
+	ML_WORKSPACE_GPU_TAGS      = "0.1"
+	ML_WORKSPACE_GPU_CONTAINER = "ml-workspace-gpu"
+	ML_WORKSPACE_GPU_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_GPU_IMAGE + ":" + ML_WORKSPACE_TAGS
+)
+
 // DOT is "." character
 const DOT = "."
 
@@ -135,20 +151,8 @@ type InfoFlop struct {
 }
 
 type FormData struct {
-	TaskName     string `json:"taskName"`
-	ImageName    string `json:"imageName"`
-	ImageTag     string `json:"imageTag"`
-	Libery       string `json:"libery"`
-	Model        string `json:"model"`
-	DataUrl      string `json:"dataUrl"`
-	Iters        string `json:"iters"`
-	Batchsize    string `json:"batchsize"`
-	Rate         string `json:"rate"`
-	Duration     int    `json:"duration"`
-	LibType      string `json:"libType"`
-	BuyTime      string `json:"buyTime"`
-	OrderTime    string `json:"orderTime"`
-	ModelUrl     string `json:"modelUrl"`
-	CompleteTime string `json:"completeTime"`
-	Evaluate     string `json:"evaluate"`
+	TaskName  string `json:"taskName"`
+	Duration  int    `json:"duration"`
+	BuyTime   string `json:"buyTime"`
+	OrderTime string `json:"orderTime"`
 }

@@ -67,6 +67,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/docker/docker v24.0.7+incompatible
 	github.com/gagliardetto/solana-go v1.8.4
+	github.com/jdgcs/ed25519 v0.0.0-20200408034030-96c10d46cdc3
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.23.11

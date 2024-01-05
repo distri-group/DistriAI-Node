@@ -69,7 +69,6 @@ func RunContainer(ctx context.Context, cli *client.Client, containerName string,
 		}
 	}
 
-	hostConfig.AutoRemove = true
 	containerID, err := CreateContainer(ctx, cli, containerName, config, hostConfig)
 	if err != nil {
 		return "", err
@@ -81,6 +80,19 @@ func RunContainer(ctx context.Context, cli *client.Client, containerName string,
 		return "", err
 	}
 	return containerID, nil
+}
+
+func StopAndRemoveContainer(ctx context.Context, cli *client.Client, containerID string) error {
+	options := container.StopOptions{
+		Timeout: nil,
+	}
+	if err := cli.ContainerStop(ctx, containerID, options); err != nil {
+		return err
+	}
+	if err := cli.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func DeleteImage(ctx context.Context, cli *client.Client, imageName string) error {

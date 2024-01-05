@@ -5,6 +5,7 @@ import (
 	"DistriAI-Node/chain/distri"
 	"DistriAI-Node/chain/subscribe"
 	"DistriAI-Node/config"
+	"DistriAI-Node/core_task"
 	"DistriAI-Node/docker"
 	"DistriAI-Node/machine_info"
 	"DistriAI-Node/machine_info/disk"
@@ -19,11 +20,11 @@ import (
 )
 
 var ClientCommand = cli.Command{
-	Name:  "client",
+	Name:  "node",
 	Usage: "Starting or terminating a client.",
 	Subcommands: []cli.Command{
 		{
-			Name:  "execute",
+			Name:  "start",
 			Usage: "Upload hardware configuration and initiate listening events.",
 			Action: func(c *cli.Context) error {
 				distriWrapper, hwInfo, chainInfo, err := getDistri(true)
@@ -32,7 +33,7 @@ var ClientCommand = cli.Command{
 					return nil
 				}
 
-				machine, err := distriWrapper.GetMachine(*hwInfo)
+				machine, err := distriWrapper.GetMachine()
 				if err != nil {
 					logs.Error(fmt.Sprintf("Error: %v", err))
 					return nil
@@ -56,7 +57,7 @@ var ClientCommand = cli.Command{
 				subscribeBlocks := subscribe.NewSubscribeWrapper(chainInfo)
 
 				for {
-					time.Sleep(3 * time.Second)
+					time.Sleep(1 * time.Second)
 
 					logs.Result("=============== Start subscription ==================")
 					order, err := subscribeBlocks.SubscribeEvents(hwInfo)
@@ -76,50 +77,18 @@ var ClientCommand = cli.Command{
 						continue
 					}
 
-					logs.Normal(fmt.Sprintf("Start training model, orderId: %v", fmt.Sprintf("%#x", order.OrderId)))
+					logs.Normal(fmt.Sprintf("Start workspace container, orderId: %v", fmt.Sprintf("%#x", order.OrderId)))
 
-					var orderPlacedMetadata pattern.OrderPlacedMetadata
-
-					err = json.Unmarshal([]byte(order.Metadata), &orderPlacedMetadata)
+					isGPU := false
+					if hwInfo.GPUInfo.Number > 0 {
+						isGPU = true
+					}
+					containerID, err := docker.RunWorkspaceContainer(isGPU)
 					if err != nil {
-						logs.Error(fmt.Sprintf("error unmarshaling order metadata: %v", err))
-						return nil
+						logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
+						return nil						
 					}
-
-					orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
-
-					// Easy debugging
-					switch orderPlacedMetadata.FormData.LibType {
-					case "lib":
-					case "docker":
-						imageName := orderPlacedMetadata.FormData.ImageName + ":" + orderPlacedMetadata.FormData.ImageTag
-						logs.Normal(fmt.Sprintf("imageName: %v", imageName))
-					default:
-						err = fmt.Errorf("libType error: %v", orderPlacedMetadata.FormData.LibType)
-					}
-
-					if err != nil {
-						logs.Error(fmt.Sprintf("Container operation failed\n%v", err))
-						_, err = distriWrapper.OrderFailed(order.Buyer, orderPlacedMetadata)
-						if err != nil {
-							logs.Error(err.Error())
-							return err
-						}
-						logs.Normal("OrderFailed done")
-					} else {
-
-						/*
-							In practice, only the "lib" mode requires the uploading of models on the client side, while the uploading logic of the "docker" mode is handled by the user (buyer).
-							For the convenience of debugging and demonstration, the given model download IP address is used uniformly.
-						*/
-						orderPlacedMetadata.FormData.ModelUrl = "https://ipfs.io/ipfs/QmPHdMGXiuzxeQB5xyn6fqjKLGPUo4rxircpMzzd9cVomF?filename=model.pt"
-
-						_, err = distriWrapper.OrderCompleted(orderPlacedMetadata)
-						if err != nil {
-							return err
-						}
-						logs.Normal("OrderCompleted done")
-					}
+					core_task.StartTimer(distriWrapper, order, isGPU, containerID)
 				}
 			},
 		},
@@ -133,7 +102,7 @@ var ClientCommand = cli.Command{
 					return err
 				}
 
-				machine, err := distriWrapper.GetMachine(*hwInfo)
+				machine, err := distriWrapper.GetMachine()
 				if err != nil {
 					logs.Error(fmt.Sprintf("Error: %v", err))
 					return nil

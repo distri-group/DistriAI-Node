@@ -11,9 +11,12 @@ import (
 type Config struct {
 	Base struct {
 		PrivateKey    string `yaml:"privateKey"`
-		WorkDirectory string `yaml:"workDirectory"`
 		SecurityLevel string `yaml:"securityLevel"`
 	} `yaml:"base"`
+	Console struct {
+		WorkDirectory string `yaml:"workDirectory"`
+		Port          string `yaml:"port"`
+	} `yaml:"console"`
 }
 
 var GlobalConfig Config
