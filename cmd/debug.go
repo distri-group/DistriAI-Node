@@ -1,15 +1,15 @@
 package cmd
 
 import (
-	"DistriAI-Node/chain"
-	"DistriAI-Node/chain/distri"
-	"DistriAI-Node/config"
-	"DistriAI-Node/machine_info/machine_uuid"
-	"DistriAI-Node/pattern"
-	"encoding/json"
 
 	// "github.com/jdgcs/ed25519/extra25519"
-	"github.com/gagliardetto/solana-go"
+	"os"
+
+	// docker_utils "DistriAI-Node/docker/utils"
+
+	// "github.com/docker/docker/api/types/container"
+	// "github.com/docker/docker/client"
+	// "github.com/docker/go-connections/nat"
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -80,39 +80,89 @@ var DebugCommand = cli.Command{
 		// fmt.Println(string(decrypted)) // 输出: Hello, World!
 
 		/* Debug : Force Complete */
-		machineUUID, err := machine_uuid.GetInfoMachineUUID()
-		if err != nil {
-			return err
-		}
+		// machineUUID, err := machine_uuid.GetInfoMachineUUID()
+		// if err != nil {
+		// 	return err
+		// }
 
-		key := config.GlobalConfig.Base.PrivateKey
+		// key := config.GlobalConfig.Base.PrivateKey
 
-		newConfig := config.NewConfig(
-			key,
-			pattern.RPC,
-			pattern.WsRPC)
+		// newConfig := config.NewConfig(
+		// 	key,
+		// 	pattern.RPC,
+		// 	pattern.WsRPC)
 
-		var chainInfo *chain.InfoChain
-		chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
-		if err != nil {
-			return err
-		}
+		// var chainInfo *chain.InfoChain
+		// chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
+		// if err != nil {
+		// 	return err
+		// }
 
-		var orderPlacedMetadata pattern.OrderPlacedMetadata
+		// var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-		metadata := "{\"formData\":{\"taskName\":\"Computing Task - 7\",\"duration\":1},\"machinePublicKey\":\"9fMCEWm5Y6tqn9UseHrfPmokWAbjJBooK5mjPanAYgbb\"}"
+		// metadata := "{\"formData\":{\"taskName\":\"Computing Task - 8\",\"duration\":1},\"machinePublicKey\":\"4Tx68qZ2GPhsVd1k7stMFfVkLh7y8gPs6vgH7z7KgB7S\"}"
 
-		err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
-		if err != nil {
-			return err
-		}
+		// err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
+		// if err != nil {
+		// 	return err
+		// }
 
-		orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
+		// orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
 
-		chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("9fMCEWm5Y6tqn9UseHrfPmokWAbjJBooK5mjPanAYgbb")
+		// chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("4Tx68qZ2GPhsVd1k7stMFfVkLh7y8gPs6vgH7z7KgB7S")
 
-		distriWrapper := distri.NewDistriWrapper(chainInfo)
-		_, err = distriWrapper.OrderCompleted(orderPlacedMetadata, false)
+		// distriWrapper := distri.NewDistriWrapper(chainInfo)
+		// _, err = distriWrapper.OrderCompleted(orderPlacedMetadata, false)
+		// if err != nil {
+		// 	return err
+		// }
+
+		/* Dedug : ml-workspace */
+		// ctx, cancel := context.WithCancel(context.Background())
+		// defer cancel()
+
+		// cli, err := client.NewClientWithOpts(client.FromEnv)
+		// if err != nil {
+		// 	return err
+		// }
+		// cli.NegotiateAPIVersion(ctx)
+
+		// containerName := "debug-workspace"
+		// containerConfig := &container.Config{
+		// 	Image: pattern.ML_WORKSPACE_NAME,
+		// 	Tty:   true,
+		// }
+
+		// portBind := nat.PortMap{
+		// 	nat.Port("8080/tcp"): []nat.PortBinding{
+		// 		{
+		// 			HostIP:   "0.0.0.0",
+		// 			HostPort: "8080",
+		// 		},
+		// 	}}
+
+		// hostConfig := &container.HostConfig{
+		// 	PortBindings: portBind,
+		// 	Binds: []string{
+		// 		fmt.Sprintf("%s:/workspace", "/data/debug"),
+		// 		"myvolume:/data",
+		// 	},
+		// 	RestartPolicy: container.RestartPolicy{
+		// 		Name: "always",
+		// 	},
+		// 	ShmSize: 512 * 1024 * 1024, // 512MB
+		// }
+
+		// _, err = docker_utils.RunContainer(ctx, cli, containerName,
+		// 	containerConfig,
+		// 	hostConfig)
+		// if err != nil {
+		// 	return err
+		// }
+
+		dir := "/data/temp"
+
+		err := os.RemoveAll(dir)
 		if err != nil {
 			return err
 		}

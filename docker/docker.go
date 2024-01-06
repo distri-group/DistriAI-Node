@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -28,7 +29,9 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 	}
 	cli.NegotiateAPIVersion(ctx)
 
-	hostConfig := &container.HostConfig{}
+	hostConfig := &container.HostConfig{
+		AutoRemove: true,
+	}
 	if isGPU {
 		hostConfig = &container.HostConfig{
 			Runtime: "nvidia",
@@ -40,7 +43,6 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 					},
 				},
 			},
-			AutoRemove: true,
 		}
 	}
 
@@ -96,22 +98,23 @@ func RunWorkspaceContainer(isGPU bool) (string, error) {
 		Tty:   true,
 	}
 
-	var port = "8080"
+	var hostPort = "8080"
 	if config.GlobalConfig.Console.Port != "" {
-		port = config.GlobalConfig.Console.Port
+		hostPort = config.GlobalConfig.Console.Port
 	}
 
-	hostConfig := &container.HostConfig{
-		PortBindings: map[nat.Port][]nat.PortBinding{
-			nat.Port("8080"): {
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: port,
-				},
+	portBind := nat.PortMap{
+		nat.Port("8080/tcp"): []nat.PortBinding{
+			{
+				HostIP:   "0.0.0.0",
+				HostPort: hostPort,
 			},
-		},
+		}}
+
+	hostConfig := &container.HostConfig{
+		PortBindings: portBind,
 		Binds: []string{
-			fmt.Sprintf("%s:/workspace", config.GlobalConfig.Console.WorkDirectory),
+			fmt.Sprintf("%s/ml-workspace:/workspace", config.GlobalConfig.Console.WorkDirectory),
 			"myvolume:/data",
 		},
 		RestartPolicy: container.RestartPolicy{
@@ -157,5 +160,12 @@ func StopWorkspaceContainer(containerID string) error {
 	if err := docker_utils.StopAndRemoveContainer(ctx, cli, containerID); err != nil {
 		return err
 	}
+
+	dir := config.GlobalConfig.Console.WorkDirectory + "/ml-workspace"
+	err = os.RemoveAll(dir)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

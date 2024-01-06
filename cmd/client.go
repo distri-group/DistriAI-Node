@@ -21,7 +21,7 @@ import (
 
 var ClientCommand = cli.Command{
 	Name:  "node",
-	Usage: "Starting or terminating a client.",
+	Usage: "Starting or terminating a node program.",
 	Subcommands: []cli.Command{
 		{
 			Name:  "start",
@@ -86,9 +86,13 @@ var ClientCommand = cli.Command{
 					containerID, err := docker.RunWorkspaceContainer(isGPU)
 					if err != nil {
 						logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
-						return nil						
+						return nil
 					}
-					core_task.StartTimer(distriWrapper, order, isGPU, containerID)
+					if core_task.StartTimer(distriWrapper, order) {
+						core_task.OrderComplete(distriWrapper, order.Metadata, isGPU, containerID)
+					} else {
+						core_task.OrderFailed(distriWrapper, order.Metadata, order.Buyer, containerID)
+					}
 				}
 			},
 		},

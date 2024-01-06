@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/gagliardetto/solana-go"
 )
 
 func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, containerID string) {
@@ -32,10 +34,32 @@ func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, co
 	distri.OrderCompleted(orderPlacedMetadata, isGPU)
 }
 
-func CheckOrder(distri *distri.WrapperDistri, oldDuration time.Time, isGPU bool, containerID string) {
+func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.PublicKey, containerID string) {
+	logs.Normal("Order is failed")
+
+	if err := docker.StopWorkspaceContainer(containerID); err != nil {
+		logs.Error(fmt.Sprintf("Stopping Workspace container error: %v", err))
+		return
+	}
+
+	var orderPlacedMetadata pattern.OrderPlacedMetadata
+
+	err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
+	if err != nil {
+		logs.Error(fmt.Sprintf("error unmarshaling order metadata: %v", err))
+		return
+	}
+
+	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
+
+	distri.OrderFailed(buyer, orderPlacedMetadata)
+}
+
+func CheckOrder(done chan bool, distri *distri.WrapperDistri, oldDuration time.Time) {
 	newOrder, err := distri.GetOrder()
 	if err != nil {
 		logs.Error(fmt.Sprintf("Error: %v", err))
+		done <- false
 		return
 	}
 
@@ -46,13 +70,15 @@ func CheckOrder(distri *distri.WrapperDistri, oldDuration time.Time, isGPU bool,
 
 	if newDuration.After(oldDuration) {
 		logs.Normal("Restart timer")
-		StartTimer(distri, newOrder, isGPU, containerID)
-	} else {
-		OrderComplete(distri, newOrder.Metadata, isGPU, containerID)
+		if !StartTimer(distri, newOrder) {
+			done <- false
+			return
+		}
 	}
+	done <- true
 }
 
-func StartTimer(distri *distri.WrapperDistri, order distri_ai.Order, isGPU bool, containerID string) {
+func StartTimer(distri *distri.WrapperDistri, order distri_ai.Order) bool {
 	done := make(chan bool)
 
 	duration := time.Unix(order.OrderTime, 0).Add(time.Hour * time.Duration(order.Duration))
@@ -60,8 +86,7 @@ func StartTimer(distri *distri.WrapperDistri, order distri_ai.Order, isGPU bool,
 	logs.Normal(fmt.Sprintf("Order Add: %v", time.Hour*time.Duration(order.Duration)))
 	logs.Normal(fmt.Sprintf("Order duration: %v", duration))
 	time.AfterFunc(time.Until(duration), func() {
-		CheckOrder(distri, duration, isGPU, containerID)
-		done <- true
+		CheckOrder(done, distri, duration)
 	})
-	<-done
+	return <-done
 }
