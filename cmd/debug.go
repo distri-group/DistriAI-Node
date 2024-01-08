@@ -3,13 +3,20 @@ package cmd
 import (
 
 	// "github.com/jdgcs/ed25519/extra25519"
-	"os"
 
 	// docker_utils "DistriAI-Node/docker/utils"
 
 	// "github.com/docker/docker/api/types/container"
 	// "github.com/docker/docker/client"
 	// "github.com/docker/go-connections/nat"
+	"DistriAI-Node/chain"
+	"DistriAI-Node/chain/distri"
+	"DistriAI-Node/config"
+	"DistriAI-Node/machine_info/machine_uuid"
+	"DistriAI-Node/pattern"
+	"encoding/json"
+
+	"github.com/gagliardetto/solana-go"
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -80,42 +87,42 @@ var DebugCommand = cli.Command{
 		// fmt.Println(string(decrypted)) // 输出: Hello, World!
 
 		/* Debug : Force Complete */
-		// machineUUID, err := machine_uuid.GetInfoMachineUUID()
-		// if err != nil {
-		// 	return err
-		// }
+		machineUUID, err := machine_uuid.GetInfoMachineUUID()
+		if err != nil {
+			return err
+		}
 
-		// key := config.GlobalConfig.Base.PrivateKey
+		key := config.GlobalConfig.Base.PrivateKey
 
-		// newConfig := config.NewConfig(
-		// 	key,
-		// 	pattern.RPC,
-		// 	pattern.WsRPC)
+		newConfig := config.NewConfig(
+			key,
+			pattern.RPC,
+			pattern.WsRPC)
 
-		// var chainInfo *chain.InfoChain
-		// chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
-		// if err != nil {
-		// 	return err
-		// }
+		var chainInfo *chain.InfoChain
+		chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
+		if err != nil {
+			return err
+		}
 
-		// var orderPlacedMetadata pattern.OrderPlacedMetadata
+		var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-		// metadata := "{\"formData\":{\"taskName\":\"Computing Task - 8\",\"duration\":1},\"machinePublicKey\":\"4Tx68qZ2GPhsVd1k7stMFfVkLh7y8gPs6vgH7z7KgB7S\"}"
+		metadata := "{\"formData\":{\"taskName\":\"Computing Task - 12\",\"duration\":1},\"machinePublicKey\":\"4Bmkq68t7wvCzcT88NF7JrcYYCP8q4NinFXz6TiBVMFY\"}"
 
-		// err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
-		// if err != nil {
-		// 	return err
-		// }
+		err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
+		if err != nil {
+			return err
+		}
 
-		// orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
+		orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
 
-		// chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("4Tx68qZ2GPhsVd1k7stMFfVkLh7y8gPs6vgH7z7KgB7S")
+		chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("4Bmkq68t7wvCzcT88NF7JrcYYCP8q4NinFXz6TiBVMFY")
 
-		// distriWrapper := distri.NewDistriWrapper(chainInfo)
-		// _, err = distriWrapper.OrderCompleted(orderPlacedMetadata, false)
-		// if err != nil {
-		// 	return err
-		// }
+		distriWrapper := distri.NewDistriWrapper(chainInfo)
+		_, err = distriWrapper.OrderCompleted(orderPlacedMetadata, false)
+		if err != nil {
+			return err
+		}
 
 		/* Dedug : ml-workspace */
 		// ctx, cancel := context.WithCancel(context.Background())
@@ -159,13 +166,6 @@ var DebugCommand = cli.Command{
 		// if err != nil {
 		// 	return err
 		// }
-
-		dir := "/data/temp"
-
-		err := os.RemoveAll(dir)
-		if err != nil {
-			return err
-		}
 		return nil
 	},
 }

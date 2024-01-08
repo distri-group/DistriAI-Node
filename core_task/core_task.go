@@ -13,46 +13,50 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
-func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, containerID string) {
+func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, containerID string) error {
 	logs.Normal("Order is complete")
 
 	if err := docker.StopWorkspaceContainer(containerID); err != nil {
-		logs.Error(fmt.Sprintf("Stopping Workspace container error: %v", err))
-		return
+		return err
 	}
 
 	var orderPlacedMetadata pattern.OrderPlacedMetadata
 
 	err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
 	if err != nil {
-		logs.Error(fmt.Sprintf("error unmarshaling order metadata: %v", err))
-		return
+		return err
 	}
 
 	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
 
-	distri.OrderCompleted(orderPlacedMetadata, isGPU)
+	_, err = distri.OrderCompleted(orderPlacedMetadata, isGPU)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.PublicKey, containerID string) {
+func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.PublicKey, containerID string) error {
 	logs.Normal("Order is failed")
 
 	if err := docker.StopWorkspaceContainer(containerID); err != nil {
-		logs.Error(fmt.Sprintf("Stopping Workspace container error: %v", err))
-		return
+		return err
 	}
 
 	var orderPlacedMetadata pattern.OrderPlacedMetadata
 
 	err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
 	if err != nil {
-		logs.Error(fmt.Sprintf("error unmarshaling order metadata: %v", err))
-		return
+		return err
 	}
 
 	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
 
-	distri.OrderFailed(buyer, orderPlacedMetadata)
+	_, err = distri.OrderFailed(buyer, orderPlacedMetadata)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func CheckOrder(done chan bool, distri *distri.WrapperDistri, oldDuration time.Time) {

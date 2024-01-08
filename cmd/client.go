@@ -89,9 +89,13 @@ var ClientCommand = cli.Command{
 						return nil
 					}
 					if core_task.StartTimer(distriWrapper, order) {
-						core_task.OrderComplete(distriWrapper, order.Metadata, isGPU, containerID)
+						err = core_task.OrderComplete(distriWrapper, order.Metadata, isGPU, containerID)
 					} else {
-						core_task.OrderFailed(distriWrapper, order.Metadata, order.Buyer, containerID)
+						err = core_task.OrderFailed(distriWrapper, order.Metadata, order.Buyer, containerID)
+					}
+					if err != nil {
+						logs.Error(fmt.Sprintln("Order end error: ", err))
+						return nil
 					}
 				}
 			},

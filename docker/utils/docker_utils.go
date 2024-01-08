@@ -83,6 +83,8 @@ func RunContainer(ctx context.Context, cli *client.Client, containerName string,
 }
 
 func StopAndRemoveContainer(ctx context.Context, cli *client.Client, containerID string) error {
+	logs.Normal("Stop and remove container")
+
 	options := container.StopOptions{
 		Timeout: nil,
 	}

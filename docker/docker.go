@@ -4,6 +4,7 @@ import (
 	"DistriAI-Node/config"
 	docker_utils "DistriAI-Node/docker/utils"
 	"DistriAI-Node/pattern"
+	logs "DistriAI-Node/utils/log_utils"
 	"bufio"
 	"context"
 	"fmt"
@@ -33,14 +34,12 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 		AutoRemove: true,
 	}
 	if isGPU {
-		hostConfig = &container.HostConfig{
-			Runtime: "nvidia",
-			Resources: container.Resources{
-				DeviceRequests: []container.DeviceRequest{
-					{
-						Count:        -1,
-						Capabilities: [][]string{{"gpu"}},
-					},
+		hostConfig.Runtime = "nvidia"
+		hostConfig.Resources = container.Resources{
+			DeviceRequests: []container.DeviceRequest{
+				{
+					Count:        -1,
+					Capabilities: [][]string{{"gpu"}},
 				},
 			},
 		}
@@ -125,14 +124,12 @@ func RunWorkspaceContainer(isGPU bool) (string, error) {
 	if isGPU {
 		containerName = pattern.ML_WORKSPACE_GPU_CONTAINER
 		containerConfig.Image = pattern.ML_WORKSPACE_GPU_NAME
-		hostConfig = &container.HostConfig{
-			Runtime: "nvidia",
-			Resources: container.Resources{
-				DeviceRequests: []container.DeviceRequest{
-					{
-						Count:        -1,
-						Capabilities: [][]string{{"gpu"}},
-					},
+		hostConfig.Runtime = "nvidia"
+		hostConfig.Resources = container.Resources{
+			DeviceRequests: []container.DeviceRequest{
+				{
+					Count:        -1,
+					Capabilities: [][]string{{"gpu"}},
 				},
 			},
 		}
@@ -148,6 +145,8 @@ func RunWorkspaceContainer(isGPU bool) (string, error) {
 }
 
 func StopWorkspaceContainer(containerID string) error {
+	logs.Normal("Stop workspace container")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

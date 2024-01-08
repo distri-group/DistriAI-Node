@@ -121,10 +121,9 @@ func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlace
 		[]byte(pattern.DISTRI_VAULT),
 		ecpc.Bytes(),
 	}
-	programID := solana.MustPublicKeyFromBase58(pattern.PROGRAM_DISTRI_ID)
 	vault, _, err := solana.FindProgramAddress(
 		seedVault,
-		programID,
+		chain.ProgramDistriID,
 	)
 	if err != nil {
 		return "", fmt.Errorf("error finding program address: %v", err)
@@ -209,10 +208,9 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 		[]byte(pattern.DISTRI_VAULT),
 		ecpc.Bytes(),
 	}
-	programID := solana.MustPublicKeyFromBase58(pattern.PROGRAM_DISTRI_ID)
 	vault, _, err := solana.FindProgramAddress(
 		seedVault,
-		programID,
+		chain.ProgramDistriID,
 	)
 	if err != nil {
 		return "", fmt.Errorf("error finding program address: %v", err)
