@@ -8,7 +8,6 @@ import (
 	logs "DistriAI-Node/utils/log_utils"
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -39,8 +38,7 @@ func (chain *WrapperSubscribe) SubscribeEvents(hardwareInfo *machine_info.Machin
 			return order, err
 		}
 
-		logs.Normal("=============== ProgramSubscribe ==================")
-		spew.Dump(got)
+		logs.Normal(fmt.Sprintf("programSubscribe: %v", got.Value.Pubkey))
 
 		borshDec := bin.NewBorshDecoder(got.Value.Account.Data.GetBinary())
 
@@ -49,9 +47,6 @@ func (chain *WrapperSubscribe) SubscribeEvents(hardwareInfo *machine_info.Machin
 			logs.Warning(fmt.Sprintf("cannot parse distri_ai.Order: %v", err))
 			continue
 		} else {
-			logs.Result(fmt.Sprintf("Order Account: %v", got.Value.Pubkey))
-			spew.Dump(order)
-
 			uuid, err := utils.ParseMachineUUID(string(hardwareInfo.MachineUUID))
 			if err != nil {
 				return order, fmt.Errorf("error parsing uuid: %v", err)

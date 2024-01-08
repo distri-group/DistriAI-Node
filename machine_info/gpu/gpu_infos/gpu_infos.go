@@ -70,6 +70,7 @@ func InitGpuInfos() []GpuInfo {
 		GpuInfo{Name: "NVIDIA GeForce RTX 3060 Ti GA103", Fp16: 16.2, Fp32: 16.2, Fp64: 0.253},
 		GpuInfo{Name: "NVIDIA GeForce RTX 3070 Ti 16 GB", Fp16: 21.75, Fp32: 21.75, Fp64: 0.339},
 		GpuInfo{Name: "NVIDIA GeForce RTX 3050 4 GB", Fp16: 8.01, Fp32: 8.01, Fp64: 0.125},
+		GpuInfo{Name: "NVIDIA GeForce RTX 3080", Fp16: 29.77, Fp32: 29.77, Fp64: 0.465},
 		GpuInfo{Name: "NVIDIA GeForce RTX 3080 12 GB", Fp16: 30.64, Fp32: 30.64, Fp64: 0.478},
 		GpuInfo{Name: "NVIDIA GeForce RTX 3050 8 GB", Fp16: 9.09, Fp32: 9.09, Fp64: 0.142},
 		GpuInfo{Name: "NVIDIA GeForce RTX 3050 OEM", Fp16: 8.08, Fp32: 8.08, Fp64: 0.126},

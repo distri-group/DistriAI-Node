@@ -1,9 +1,14 @@
 package core_task
 
 import (
+	"DistriAI-Node/chain"
 	"DistriAI-Node/chain/distri"
 	"DistriAI-Node/chain/distri/distri_ai"
+	"DistriAI-Node/config"
 	"DistriAI-Node/docker"
+	"DistriAI-Node/machine_info"
+	"DistriAI-Node/machine_info/disk"
+	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/pattern"
 	logs "DistriAI-Node/utils/log_utils"
 	"encoding/json"
@@ -59,10 +64,68 @@ func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.Pub
 	return nil
 }
 
+func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *chain.InfoChain, error) {
+
+	key := config.GlobalConfig.Base.PrivateKey
+
+	machineUUID, err := machine_uuid.GetInfoMachineUUID()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	newConfig := config.NewConfig(
+		key,
+		pattern.RPC,
+		pattern.WsRPC)
+
+	var chainInfo *chain.InfoChain
+	chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error getting chain info: %v", err)
+	}
+
+	var hwInfo machine_info.MachineInfo
+
+	if isHw {
+		hwInfo, err = machine_info.GetMachineInfo()
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("error getting hardware info: %v", err)
+		}
+
+		diskInfo, err := disk.GetDiskInfo()
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		isGPU := false
+		if hwInfo.GPUInfo.Number > 0 {
+			isGPU = true
+		}
+		// Easy debugging
+		score, err := docker.RunScoreContainer(isGPU)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		hwInfo.Score = score
+		hwInfo.MachineAccounts = chainInfo.ProgramDistriMachine.String()
+		hwInfo.DiskInfo = diskInfo
+	}
+
+	hwInfo.Addr = chainInfo.Wallet.Wallet.PublicKey().String()
+	hwInfo.MachineUUID = machineUUID
+
+	jsonData, _ := json.Marshal(hwInfo)
+	logs.Normal(fmt.Sprintf("Hardware Info : %v", string(jsonData)))
+
+	return distri.NewDistriWrapper(chainInfo), &hwInfo, chainInfo, nil
+}
+
+
 func CheckOrder(done chan bool, distri *distri.WrapperDistri, oldDuration time.Time) {
 	newOrder, err := distri.GetOrder()
 	if err != nil {
-		logs.Error(fmt.Sprintf("Error: %v", err))
+		logs.Error(fmt.Sprintf("GetOrder Error: %v", err))
 		done <- false
 		return
 	}
@@ -87,8 +150,8 @@ func StartTimer(distri *distri.WrapperDistri, order distri_ai.Order) bool {
 
 	duration := time.Unix(order.OrderTime, 0).Add(time.Hour * time.Duration(order.Duration))
 	logs.Normal(fmt.Sprintf("Order OrderTime: %v", time.Unix(order.OrderTime, 0)))
-	logs.Normal(fmt.Sprintf("Order Add: %v", time.Hour*time.Duration(order.Duration)))
-	logs.Normal(fmt.Sprintf("Order duration: %v", duration))
+	logs.Normal(fmt.Sprintf("Order duration: %v", time.Hour*time.Duration(order.Duration)))
+	logs.Normal(fmt.Sprintf("Order end time: %v", duration))
 	time.AfterFunc(time.Until(duration), func() {
 		CheckOrder(done, distri, duration)
 	})

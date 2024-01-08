@@ -66,7 +66,7 @@ func GetMachineInfo() (MachineInfo, error) {
 	// Easy debugging
 	speedInfo, err := speedtest.GetSpeedInfo()
 	if err != nil {
-		logs.Error(err.Error())
+		logs.Warning(err.Error())
 	}
 	// speedInfo := speedtest.InfoSpeed{
 	// 	Download: "1000 Mbit/s",

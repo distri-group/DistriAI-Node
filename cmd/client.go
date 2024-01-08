@@ -1,21 +1,14 @@
 package cmd
 
 import (
-	"DistriAI-Node/chain"
-	"DistriAI-Node/chain/distri"
 	"DistriAI-Node/chain/subscribe"
-	"DistriAI-Node/config"
 	"DistriAI-Node/core_task"
 	"DistriAI-Node/docker"
-	"DistriAI-Node/machine_info"
-	"DistriAI-Node/machine_info/disk"
-	"DistriAI-Node/machine_info/machine_uuid"
-	"DistriAI-Node/pattern"
 	logs "DistriAI-Node/utils/log_utils"
-	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/urfave/cli"
 )
 
@@ -27,7 +20,7 @@ var ClientCommand = cli.Command{
 			Name:  "start",
 			Usage: "Upload hardware configuration and initiate listening events.",
 			Action: func(c *cli.Context) error {
-				distriWrapper, hwInfo, chainInfo, err := getDistri(true)
+				distriWrapper, hwInfo, chainInfo, err := core_task.GetDistri(true)
 				if err != nil {
 					logs.Error(err.Error())
 					return nil
@@ -59,7 +52,7 @@ var ClientCommand = cli.Command{
 				for {
 					time.Sleep(1 * time.Second)
 
-					logs.Result("=============== Start subscription ==================")
+					logs.Normal("=============== Start subscription ==================")
 					order, err := subscribeBlocks.SubscribeEvents(hwInfo)
 					logs.Normal("=============== End subscription ==================")
 					if err != nil {
@@ -77,8 +70,9 @@ var ClientCommand = cli.Command{
 						continue
 					}
 
-					logs.Normal(fmt.Sprintf("Start workspace container, orderId: %v", fmt.Sprintf("%#x", order.OrderId)))
-
+					logs.Result(fmt.Sprintf("Start order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
+					spew.Dump(order)
+					
 					isGPU := false
 					if hwInfo.GPUInfo.Number > 0 {
 						isGPU = true
@@ -104,7 +98,7 @@ var ClientCommand = cli.Command{
 			Name:  "stop",
 			Usage: "Stop the client.",
 			Action: func(c *cli.Context) error {
-				distriWrapper, hwInfo, _, err := getDistri(false)
+				distriWrapper, hwInfo, _, err := core_task.GetDistri(false)
 				if err != nil {
 					logs.Error(err.Error())
 					return err
@@ -129,61 +123,4 @@ var ClientCommand = cli.Command{
 			},
 		},
 	},
-}
-
-func getDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *chain.InfoChain, error) {
-
-	key := config.GlobalConfig.Base.PrivateKey
-
-	machineUUID, err := machine_uuid.GetInfoMachineUUID()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	newConfig := config.NewConfig(
-		key,
-		pattern.RPC,
-		pattern.WsRPC)
-
-	var chainInfo *chain.InfoChain
-	chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error getting chain info: %v", err)
-	}
-
-	var hwInfo machine_info.MachineInfo
-
-	if isHw {
-		hwInfo, err = machine_info.GetMachineInfo()
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error getting hardware info: %v", err)
-		}
-
-		diskInfo, err := disk.GetDiskInfo()
-		if err != nil {
-			return nil, nil, nil, err
-		}
-
-		isGPU := false
-		if hwInfo.GPUInfo.Number > 0 {
-			isGPU = true
-		}
-		// Easy debugging
-		score, err := docker.RunScoreContainer(isGPU)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-
-		hwInfo.Score = score
-		hwInfo.MachineAccounts = chainInfo.ProgramDistriMachine.String()
-		hwInfo.DiskInfo = diskInfo
-	}
-
-	hwInfo.Addr = chainInfo.Wallet.Wallet.PublicKey().String()
-	hwInfo.MachineUUID = machineUUID
-
-	jsonData, _ := json.Marshal(hwInfo)
-	logs.Normal(fmt.Sprintf("Hardware Info : %v", string(jsonData)))
-
-	return distri.NewDistriWrapper(chainInfo), &hwInfo, chainInfo, nil
 }
