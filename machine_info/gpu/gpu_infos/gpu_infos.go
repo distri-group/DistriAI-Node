@@ -22,7 +22,6 @@ func InitGpuInfos() []GpuInfo {
 		GpuInfo{Name: "NVIDIA GeForce GTX 1080 Ti 12 GB", Fp16: 0.167, Fp32: 10.69, Fp64: 0.334},
 		GpuInfo{Name: "NVIDIA Tesla C1080", Fp16: 0.0, Fp32: 0.622, Fp64: 0.077},
 		GpuInfo{Name: "NVIDIA GeForce RTX 4080 SUPER", Fp16: 51.3, Fp32: 51.3, Fp64: 0.801},
-		GpuInfo{Name: "NVIDIA GeForce RTX 4090D", Fp16: 73.54, Fp32: 73.54, Fp64: 1.149},
 		GpuInfo{Name: "NVIDIA GeForce RTX 4060 AD106", Fp16: 19.47, Fp32: 19.47, Fp64: 0.304},
 		GpuInfo{Name: "NVIDIA GeForce RTX 4080 Ti", Fp16: 67.58, Fp32: 67.58, Fp64: 1.056},
 		GpuInfo{Name: "NVIDIA GeForce RTX 4050", Fp16: 13.52, Fp32: 13.52, Fp64: 0.211},

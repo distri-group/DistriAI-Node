@@ -28,7 +28,12 @@ func GetLocationInfo() (InfoLocation, error) {
 		return InfoLocation{}, err
 	}
 
+	// Easy debugging
 	var response InfoLocation
 	json.Unmarshal(body, &response)
+	// response.Country = "South Korea"
+	// response.Region = "Gyeonggi-do"
+	// response.City = "Anyang-si"
+	// response.IP = "211.32.126.136"
 	return response, nil
 }

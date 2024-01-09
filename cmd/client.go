@@ -57,7 +57,8 @@ var ClientCommand = cli.Command{
 					logs.Normal("=============== End subscription ==================")
 					if err != nil {
 						logs.Error(err.Error())
-						return nil
+						time.Sleep(3 * time.Minute)
+						continue
 					}
 
 					if order.Metadata == "" {
@@ -72,7 +73,7 @@ var ClientCommand = cli.Command{
 
 					logs.Result(fmt.Sprintf("Start order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
 					spew.Dump(order)
-					
+
 					isGPU := false
 					if hwInfo.GPUInfo.Number > 0 {
 						isGPU = true

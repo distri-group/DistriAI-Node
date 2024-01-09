@@ -10,6 +10,11 @@ import (
 	// "github.com/docker/docker/client"
 	// "github.com/docker/go-connections/nat"
 
+	gpu "DistriAI-Node/machine_info/gpu/gpu_infos"
+	logs "DistriAI-Node/utils/log_utils"
+	"fmt"
+	"sort"
+
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -159,6 +164,16 @@ var DebugCommand = cli.Command{
 		// if err != nil {
 		// 	return err
 		// }
+
+		gpuInfos := gpu.InitGpuInfos()
+
+		sort.Slice(gpuInfos, func(i, j int) bool {
+			return gpuInfos[i].Fp64 > gpuInfos[j].Fp64
+		})
+
+		for _, info := range gpuInfos {
+			logs.Normal(fmt.Sprintf("Name: %v", info))
+		}
 		return nil
 	},
 }

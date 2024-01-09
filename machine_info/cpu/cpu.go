@@ -26,20 +26,17 @@ func GetCPUInfo() (InfoCPU, error) {
 		return InfoCPU{}, fmt.Errorf("failed to get CPU Counts : %w", err)
 	}
 
-	// cpuInfos := make([]InfoCPU, 0)
-	// for _, info := range cpuInfoStats {
-	// 	cpuInfos = append(cpuInfos, InfoCPU{
-	// 		ModelName: info.ModelName,
-	// 		Cores:     info.Cores,
-	// 		Mhz:       info.Mhz,
-	// 	})
-	// }
-
+	// Easy debugging
 	cpuInfo := InfoCPU{
 		ModelName: cpuInfoStats[0].ModelName,
 		Cores:     int32(counts),
 		Mhz:       cpuInfoStats[0].Mhz,
 	}
+	// cpuInfo := InfoCPU{
+	// 	ModelName: "Intel(R) Xeon(R) Platinum",
+	// 	Cores:     int32(counts),
+	// 	Mhz:       cpuInfoStats[0].Mhz,
+	// }
 
 	return cpuInfo, nil
 }

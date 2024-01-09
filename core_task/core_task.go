@@ -98,10 +98,10 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 		}
 
 		isGPU := false
+		// Easy debugging
 		if hwInfo.GPUInfo.Number > 0 {
 			isGPU = true
 		}
-		// Easy debugging
 		score, err := docker.RunScoreContainer(isGPU)
 		if err != nil {
 			return nil, nil, nil, err
