@@ -52,12 +52,13 @@ var ClientCommand = cli.Command{
 				for {
 					time.Sleep(1 * time.Second)
 
-					logs.Normal("=============== Start subscription ==================")
+					logs.Normal("=============== Start subscription")
 					order, err := subscribeBlocks.SubscribeEvents(hwInfo)
-					logs.Normal("=============== End subscription ==================")
+					logs.Normal("=============== End subscription")
 					if err != nil {
 						logs.Error(err.Error())
 						time.Sleep(3 * time.Minute)
+						logs.Normal("Restart subscription")
 						continue
 					}
 
@@ -102,7 +103,7 @@ var ClientCommand = cli.Command{
 				distriWrapper, hwInfo, _, err := core_task.GetDistri(false)
 				if err != nil {
 					logs.Error(err.Error())
-					return err
+					return nil
 				}
 
 				machine, err := distriWrapper.GetMachine()
