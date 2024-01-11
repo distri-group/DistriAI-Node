@@ -73,7 +73,7 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 		return "", fmt.Errorf("error signing transaction: %v", err)
 	}
 
-	logs.Normal("=============== AddMachine Transaction ==================")
+	logs.Normal("=============== AddMachine Transaction")
 	spew.Dump(tx)
 
 	sig, err := sendandconfirm.SendAndConfirmTransaction(
@@ -301,6 +301,9 @@ func (chain WrapperDistri) RemoveMachine(hardwareInfo machine_info.MachineInfo) 
 	if err != nil {
 		return "", fmt.Errorf("error signing transaction: %v", err)
 	}
+
+	logs.Normal("=============== RemoveMachine Transaction")
+	spew.Dump(tx)
 
 	sig, err := sendandconfirm.SendAndConfirmTransaction(
 		context.TODO(),
