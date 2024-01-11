@@ -3,6 +3,7 @@ package location
 import (
 	"DistriAI-Node/utils/log_utils"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -14,10 +15,11 @@ type InfoLocation struct {
 	IP      string `json:"query"`
 }
 
-func GetLocationInfo() (InfoLocation, error) {
+func GetLocationInfo(ip string) (InfoLocation, error) {
 	logs.Normal("Getting location info...")
 
-	resp, err := http.Get("http://ip-api.com/json/")
+	url := fmt.Sprintf("http://ip-api.com/json/%v", ip)
+	resp, err := http.Get(url)
 	if err != nil {
 		return InfoLocation{}, err
 	}

@@ -1,6 +1,11 @@
 package ip
 
-import "DistriAI-Node/config"
+import (
+	"DistriAI-Node/config"
+	"fmt"
+	"os/exec"
+	"strings"
+)
 
 type InfoIP struct {
 	IP   string `json:"ip"`
@@ -8,20 +13,24 @@ type InfoIP struct {
 }
 
 func GetIpInfo() (InfoIP, error) {
-	// addrs, err := net.InterfaceAddrs()
-	// if err != nil {
-	//     return InfoIP{}, err
-	// }
+	cmd := exec.Command("curl", "cip.cc")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return InfoIP{}, fmt.Errorf("error getting ip info: %v", err)
+	}
 
-	// for _, addr := range addrs {
-	//     if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-	//         if ipnet.IP.To4() != nil {
-	// 			return InfoIP{IP: ipnet.IP.String()}, nil
-	//         }
-	//     }
-	// }
-	return InfoIP{
-		IP:   config.GlobalConfig.Console.OuterNetIP,
-		Port: config.GlobalConfig.Console.OuterNetPort,
-	}, nil
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "IP") {
+			parts := strings.Split(line, ":")
+			if len(parts) > 1 {
+				ip := strings.TrimSpace(parts[1])
+                return InfoIP{
+                    IP:   ip,
+                    Port: config.GlobalConfig.Console.OuterNetPort,
+                }, nil
+			}
+		}
+	}
+	return InfoIP{}, fmt.Errorf("no outer net IP found")
 }

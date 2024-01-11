@@ -39,6 +39,12 @@ func GetMachineInfo() (MachineInfo, error) {
 	}
 	hwInfo.IpInfo = ipInfo
 
+	locationInfo, err := location.GetLocationInfo(ipInfo.IP)
+	if err != nil {
+		return hwInfo, err
+	}
+	hwInfo.LocationInfo = locationInfo
+
 	cpuInfo, err := cpu.GetCPUInfo()
 	if err != nil {
 		return hwInfo, err
@@ -56,12 +62,6 @@ func GetMachineInfo() (MachineInfo, error) {
 	// 	return hwInfo, err
 	// }
 	hwInfo.GPUInfo = gpuInfo
-
-	locationInfo, err := location.GetLocationInfo()
-	if err != nil {
-		return hwInfo, err
-	}
-	hwInfo.LocationInfo = locationInfo
 
 	// Easy debugging
 	speedInfo, err := speedtest.GetSpeedInfo()
