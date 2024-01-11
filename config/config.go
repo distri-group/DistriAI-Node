@@ -15,7 +15,9 @@ type Config struct {
 	} `yaml:"base"`
 	Console struct {
 		WorkDirectory string `yaml:"workDirectory"`
-		Port          string `yaml:"port"`
+		OuterNetIP    string `yaml:"outerNetIP"`
+		OuterNetPort  string `yaml:"outerNetPort"`
+		Port          string `yaml:"innerNetPort"`
 	} `yaml:"console"`
 }
 
