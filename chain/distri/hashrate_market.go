@@ -22,7 +22,7 @@ import (
 type WrapperDistri struct {
 	*chain.InfoChain
 }
-
+// Register the given hardware information with a distributed system or blockchain
 func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %v", pattern.TX_HASHRATE_MARKET_REGISTER))
 
