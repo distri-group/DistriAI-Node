@@ -4,16 +4,16 @@ import (
 
 	// "github.com/jdgcs/ed25519/extra25519"
 
-	// docker_utils "DistriAI-Node/docker/utils"
+	docker_utils "DistriAI-Node/docker/utils"
 
-	// "github.com/docker/docker/api/types/container"
-	// "github.com/docker/docker/client"
-	// "github.com/docker/go-connections/nat"
-
-	gpu "DistriAI-Node/machine_info/gpu/gpu_infos"
-	logs "DistriAI-Node/utils/log_utils"
 	"fmt"
-	"sort"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
+
+	"DistriAI-Node/pattern"
+	"context"
 
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
@@ -105,7 +105,7 @@ var DebugCommand = cli.Command{
 
 		// var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-		// metadata := "{\"formData\":{\"taskName\":\"Computing Task - 12\",\"duration\":1},\"machinePublicKey\":\"4Bmkq68t7wvCzcT88NF7JrcYYCP8q4NinFXz6TiBVMFY\"}"
+		// metadata := "{\"formData\":{\"taskName\":\"Computing Task - 17\",\"duration\":1},\"machinePublicKey\":\"BRFRcBBVHsNoYkzuCcmfjvaAscMZHkiUYwckpoTiwiHu\"}"
 
 		// err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
 		// if err != nil {
@@ -114,7 +114,7 @@ var DebugCommand = cli.Command{
 
 		// orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
 
-		// chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("4Bmkq68t7wvCzcT88NF7JrcYYCP8q4NinFXz6TiBVMFY")
+		// chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("CRiz2ogGQAqNUbkqQJXJtRKVirHpqv1Z3aEGVgB1JcfU")
 
 		// distriWrapper := distri.NewDistriWrapper(chainInfo)
 		// _, err = distriWrapper.OrderCompleted(orderPlacedMetadata, false)
@@ -123,56 +123,56 @@ var DebugCommand = cli.Command{
 		// }
 
 		/* Dedug : ml-workspace */
-		// ctx, cancel := context.WithCancel(context.Background())
-		// defer cancel()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-		// cli, err := client.NewClientWithOpts(client.FromEnv)
-		// if err != nil {
-		// 	return err
-		// }
-		// cli.NegotiateAPIVersion(ctx)
+		cli, err := client.NewClientWithOpts(client.FromEnv)
+		if err != nil {
+			return err
+		}
+		cli.NegotiateAPIVersion(ctx)
 
-		// containerName := "debug-workspace"
-		// containerConfig := &container.Config{
-		// 	Image: pattern.ML_WORKSPACE_NAME,
-		// 	Tty:   true,
-		// }
+		containerName := "debug-workspace"
+		containerConfig := &container.Config{
+			Image: pattern.ML_WORKSPACE_GPU_NAME,
+			Tty:   true,
+		}
 
-		// portBind := nat.PortMap{
-		// 	nat.Port("8080/tcp"): []nat.PortBinding{
-		// 		{
-		// 			HostIP:   "0.0.0.0",
-		// 			HostPort: "8080",
-		// 		},
-		// 	}}
+		portBind := nat.PortMap{
+			nat.Port("8080/tcp"): []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "8080",
+				},
+			}}
 
-		// hostConfig := &container.HostConfig{
-		// 	PortBindings: portBind,
-		// 	Binds: []string{
-		// 		fmt.Sprintf("%s:/workspace", "/data/debug"),
-		// 		"myvolume:/data",
-		// 	},
-		// 	RestartPolicy: container.RestartPolicy{
-		// 		Name: "always",
-		// 	},
-		// 	ShmSize: 512 * 1024 * 1024, // 512MB
-		// }
+		hostConfig := &container.HostConfig{
+			PortBindings: portBind,
+			Binds: []string{
+				fmt.Sprintf("%s:/workspace", "/data/debug"),
+				"myvolume:/data",
+			},
+			RestartPolicy: container.RestartPolicy{
+				Name: "always",
+			},
+			ShmSize: 512 * 1024 * 1024, // 512MB
+			// GPU configuration
+			Runtime: "nvidia",
+			Resources: container.Resources{
+				DeviceRequests: []container.DeviceRequest{
+					{
+						Count:        -1,
+						Capabilities: [][]string{{"gpu"}},
+					},
+				},
+			},
+		}
 
-		// _, err = docker_utils.RunContainer(ctx, cli, containerName,
-		// 	containerConfig,
-		// 	hostConfig)
-		// if err != nil {
-		// 	return err
-		// }
-
-		gpuInfos := gpu.InitGpuInfos()
-
-		sort.Slice(gpuInfos, func(i, j int) bool {
-			return gpuInfos[i].Fp64 > gpuInfos[j].Fp64
-		})
-
-		for _, info := range gpuInfos {
-			logs.Normal(fmt.Sprintf("Name: %v", info))
+		_, err = docker_utils.RunContainer(ctx, cli, containerName,
+			containerConfig,
+			hostConfig)
+		if err != nil {
+			return err
 		}
 		return nil
 	},

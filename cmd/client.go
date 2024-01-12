@@ -119,7 +119,7 @@ var ClientCommand = cli.Command{
 				hash, err := distriWrapper.RemoveMachine(*hwInfo)
 				if err != nil {
 					logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
-					return err
+					return nil
 				}
 				return nil
 			},

@@ -17,5 +17,5 @@ func GetInfoMachineUUID() (MachineUUID, error) {
 		return "", err
 	}
 	return MachineUUID(strings.TrimSpace(string(mID))), nil
-	// return MachineUUID("b711ebf34e474f4db43198e23a59d416"), nil
+	// return MachineUUID("b711ebf34e474f4db43198e23a59d414"), nil
 }
