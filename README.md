@@ -34,6 +34,7 @@ go build -o bin/DistriAI main.go
 
 Create config.yml file in the same directory as the executable file.
 ```
+cd bin
 cat << EOF > config.yml
 base:
   # Mnemonics used to complete transactions
@@ -52,6 +53,5 @@ EOF
 3. Run executable file.
 
 ```
-cd bin
 ./DistriAI node start
 ```

@@ -34,7 +34,7 @@ const (
 // docker: ml-workspace image
 const (
 	ML_WORKSPACE_IMAGE     = "ml-workspace"
-	ML_WORKSPACE_TAGS      = "0.1"
+	ML_WORKSPACE_TAGS      = "0.2.1"
 	ML_WORKSPACE_CONTAINER = "ml-workspace"
 	ML_WORKSPACE_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_IMAGE + ":" + ML_WORKSPACE_TAGS
 )
@@ -42,7 +42,7 @@ const (
 // docker: ml-workspace-gpu image
 const (
 	ML_WORKSPACE_GPU_IMAGE     = "ml-workspace-gpu"
-	ML_WORKSPACE_GPU_TAGS      = "0.1"
+	ML_WORKSPACE_GPU_TAGS      = "0.2.1"
 	ML_WORKSPACE_GPU_CONTAINER = "ml-workspace-gpu"
 	ML_WORKSPACE_GPU_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_GPU_IMAGE + ":" + ML_WORKSPACE_TAGS
 )

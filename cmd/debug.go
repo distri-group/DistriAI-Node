@@ -4,17 +4,18 @@ import (
 
 	// "github.com/jdgcs/ed25519/extra25519"
 
-	docker_utils "DistriAI-Node/docker/utils"
+	// "github.com/docker/docker/api/types/container"
+	// "github.com/docker/docker/client"
+	// "github.com/docker/go-connections/nat"
 
-	"fmt"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
-
+	"DistriAI-Node/chain"
+	"DistriAI-Node/chain/distri"
+	"DistriAI-Node/config"
+	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/pattern"
-	"context"
+	"encoding/json"
 
+	"github.com/gagliardetto/solana-go"
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -85,95 +86,95 @@ var DebugCommand = cli.Command{
 		// fmt.Println(string(decrypted)) // 输出: Hello, World!
 
 		/* Debug : Force Complete */
-		// machineUUID, err := machine_uuid.GetInfoMachineUUID()
-		// if err != nil {
-		// 	return err
-		// }
+		machineUUID, err := machine_uuid.GetInfoMachineUUID()
+		if err != nil {
+			return err
+		}
 
-		// key := config.GlobalConfig.Base.PrivateKey
+		key := config.GlobalConfig.Base.PrivateKey
 
-		// newConfig := config.NewConfig(
-		// 	key,
-		// 	pattern.RPC,
-		// 	pattern.WsRPC)
+		newConfig := config.NewConfig(
+			key,
+			pattern.RPC,
+			pattern.WsRPC)
 
-		// var chainInfo *chain.InfoChain
-		// chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
-		// if err != nil {
-		// 	return err
-		// }
+		var chainInfo *chain.InfoChain
+		chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
+		if err != nil {
+			return err
+		}
 
-		// var orderPlacedMetadata pattern.OrderPlacedMetadata
+		var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-		// metadata := "{\"formData\":{\"taskName\":\"Computing Task - 17\",\"duration\":1},\"machinePublicKey\":\"BRFRcBBVHsNoYkzuCcmfjvaAscMZHkiUYwckpoTiwiHu\"}"
+		metadata := "{\"formData\":{\"taskName\":\"test\",\"duration\":1},\"machinePublicKey\":\"Go7DjYCFcKXZ1AUdWW3wq9yqQCMBJDL4Vsvu2qEdcyAv\"}"
 
-		// err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
-		// if err != nil {
-		// 	return err
-		// }
+		err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
+		if err != nil {
+			return err
+		}
 
-		// orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
+		orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
 
-		// chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("CRiz2ogGQAqNUbkqQJXJtRKVirHpqv1Z3aEGVgB1JcfU")
+		chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("FNbGf9XAmxFTEovp9QVRGj4d6TDufwBsKHzaHPkjQy64")
 
-		// distriWrapper := distri.NewDistriWrapper(chainInfo)
-		// _, err = distriWrapper.OrderCompleted(orderPlacedMetadata, false)
-		// if err != nil {
-		// 	return err
-		// }
+		distriWrapper := distri.NewDistriWrapper(chainInfo)
+		_, err = distriWrapper.OrderCompleted(orderPlacedMetadata, false)
+		if err != nil {
+			return err
+		}
 
 		/* Dedug : ml-workspace */
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		// ctx, cancel := context.WithCancel(context.Background())
+		// defer cancel()
 
-		cli, err := client.NewClientWithOpts(client.FromEnv)
-		if err != nil {
-			return err
-		}
-		cli.NegotiateAPIVersion(ctx)
+		// cli, err := client.NewClientWithOpts(client.FromEnv)
+		// if err != nil {
+		// 	return err
+		// }
+		// cli.NegotiateAPIVersion(ctx)
 
-		containerName := "debug-workspace"
-		containerConfig := &container.Config{
-			Image: pattern.ML_WORKSPACE_GPU_NAME,
-			Tty:   true,
-		}
+		// containerName := "debug-workspace"
+		// containerConfig := &container.Config{
+		// 	Image: pattern.ML_WORKSPACE_GPU_NAME,
+		// 	Tty:   true,
+		// }
 
-		portBind := nat.PortMap{
-			nat.Port("8080/tcp"): []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "8080",
-				},
-			}}
+		// portBind := nat.PortMap{
+		// 	nat.Port("8080/tcp"): []nat.PortBinding{
+		// 		{
+		// 			HostIP:   "0.0.0.0",
+		// 			HostPort: "8080",
+		// 		},
+		// 	}}
 
-		hostConfig := &container.HostConfig{
-			PortBindings: portBind,
-			Binds: []string{
-				fmt.Sprintf("%s:/workspace", "/data/debug"),
-				"myvolume:/data",
-			},
-			RestartPolicy: container.RestartPolicy{
-				Name: "always",
-			},
-			ShmSize: 512 * 1024 * 1024, // 512MB
-			// GPU configuration
-			Runtime: "nvidia",
-			Resources: container.Resources{
-				DeviceRequests: []container.DeviceRequest{
-					{
-						Count:        -1,
-						Capabilities: [][]string{{"gpu"}},
-					},
-				},
-			},
-		}
+		// hostConfig := &container.HostConfig{
+		// 	PortBindings: portBind,
+		// 	Binds: []string{
+		// 		fmt.Sprintf("%s:/workspace", "/data/debug"),
+		// 		"myvolume:/data",
+		// 	},
+		// 	RestartPolicy: container.RestartPolicy{
+		// 		Name: "always",
+		// 	},
+		// 	ShmSize: 512 * 1024 * 1024, // 512MB
+		// 	// GPU configuration
+		// 	Runtime: "nvidia",
+		// 	Resources: container.Resources{
+		// 		DeviceRequests: []container.DeviceRequest{
+		// 			{
+		// 				Count:        -1,
+		// 				Capabilities: [][]string{{"gpu"}},
+		// 			},
+		// 		},
+		// 	},
+		// }
 
-		_, err = docker_utils.RunContainer(ctx, cli, containerName,
-			containerConfig,
-			hostConfig)
-		if err != nil {
-			return err
-		}
+		// _, err = docker_utils.RunContainer(ctx, cli, containerName,
+		// 	containerConfig,
+		// 	hostConfig)
+		// if err != nil {
+		// 	return err
+		// }
 		return nil
 	},
 }
