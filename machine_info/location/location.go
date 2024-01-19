@@ -10,7 +10,7 @@ import (
 
 type InfoLocation struct {
 	Country string `json:"Country"`
-	Region  string `json:"Region"`
+	Region  string `json:"RegionName"`
 	City    string `json:"City"`
 	IP      string `json:"query"`
 }

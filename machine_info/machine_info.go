@@ -4,13 +4,13 @@ import (
 	"DistriAI-Node/config"
 	"DistriAI-Node/machine_info/cpu"
 	"DistriAI-Node/machine_info/disk"
-	"DistriAI-Node/machine_info/flops"
 	"DistriAI-Node/machine_info/gpu"
 	"DistriAI-Node/machine_info/ip"
 	"DistriAI-Node/machine_info/location"
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/machine_info/memory"
 	"DistriAI-Node/machine_info/speedtest"
+	"DistriAI-Node/machine_info/tflops"
 	logs "DistriAI-Node/utils/log_utils"
 )
 
@@ -25,7 +25,7 @@ type MachineInfo struct {
 	GPUInfo         gpu.InfoGPU              `json:"GPUInfo"`
 	LocationInfo    location.InfoLocation    `json:"LocationInfo"`
 	SpeedInfo       speedtest.InfoSpeed      `json:"SpeedInfo"`
-	FlopsInfo       flops.InfoFlop           `json:"InfoFlop"`
+	TFLOPSInfo      tflops.InfoTFLOPS        `json:"InfoTFLOPS"`
 	SecurityLevel   string                   `json:"SecurityLevel"`
 	MachineAccounts string                   `json:"MachineAccounts"`
 }
@@ -74,8 +74,7 @@ func GetMachineInfo() (MachineInfo, error) {
 	// }
 	hwInfo.SpeedInfo = speedInfo
 
-	flopsInfo := flops.GetFlopsInfo(gpuInfo.Model)
-	hwInfo.FlopsInfo = flopsInfo
+	hwInfo.TFLOPSInfo = tflops.GetFlopsInfo(gpuInfo.Model)
 
 	hwInfo.SecurityLevel = config.GlobalConfig.Base.SecurityLevel
 
