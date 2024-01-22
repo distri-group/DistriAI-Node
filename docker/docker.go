@@ -97,16 +97,11 @@ func RunWorkspaceContainer(isGPU bool) (string, error) {
 		Tty:   true,
 	}
 
-	var hostPort = "8080"
-	if config.GlobalConfig.Console.Port != "" {
-		hostPort = config.GlobalConfig.Console.Port
-	}
-
 	portBind := nat.PortMap{
 		nat.Port("8080/tcp"): []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
-				HostPort: hostPort,
+				HostPort: config.GlobalConfig.Console.Port,
 			},
 		}}
 

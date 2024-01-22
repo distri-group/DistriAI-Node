@@ -43,10 +43,10 @@ base:
   securityLevel: 0
 console:
   # Directory provided for training models. default: /data/distri
-  workDirectory: /data/distri
+  workDirectory:
   outerNetPort: <your_outer_net_port>
   # The port on which the console listens. default: 8080
-  innerNetPort: 8080
+  innerNetPort:
 EOF
 ```
 

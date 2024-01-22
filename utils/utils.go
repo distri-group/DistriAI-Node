@@ -2,10 +2,12 @@ package utils
 
 import (
 	"DistriAI-Node/pattern"
+	logs "DistriAI-Node/utils/log_utils"
 	"archive/zip"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -162,4 +164,15 @@ func GetFreeSpace(path string) (uint64, error) {
 		return 0, err
 	}
 	return stat.Bavail * uint64(stat.Bsize), nil
+}
+
+func CheckPort(port string) bool {
+	logs.Normal("Checking port...")
+
+	listener, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		return false
+	}
+	listener.Close()
+	return true
 }

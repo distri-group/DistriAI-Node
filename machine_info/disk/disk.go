@@ -22,6 +22,7 @@ func GetDiskInfo() (InfoDisk, error) {
 		logs.Normal(fmt.Sprintf("%s does not exist. Using default directory: /data/distri", dirpath))
 		dirpath = "/data/distri"
 		os.MkdirAll(dirpath, 0755)
+		config.GlobalConfig.Console.WorkDirectory = dirpath
 	}
 
 	freeSpace, err := utils.GetFreeSpace(dirpath)
