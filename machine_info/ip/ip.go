@@ -40,6 +40,9 @@ func GetIpInfo() (InfoIP, error) {
 	if !utils.CheckPort(config.GlobalConfig.Console.Port) {
 		return InfoIP{}, fmt.Errorf("port %s is not available", config.GlobalConfig.Console.Port)
 	}
-	response.Port = config.GlobalConfig.Console.Port
+	if config.GlobalConfig.Console.OuterNetPort == "" {
+		config.GlobalConfig.Console.OuterNetPort = config.GlobalConfig.Console.Port
+	}
+	response.Port = config.GlobalConfig.Console.OuterNetPort
 	return response, nil
 }

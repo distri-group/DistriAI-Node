@@ -167,7 +167,7 @@ func GetFreeSpace(path string) (uint64, error) {
 }
 
 func CheckPort(port string) bool {
-	logs.Normal("Checking port...")
+	logs.Normal(fmt.Sprintf("Checking port %s...", port))
 
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {

@@ -46,8 +46,10 @@ console:
   workDirectory:
   # If using a proxy, please specify the public IP address. If not using a proxy, you can ignore this.
   outerNetIP:
+  # If not filled, the value of the 'innerNetPort' field will be used to fill this.
+  outerNetPort:
   # The port on which the console listens. default: 8080
-  port:
+  innerNetPort:
 EOF
 ```
 
