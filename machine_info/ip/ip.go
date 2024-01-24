@@ -2,10 +2,12 @@ package ip
 
 import (
 	"DistriAI-Node/config"
+	"DistriAI-Node/utils"
 	logs "DistriAI-Node/utils/log_utils"
+	"encoding/json"
 	"fmt"
-	"os/exec"
-	"strings"
+	"io"
+	"net/http"
 )
 
 type InfoIP struct {
@@ -16,24 +18,28 @@ type InfoIP struct {
 func GetIpInfo() (InfoIP, error) {
 	logs.Normal("Getting outer net ip info...")
 
-	cmd := exec.Command("curl", "cip.cc")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return InfoIP{}, fmt.Errorf("error getting ip info: %v", err)
+	var response InfoIP
+	response.IP = config.GlobalConfig.Console.OuterNetIP
+	if response.IP == "" {
+		resp, err := http.Get("https://ipinfo.io")
+		if err != nil {
+			return InfoIP{}, err
+		}
+
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return InfoIP{}, err
+		}
+		json.Unmarshal(body, &response)
 	}
 
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "IP") {
-			parts := strings.Split(line, ":")
-			if len(parts) > 1 {
-				ip := strings.TrimSpace(parts[1])
-				return InfoIP{
-					IP:   ip,
-					Port: config.GlobalConfig.Console.OuterNetPort,
-				}, nil
-			}
-		}
+	if config.GlobalConfig.Console.Port == "" {
+		config.GlobalConfig.Console.Port = "8080"
 	}
-	return InfoIP{}, fmt.Errorf("no outer net IP found")
+	if !utils.CheckPort(config.GlobalConfig.Console.Port) {
+		return InfoIP{}, fmt.Errorf("port %s is not available", config.GlobalConfig.Console.Port)
+	}
+	response.Port = config.GlobalConfig.Console.Port
+	return response, nil
 }

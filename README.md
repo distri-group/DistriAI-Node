@@ -44,9 +44,10 @@ base:
 console:
   # Directory provided for training models. default: /data/distri
   workDirectory:
-  outerNetPort: <your_outer_net_port>
+  # If using a proxy, please specify the public IP address. If not using a proxy, you can ignore this.
+  outerNetIP:
   # The port on which the console listens. default: 8080
-  innerNetPort:
+  port:
 EOF
 ```
 

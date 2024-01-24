@@ -10,7 +10,6 @@ import (
 	"DistriAI-Node/machine_info/disk"
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/pattern"
-	"DistriAI-Node/utils"
 	logs "DistriAI-Node/utils/log_utils"
 	"encoding/json"
 	"fmt"
@@ -96,13 +95,6 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 		diskInfo, err := disk.GetDiskInfo()
 		if err != nil {
 			return nil, nil, nil, err
-		}
-
-		if config.GlobalConfig.Console.Port != "" {
-			config.GlobalConfig.Console.Port = "8080"
-		}
-		if !utils.CheckPort(config.GlobalConfig.Console.Port) {
-			return nil, nil, nil, fmt.Errorf("port %s is not available", config.GlobalConfig.Console.Port)
 		}
 
 		isGPU := false
