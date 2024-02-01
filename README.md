@@ -18,12 +18,18 @@ Please ensure that the following software packages are installed before use.
 - curl
 - speedtest-cli
 - docker
+- nginx
+
+***During the DistriAI-node program execution, all Docker containers will be stopped and the nginx configuration file will be reset. If necessary, please make a backup in advance.***
 
 Additional software packages required for GPU devices.
 - nvidia-container-toolkit
 - nvidia-docker2
 
 ## Instructions for use
+
+***Please make sure to switch to the root account before starting.***
+
 1. Compile binary executable file.
 
 ```
@@ -46,10 +52,14 @@ console:
   workDirectory:
   # If using a proxy, please specify the public IP address. If not using a proxy, you can ignore this.
   outerNetIP:
-  # If not filled, the value of the 'innerNetPort' field will be used to fill this.
+  # If not filled, the value of the 'nginxPost' field will be used to fill this.
   outerNetPort:
+  # The port on which the nginx listens. default: 80
+  nginxPost:
   # The port on which the console listens. default: 8080
-  innerNetPort:
+  consolePost:
+  # The port on which the Local server listens. default: 8088
+  serverPost:
 EOF
 ```
 

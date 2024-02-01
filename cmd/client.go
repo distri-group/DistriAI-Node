@@ -2,13 +2,21 @@ package cmd
 
 import (
 	"DistriAI-Node/chain/subscribe"
+	"DistriAI-Node/config"
 	"DistriAI-Node/core_task"
 	"DistriAI-Node/docker"
+	"DistriAI-Node/nginx"
+	"DistriAI-Node/pattern"
+	"DistriAI-Node/server"
+	"DistriAI-Node/utils"
+	dbutils "DistriAI-Node/utils/db_utils"
 	logs "DistriAI-Node/utils/log_utils"
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/urfave/cli"
 )
 
@@ -47,6 +55,16 @@ var ClientCommand = cli.Command{
 					}
 				}
 
+				if err = nginx.StartNginx(
+					config.GlobalConfig.Console.NginxPort,
+					config.GlobalConfig.Console.ConsolePost,
+					config.GlobalConfig.Console.ServerPost); err != nil {
+					logs.Error(err.Error())
+					return nil
+				}
+
+				go server.StartServer(config.GlobalConfig.Console.ServerPost)
+
 				subscribeBlocks := subscribe.NewSubscribeWrapper(chainInfo)
 
 				for {
@@ -57,8 +75,15 @@ var ClientCommand = cli.Command{
 					logs.Normal("=============== End subscription")
 					if err != nil {
 						logs.Error(err.Error())
-						time.Sleep(3 * time.Minute)
 						logs.Normal("Restart subscription")
+						subscribeBlocks.Conn.WsClient.Close()
+						subscribeBlocks.Conn.WsClient = nil
+						time.Sleep(3 * time.Minute)
+						subscribeBlocks.Conn.WsClient, err = ws.Connect(context.Background(), pattern.WsRPC)
+						if err != nil {
+							logs.Error(err.Error())
+							continue
+						}
 						continue
 					}
 
@@ -79,7 +104,24 @@ var ClientCommand = cli.Command{
 					if hwInfo.GPUInfo.Number > 0 {
 						isGPU = true
 					}
-					containerID, err := docker.RunWorkspaceContainer(isGPU)
+
+					mlToken, err := utils.GenerateRandomString(16)
+					if err != nil {
+						logs.Error(err.Error())
+						return nil
+					}
+
+					db, err := dbutils.NewDB()
+					if err != nil {
+						logs.Error(err.Error())
+						return nil
+					}
+					db.Update([]byte("buyer"), []byte(order.Buyer.String()))
+					db.Update([]byte("token"), []byte(mlToken))
+					db.Close()
+					logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", order.Buyer, mlToken))
+
+					containerID, err := docker.RunWorkspaceContainer(isGPU, mlToken)
 					if err != nil {
 						logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
 						return nil
@@ -119,8 +161,17 @@ var ClientCommand = cli.Command{
 				hash, err := distriWrapper.RemoveMachine(*hwInfo)
 				if err != nil {
 					logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
-					return nil
 				}
+
+				db, err := dbutils.NewDB()
+				if err != nil {
+					logs.Error(err.Error())
+				}
+				db.Delete([]byte("buyer"))
+				db.Delete([]byte("token"))
+				db.Close()
+
+				nginx.StopNginx()
 				return nil
 			},
 		},

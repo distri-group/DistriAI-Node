@@ -17,7 +17,9 @@ type Config struct {
 		WorkDirectory string `yaml:"workDirectory"`
 		OuterNetIP    string `yaml:"outerNetIP"`
 		OuterNetPort  string `yaml:"outerNetPort"`
-		Port          string `yaml:"innerNetPort"`
+		NginxPort     string `yaml:"nginxPost"`
+		ConsolePost   string `yaml:"consolePost"`
+		ServerPost    string `yaml:"serverPost"`
 	} `yaml:"console"`
 }
 
@@ -31,6 +33,19 @@ func InitializeConfig() {
 	err = yaml.Unmarshal([]byte(data), &GlobalConfig)
 	if err != nil {
 		logs.Error(fmt.Sprintf("Error reading config file: %v", err))
+	}
+
+	if GlobalConfig.Console.ServerPost == "" {
+		GlobalConfig.Console.ServerPost = "8088"
+	}
+	if GlobalConfig.Console.ConsolePost == "" {
+		GlobalConfig.Console.ConsolePost = "8080"
+	}
+	if GlobalConfig.Console.NginxPort == "" {
+		GlobalConfig.Console.NginxPort = "80"
+	}
+	if GlobalConfig.Console.OuterNetPort == "" {
+		GlobalConfig.Console.OuterNetPort = GlobalConfig.Console.NginxPort
 	}
 }
 

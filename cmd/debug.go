@@ -12,7 +12,10 @@ import (
 	"DistriAI-Node/chain/distri"
 	"DistriAI-Node/config"
 	"DistriAI-Node/machine_info/machine_uuid"
+	"DistriAI-Node/nginx"
 	"DistriAI-Node/pattern"
+	dbutils "DistriAI-Node/utils/db_utils"
+	logs "DistriAI-Node/utils/log_utils"
 	"encoding/json"
 
 	"github.com/gagliardetto/solana-go"
@@ -106,7 +109,7 @@ var DebugCommand = cli.Command{
 
 		var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-		metadata := "{\"formData\":{\"taskName\":\"test\",\"duration\":1},\"machinePublicKey\":\"Go7DjYCFcKXZ1AUdWW3wq9yqQCMBJDL4Vsvu2qEdcyAv\"}"
+		metadata := "{\"formData\":{\"taskName\":\"Computing Task - 11\",\"duration\":1},\"MachineInfo\":{},\"machinePublicKey\":\"Go7DjYCFcKXZ1AUdWW3wq9yqQCMBJDL4Vsvu2qEdcyAv\"}"
 
 		err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
 		if err != nil {
@@ -115,65 +118,77 @@ var DebugCommand = cli.Command{
 
 		orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
 
-		chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("FNbGf9XAmxFTEovp9QVRGj4d6TDufwBsKHzaHPkjQy64")
+		chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("4yFeJXuPfCaMw3aCUhvYJvZYCEm4v8ntmM3ixKEPMtcE")
+
+		buyer := solana.MustPublicKeyFromBase58("AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF")
 
 		distriWrapper := distri.NewDistriWrapper(chainInfo)
-		_, err = distriWrapper.OrderCompleted(orderPlacedMetadata, false)
+		_, err = distriWrapper.OrderFailed(buyer, orderPlacedMetadata)
 		if err != nil {
-			return err
+			logs.Error(err.Error())
 		}
 
+		db, err := dbutils.NewDB()
+		if err != nil {
+			logs.Error(err.Error())
+		}
+		db.Delete([]byte("buyer"))
+		db.Delete([]byte("token"))
+		db.Close()
+
+		nginx.StopNginx()
+
 		/* Dedug : ml-workspace */
-		// ctx, cancel := context.WithCancel(context.Background())
-		// defer cancel()
+		// mlToken, err := utils.GenerateRandomString(16)
+		// if err != nil {
+		// 	logs.Error(err.Error())
+		// 	return nil
+		// }
 
-		// cli, err := client.NewClientWithOpts(client.FromEnv)
+		// db, err := dbutils.NewDB()
+		// if err != nil {
+		// 	logs.Error(err.Error())
+		// 	return nil
+		// }
+		// db.Update([]byte("buyer"), []byte("ExCX1FnGPjYAbXREqACWp7wSWe2jFXon6pJXTKTxsn4k"))
+		// db.Update([]byte("token"), []byte(mlToken))
+		// db.Close()
+
+		// config.GlobalConfig.Console.WorkDirectory = "/data/debug"
+		// _, err = docker.RunWorkspaceContainer(true, mlToken)
+		// if err != nil {
+		// 	logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
+		// 	return nil
+		// }
+
+		/* Dedug : nginx */
+		// err = nginx.StartNginx(config.GlobalConfig.Console.NginxPort,
+		// 	config.GlobalConfig.Console.ConsolePost,
+		// 	config.GlobalConfig.Console.ServerPost)
+		// if err != nil {
+		// 	logs.Error(fmt.Sprintln("StartNginx error: ", err))
+		// 	return nil
+		// }
+
+		// if err := server.StartServer(config.GlobalConfig.Console.ServerPost); err != nil {
+		// 	logs.Error(err.Error())
+		// 	return nil
+		// }
+
+		/* Dedug : solana Sign */
+		// private := solana.MustPrivateKeyFromBase58("3wXVb6mVr5UHsetWYZQkGW3er86M3hXXgjw4LFcxAugRg9EQcZHVcW2hWeuTmXahgyQgdRZfuY2XRPaKLm4v2ywz")
+		// public := private.PublicKey()
+		// logs.Normal(fmt.Sprintf("publicKey: %v", public))
+		// msg := "workspace/token/" + public.String()
+		// signature, err := private.Sign([]byte(msg))
 		// if err != nil {
 		// 	return err
 		// }
-		// cli.NegotiateAPIVersion(ctx)
-
-		// containerName := "debug-workspace"
-		// containerConfig := &container.Config{
-		// 	Image: pattern.ML_WORKSPACE_GPU_NAME,
-		// 	Tty:   true,
-		// }
-
-		// portBind := nat.PortMap{
-		// 	nat.Port("8080/tcp"): []nat.PortBinding{
-		// 		{
-		// 			HostIP:   "0.0.0.0",
-		// 			HostPort: "8080",
-		// 		},
-		// 	}}
-
-		// hostConfig := &container.HostConfig{
-		// 	PortBindings: portBind,
-		// 	Binds: []string{
-		// 		fmt.Sprintf("%s:/workspace", "/data/debug"),
-		// 		"myvolume:/data",
-		// 	},
-		// 	RestartPolicy: container.RestartPolicy{
-		// 		Name: "always",
-		// 	},
-		// 	ShmSize: 512 * 1024 * 1024, // 512MB
-		// 	// GPU configuration
-		// 	Runtime: "nvidia",
-		// 	Resources: container.Resources{
-		// 		DeviceRequests: []container.DeviceRequest{
-		// 			{
-		// 				Count:        -1,
-		// 				Capabilities: [][]string{{"gpu"}},
-		// 			},
-		// 		},
-		// 	},
-		// }
-
-		// _, err = docker_utils.RunContainer(ctx, cli, containerName,
-		// 	containerConfig,
-		// 	hostConfig)
-		// if err != nil {
-		// 	return err
+		// logs.Normal(fmt.Sprintf("signature: %v", signature.String()))
+		// if public.Verify([]byte(msg), signature) {
+		// 	logs.Normal("Verify success")
+		// } else {
+		// 	logs.Error("Verify failed")
 		// }
 		return nil
 	},

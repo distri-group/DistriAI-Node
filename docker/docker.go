@@ -80,7 +80,7 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 	return oldScore, nil
 }
 
-func RunWorkspaceContainer(isGPU bool) (string, error) {
+func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -94,6 +94,9 @@ func RunWorkspaceContainer(isGPU bool) (string, error) {
 	containerName := pattern.ML_WORKSPACE_CONTAINER
 	containerConfig := &container.Config{
 		Image: pattern.ML_WORKSPACE_NAME,
+		Env: []string{
+			fmt.Sprintf("AUTHENTICATE_VIA_JUPYTER=%s", mlToken),
+		},
 		Tty:   true,
 	}
 
@@ -101,7 +104,7 @@ func RunWorkspaceContainer(isGPU bool) (string, error) {
 		nat.Port("8080/tcp"): []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
-				HostPort: config.GlobalConfig.Console.Port,
+				HostPort: config.GlobalConfig.Console.ConsolePost,
 			},
 		}}
 

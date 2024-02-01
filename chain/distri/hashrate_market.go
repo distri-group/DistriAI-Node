@@ -251,6 +251,8 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 		return "", fmt.Errorf("error signing transaction: %v", err)
 	}
 
+	spew.Dump(tx)
+	
 	sig, err := sendandconfirm.SendAndConfirmTransaction(
 		context.TODO(),
 		chain.Conn.RpcClient,

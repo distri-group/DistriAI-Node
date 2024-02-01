@@ -4,6 +4,7 @@ import (
 	"DistriAI-Node/pattern"
 	logs "DistriAI-Node/utils/log_utils"
 	"archive/zip"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -175,4 +176,13 @@ func CheckPort(port string) bool {
 	}
 	listener.Close()
 	return true
+}
+
+func GenerateRandomString(length int) (string, error) {
+	bytes := make([]byte, length/2)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }
