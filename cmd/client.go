@@ -71,7 +71,7 @@ var ClientCommand = cli.Command{
 					time.Sleep(1 * time.Second)
 
 					logs.Normal("=============== Start subscription")
-					order, err := subscribeBlocks.SubscribeEvents(hwInfo)
+					order, err := subscribeBlocks.SubscribeEvents(hwInfo.MachineUUID)
 					logs.Normal("=============== End subscription")
 					if err != nil {
 						logs.Error(err.Error())

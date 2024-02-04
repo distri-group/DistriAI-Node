@@ -31,6 +31,7 @@ const (
 	OrderStatusTraining OrderStatus = iota
 	OrderStatusCompleted
 	OrderStatusFailed
+	OrderStatusRefunded
 )
 
 func (value OrderStatus) String() string {
@@ -41,6 +42,8 @@ func (value OrderStatus) String() string {
 		return "Completed"
 	case OrderStatusFailed:
 		return "Failed"
+	case OrderStatusRefunded:
+		return "Refunded"
 	default:
 		return ""
 	}

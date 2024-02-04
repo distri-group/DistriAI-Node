@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/pattern"
 	logs "DistriAI-Node/utils/log_utils"
 	"archive/zip"
@@ -14,6 +15,10 @@ import (
 	"strings"
 	"syscall"
 )
+
+func ByteUUIDToStrUUID(byteUUID pattern.MachineUUID) machine_uuid.MachineUUID {
+	return machine_uuid.MachineUUID(hex.EncodeToString(byteUUID[:]))
+}
 
 func ParseMachineUUID(uuidStr string) (pattern.MachineUUID, error) {
 	/* Linux */

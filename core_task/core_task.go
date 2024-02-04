@@ -121,8 +121,32 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 	return distri.NewDistriWrapper(chainInfo), &hwInfo, chainInfo, nil
 }
 
+// func CheckOrder(done chan bool, distri *distri.WrapperDistri, oldDuration time.Time) {
+// 	newOrder, err := distri.GetOrder()
+// 	if err != nil {
+// 		logs.Error(fmt.Sprintf("GetOrder Error: %v", err))
+// 		done <- false
+// 		return
+// 	}
 
-func CheckOrder(done chan bool, distri *distri.WrapperDistri, oldDuration time.Time) {
+// 	newDuration := time.Unix(newOrder.OrderTime, 0).Add(time.Hour * time.Duration(newOrder.Duration))
+
+// 	logs.Normal(fmt.Sprintf("CheckOrder newDuration: %v", newDuration))
+// 	logs.Normal(fmt.Sprintf("CheckOrder oldDuration: %v", oldDuration))
+
+// 	if newDuration.After(oldDuration) {
+// 		logs.Normal("Restart timer")
+// 		if !StartTimer(distri, newOrder) {
+// 			done <- false
+// 			return
+// 		}
+// 	}
+// 	done <- true
+// }
+
+var oldDuration time.Time
+
+func CheckOrder(done chan bool, distri *distri.WrapperDistri) {
 	newOrder, err := distri.GetOrder()
 	if err != nil {
 		logs.Error(fmt.Sprintf("GetOrder Error: %v", err))
@@ -137,23 +161,27 @@ func CheckOrder(done chan bool, distri *distri.WrapperDistri, oldDuration time.T
 
 	if newDuration.After(oldDuration) {
 		logs.Normal("Restart timer")
-		if !StartTimer(distri, newOrder) {
-			done <- false
-			return
-		}
+		oldDuration = newDuration
+		done <- false
 	}
 	done <- true
 }
 
 func StartTimer(distri *distri.WrapperDistri, order distri_ai.Order) bool {
-	done := make(chan bool)
 
+	done := make(chan bool)
 	duration := time.Unix(order.OrderTime, 0).Add(time.Hour * time.Duration(order.Duration))
 	logs.Normal(fmt.Sprintf("Order OrderTime: %v", time.Unix(order.OrderTime, 0)))
 	logs.Normal(fmt.Sprintf("Order duration: %v", time.Hour*time.Duration(order.Duration)))
 	logs.Normal(fmt.Sprintf("Order end time: %v", duration))
-	time.AfterFunc(time.Until(duration), func() {
-		CheckOrder(done, distri, duration)
+
+	oldDuration = duration
+	timer := time.AfterFunc(time.Until(oldDuration), func() {
+		CheckOrder(done, distri)
 	})
-	return <-done
+	isDone := <-done
+	if !isDone {
+		timer.Reset(time.Until(oldDuration))
+	}
+	return isDone
 }

@@ -3,7 +3,7 @@ package subscribe
 import (
 	"DistriAI-Node/chain"
 	"DistriAI-Node/chain/distri/distri_ai"
-	"DistriAI-Node/machine_info"
+	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/utils"
 	logs "DistriAI-Node/utils/log_utils"
 	"fmt"
@@ -17,7 +17,7 @@ type WrapperSubscribe struct {
 	*chain.InfoChain
 }
 
-func (chain *WrapperSubscribe) SubscribeEvents(hardwareInfo *machine_info.MachineInfo) (distri_ai.Order, error) {
+func (chain *WrapperSubscribe) SubscribeEvents(MachineUUID machine_uuid.MachineUUID) (distri_ai.Order, error) {
 
 	var order distri_ai.Order
 
@@ -47,7 +47,7 @@ func (chain *WrapperSubscribe) SubscribeEvents(hardwareInfo *machine_info.Machin
 			logs.Warning(fmt.Sprintf("cannot parse distri_ai.Order: %v", err))
 			continue
 		} else {
-			uuid, err := utils.ParseMachineUUID(string(hardwareInfo.MachineUUID))
+			uuid, err := utils.ParseMachineUUID(string(MachineUUID))
 			if err != nil {
 				return order, fmt.Errorf("error parsing uuid: %v", err)
 			}

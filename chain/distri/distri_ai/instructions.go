@@ -36,9 +36,13 @@ var (
 
 	Instruction_CancelOffer = ag_binary.TypeID([8]byte{92, 203, 223, 40, 92, 89, 53, 119})
 
+	Instruction_SubmitTask = ag_binary.TypeID([8]byte{148, 183, 26, 116, 107, 213, 118, 213})
+
 	Instruction_PlaceOrder = ag_binary.TypeID([8]byte{51, 194, 155, 175, 109, 130, 96, 106})
 
 	Instruction_RenewOrder = ag_binary.TypeID([8]byte{216, 180, 12, 76, 71, 44, 165, 151})
+
+	Instruction_RefundOrder = ag_binary.TypeID([8]byte{164, 168, 47, 144, 154, 1, 241, 255})
 
 	Instruction_OrderCompleted = ag_binary.TypeID([8]byte{60, 28, 38, 17, 211, 99, 139, 226})
 
@@ -58,10 +62,14 @@ func InstructionIDToName(id ag_binary.TypeID) string {
 		return "MakeOffer"
 	case Instruction_CancelOffer:
 		return "CancelOffer"
+	case Instruction_SubmitTask:
+		return "SubmitTask"
 	case Instruction_PlaceOrder:
 		return "PlaceOrder"
 	case Instruction_RenewOrder:
 		return "RenewOrder"
+	case Instruction_RefundOrder:
+		return "RefundOrder"
 	case Instruction_OrderCompleted:
 		return "OrderCompleted"
 	case Instruction_OrderFailed:
@@ -101,10 +109,16 @@ var InstructionImplDef = ag_binary.NewVariantDefinition(
 			"cancel_offer", (*CancelOffer)(nil),
 		},
 		{
+			"submit_task", (*SubmitTask)(nil),
+		},
+		{
 			"place_order", (*PlaceOrder)(nil),
 		},
 		{
 			"renew_order", (*RenewOrder)(nil),
+		},
+		{
+			"refund_order", (*RefundOrder)(nil),
 		},
 		{
 			"order_completed", (*OrderCompleted)(nil),

@@ -109,7 +109,7 @@ var DebugCommand = cli.Command{
 
 		var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-		metadata := "{\"formData\":{\"taskName\":\"Computing Task - 11\",\"duration\":1},\"MachineInfo\":{},\"machinePublicKey\":\"Go7DjYCFcKXZ1AUdWW3wq9yqQCMBJDL4Vsvu2qEdcyAv\"}"
+		metadata := "{\"formData\":{\"taskName\":\"Computing Task - 29\",\"duration\":1},\"MachineInfo\":{\"Provider\":\"AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF\",\"Region\":\"Hong Kong\",\"GPU\":\"1xNVIDIA GeForce GTX 1080 Ti\",\"CPU\":\"11th Gen Intel(R) Core(TM) i5-11400 @ 2.60GHz\",\"TFLOPS\":11.34,\"RAM\":\"15GB\",\"AvailDiskStorage\":100,\"Reliability\":\"90%\",\"CPS\":\"77.84\",\"Speed\":{\"Upload\":\"72.70 Mbit/s\",\"Download\":\"35.66 Mbit/s\"}},\"machinePublicKey\":\"Go7DjYCFcKXZ1AUdWW3wq9yqQCMBJDL4Vsvu2qEdcyAv\"}"
 
 		err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
 		if err != nil {
@@ -118,9 +118,9 @@ var DebugCommand = cli.Command{
 
 		orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
 
-		chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("4yFeJXuPfCaMw3aCUhvYJvZYCEm4v8ntmM3ixKEPMtcE")
+		chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("JAcN5YuaiBGzyRz1TCh3EvAiDAPYwvXKCoW4bNWCmobo")
 
-		buyer := solana.MustPublicKeyFromBase58("AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF")
+		buyer := solana.MustPublicKeyFromBase58("ExCX1FnGPjYAbXREqACWp7wSWe2jFXon6pJXTKTxsn4k")
 
 		distriWrapper := distri.NewDistriWrapper(chainInfo)
 		_, err = distriWrapper.OrderFailed(buyer, orderPlacedMetadata)

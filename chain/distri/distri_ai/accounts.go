@@ -150,16 +150,17 @@ func (obj *Machine) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error)
 }
 
 type Order struct {
-	OrderId   [16]uint8
-	Buyer     ag_solanago.PublicKey
-	Seller    ag_solanago.PublicKey
-	MachineId [16]uint8
-	Price     uint64
-	Duration  uint32
-	Total     uint64
-	Metadata  string
-	Status    OrderStatus
-	OrderTime int64
+	OrderId    [16]uint8
+	Buyer      ag_solanago.PublicKey
+	Seller     ag_solanago.PublicKey
+	MachineId  [16]uint8
+	Price      uint64
+	Duration   uint32
+	Total      uint64
+	Metadata   string
+	Status     OrderStatus
+	OrderTime  int64
+	RefundTime int64
 }
 
 var OrderDiscriminator = [8]byte{134, 173, 223, 185, 77, 86, 28, 51}
@@ -217,6 +218,11 @@ func (obj Order) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
 	}
 	// Serialize `OrderTime` param:
 	err = encoder.Encode(obj.OrderTime)
+	if err != nil {
+		return err
+	}
+	// Serialize `RefundTime` param:
+	err = encoder.Encode(obj.RefundTime)
 	if err != nil {
 		return err
 	}
@@ -284,6 +290,236 @@ func (obj *Order) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
 	}
 	// Deserialize `OrderTime`:
 	err = decoder.Decode(&obj.OrderTime)
+	if err != nil {
+		return err
+	}
+	// Deserialize `RefundTime`:
+	err = decoder.Decode(&obj.RefundTime)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type Reward struct {
+	Period     uint32
+	Pool       uint64
+	MachineNum uint32
+}
+
+var RewardDiscriminator = [8]byte{174, 129, 42, 212, 190, 18, 45, 34}
+
+func (obj Reward) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
+	// Write account discriminator:
+	err = encoder.WriteBytes(RewardDiscriminator[:], false)
+	if err != nil {
+		return err
+	}
+	// Serialize `Period` param:
+	err = encoder.Encode(obj.Period)
+	if err != nil {
+		return err
+	}
+	// Serialize `Pool` param:
+	err = encoder.Encode(obj.Pool)
+	if err != nil {
+		return err
+	}
+	// Serialize `MachineNum` param:
+	err = encoder.Encode(obj.MachineNum)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (obj *Reward) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
+	// Read and check account discriminator:
+	{
+		discriminator, err := decoder.ReadTypeID()
+		if err != nil {
+			return err
+		}
+		if !discriminator.Equal(RewardDiscriminator[:]) {
+			return fmt.Errorf(
+				"wrong discriminator: wanted %s, got %s",
+				"[174 129 42 212 190 18 45 34]",
+				fmt.Sprint(discriminator[:]))
+		}
+	}
+	// Deserialize `Period`:
+	err = decoder.Decode(&obj.Period)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Pool`:
+	err = decoder.Decode(&obj.Pool)
+	if err != nil {
+		return err
+	}
+	// Deserialize `MachineNum`:
+	err = decoder.Decode(&obj.MachineNum)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type RewardMachine struct {
+	Period    uint32
+	Owner     ag_solanago.PublicKey
+	MachineId [16]uint8
+	TaskNum   uint32
+	Claimed   bool
+}
+
+var RewardMachineDiscriminator = [8]byte{106, 87, 186, 254, 4, 139, 144, 74}
+
+func (obj RewardMachine) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
+	// Write account discriminator:
+	err = encoder.WriteBytes(RewardMachineDiscriminator[:], false)
+	if err != nil {
+		return err
+	}
+	// Serialize `Period` param:
+	err = encoder.Encode(obj.Period)
+	if err != nil {
+		return err
+	}
+	// Serialize `Owner` param:
+	err = encoder.Encode(obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `MachineId` param:
+	err = encoder.Encode(obj.MachineId)
+	if err != nil {
+		return err
+	}
+	// Serialize `TaskNum` param:
+	err = encoder.Encode(obj.TaskNum)
+	if err != nil {
+		return err
+	}
+	// Serialize `Claimed` param:
+	err = encoder.Encode(obj.Claimed)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (obj *RewardMachine) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
+	// Read and check account discriminator:
+	{
+		discriminator, err := decoder.ReadTypeID()
+		if err != nil {
+			return err
+		}
+		if !discriminator.Equal(RewardMachineDiscriminator[:]) {
+			return fmt.Errorf(
+				"wrong discriminator: wanted %s, got %s",
+				"[106 87 186 254 4 139 144 74]",
+				fmt.Sprint(discriminator[:]))
+		}
+	}
+	// Deserialize `Period`:
+	err = decoder.Decode(&obj.Period)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Owner`:
+	err = decoder.Decode(&obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `MachineId`:
+	err = decoder.Decode(&obj.MachineId)
+	if err != nil {
+		return err
+	}
+	// Deserialize `TaskNum`:
+	err = decoder.Decode(&obj.TaskNum)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Claimed`:
+	err = decoder.Decode(&obj.Claimed)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type Task struct {
+	Uuid      [16]uint8
+	Owner     ag_solanago.PublicKey
+	MachineId [16]uint8
+	Metadata  string
+}
+
+var TaskDiscriminator = [8]byte{79, 34, 229, 55, 88, 90, 55, 84}
+
+func (obj Task) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
+	// Write account discriminator:
+	err = encoder.WriteBytes(TaskDiscriminator[:], false)
+	if err != nil {
+		return err
+	}
+	// Serialize `Uuid` param:
+	err = encoder.Encode(obj.Uuid)
+	if err != nil {
+		return err
+	}
+	// Serialize `Owner` param:
+	err = encoder.Encode(obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `MachineId` param:
+	err = encoder.Encode(obj.MachineId)
+	if err != nil {
+		return err
+	}
+	// Serialize `Metadata` param:
+	err = encoder.Encode(obj.Metadata)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (obj *Task) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
+	// Read and check account discriminator:
+	{
+		discriminator, err := decoder.ReadTypeID()
+		if err != nil {
+			return err
+		}
+		if !discriminator.Equal(TaskDiscriminator[:]) {
+			return fmt.Errorf(
+				"wrong discriminator: wanted %s, got %s",
+				"[79 34 229 55 88 90 55 84]",
+				fmt.Sprint(discriminator[:]))
+		}
+	}
+	// Deserialize `Uuid`:
+	err = decoder.Decode(&obj.Uuid)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Owner`:
+	err = decoder.Decode(&obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `MachineId`:
+	err = decoder.Decode(&obj.MachineId)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Metadata`:
+	err = decoder.Decode(&obj.Metadata)
 	if err != nil {
 		return err
 	}
