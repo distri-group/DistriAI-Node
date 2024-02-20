@@ -3,7 +3,7 @@ package cmd
 import (
 	"DistriAI-Node/chain/subscribe"
 	"DistriAI-Node/config"
-	"DistriAI-Node/core_task"
+	"DistriAI-Node/core"
 	"DistriAI-Node/docker"
 	"DistriAI-Node/nginx"
 	"DistriAI-Node/pattern"
@@ -13,9 +13,11 @@ import (
 	logs "DistriAI-Node/utils/log_utils"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/urfave/cli"
 )
@@ -28,7 +30,7 @@ var ClientCommand = cli.Command{
 			Name:  "start",
 			Usage: "Upload hardware configuration and initiate listening events.",
 			Action: func(c *cli.Context) error {
-				distriWrapper, hwInfo, chainInfo, err := core_task.GetDistri(true)
+				distriWrapper, hwInfo, chainInfo, err := core.GetDistri(true)
 				if err != nil {
 					logs.Error(err.Error())
 					return nil
@@ -67,6 +69,8 @@ var ClientCommand = cli.Command{
 
 				subscribeBlocks := subscribe.NewSubscribeWrapper(chainInfo)
 
+				var oldOrder solana.PublicKey
+				var containerID string
 				for {
 					time.Sleep(1 * time.Second)
 
@@ -92,48 +96,61 @@ var ClientCommand = cli.Command{
 						continue
 					}
 
-					if order.Status.String() != "Training" {
-						logs.Error(fmt.Sprintf("Order status is not training, status: %v", order.Status.String()))
-						continue
-					}
-
-					logs.Result(fmt.Sprintf("Start order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
 					spew.Dump(order)
 
-					isGPU := false
-					if hwInfo.GPUInfo.Number > 0 {
-						isGPU = true
-					}
+					switch order.Status.String() {
+					case "Training":
+						if oldOrder.Equals(subscribeBlocks.ProgramDistriOrder) {
+							continue
+						}
+						logs.Result(fmt.Sprintf("Start order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
 
-					mlToken, err := utils.GenerateRandomString(16)
-					if err != nil {
-						logs.Error(err.Error())
-						return nil
-					}
+						isGPU := false
+						if hwInfo.GPUInfo.Number > 0 {
+							isGPU = true
+						}
 
-					db, err := dbutils.NewDB()
-					if err != nil {
-						logs.Error(err.Error())
-						return nil
-					}
-					db.Update([]byte("buyer"), []byte(order.Buyer.String()))
-					db.Update([]byte("token"), []byte(mlToken))
-					db.Close()
-					logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", order.Buyer, mlToken))
+						mlToken, err := utils.GenerateRandomString(16)
+						if err != nil {
+							logs.Error(err.Error())
+							return nil
+						}
 
-					containerID, err := docker.RunWorkspaceContainer(isGPU, mlToken)
-					if err != nil {
-						logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
-						return nil
-					}
-					if core_task.StartTimer(distriWrapper, order) {
-						err = core_task.OrderComplete(distriWrapper, order.Metadata, isGPU, containerID)
-					} else {
-						err = core_task.OrderFailed(distriWrapper, order.Metadata, order.Buyer, containerID)
-					}
-					if err != nil {
-						logs.Error(fmt.Sprintln("Order end error: ", err))
-						return nil
+						db, err := dbutils.NewDB()
+						if err != nil {
+							logs.Error(err.Error())
+							return nil
+						}
+						db.Update([]byte("buyer"), []byte(order.Buyer.String()))
+						db.Update([]byte("token"), []byte(mlToken))
+						db.Close()
+						logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", order.Buyer, mlToken))
+
+						containerID, err = docker.RunWorkspaceContainer(isGPU, mlToken)
+						if err != nil {
+							if strings.Contains(err.Error(), "container already exists") {
+								logs.Error(err.Error())
+								if err = core.OrderFailed(distriWrapper, order.Metadata, order.Buyer); err != nil {
+									logs.Error(err.Error())
+									return nil
+								}
+								continue
+							}
+							logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
+							return nil
+						}
+
+						oldOrder = subscribeBlocks.ProgramDistriOrder
+						core.StartTimer(distriWrapper, order, isGPU, containerID)
+					case "Refunded":
+						logs.Result(fmt.Sprintf("Refunded order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
+
+						if err = core.OrderRefunded(containerID); err != nil {
+							return err
+						}
+					default:
+						logs.Error(fmt.Sprintf("Order status is not training or refunded, status: %v", order.Status.String()))
+						continue
 					}
 				}
 			},
@@ -142,19 +159,9 @@ var ClientCommand = cli.Command{
 			Name:  "stop",
 			Usage: "Stop the client.",
 			Action: func(c *cli.Context) error {
-				distriWrapper, hwInfo, _, err := core_task.GetDistri(false)
+				distriWrapper, hwInfo, _, err := core.GetDistri(false)
 				if err != nil {
 					logs.Error(err.Error())
-					return nil
-				}
-
-				machine, err := distriWrapper.GetMachine()
-				if err != nil {
-					logs.Error(fmt.Sprintf("Error: %v", err))
-					return nil
-				}
-				if machine.Status.String() != "Idle" {
-					logs.Error(fmt.Sprintf("Machine is not idle, status: %v", machine.Status.String()))
 					return nil
 				}
 

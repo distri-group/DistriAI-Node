@@ -18,6 +18,26 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
+func ImageExistOrPull(imageName string) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return err
+	}
+	cli.NegotiateAPIVersion(ctx)
+
+	isCreated, _ := docker_utils.ImageExist(ctx, cli, imageName)
+	if !isCreated {
+		logs.Normal(fmt.Sprintf("Image %s does not exist", imageName))
+		if err := docker_utils.PullImage(imageName); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func RunScoreContainer(isGPU bool) (float64, error) {
 	oldScore := 0.0
 
@@ -97,7 +117,7 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 		Env: []string{
 			fmt.Sprintf("AUTHENTICATE_VIA_JUPYTER=%s", mlToken),
 		},
-		Tty:   true,
+		Tty: true,
 	}
 
 	portBind := nat.PortMap{
@@ -133,7 +153,12 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 		}
 	}
 
-	containerID, err := docker_utils.RunContainer(ctx, cli, containerName,
+	isExists, containerID := docker_utils.ContainerExists(ctx, cli, containerName)
+	if isExists {
+		return containerID, fmt.Errorf("%s container already exists", containerName)
+	}
+
+	containerID, err = docker_utils.RunContainer(ctx, cli, containerName,
 		containerConfig,
 		hostConfig)
 	if err != nil {

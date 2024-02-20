@@ -31,7 +31,24 @@ func ImageExist(ctx context.Context, cli *client.Client, imageName string) (bool
 	return false, ""
 }
 
-func PullImage(ctx context.Context, cli *client.Client, imageName string) error {
+func ContainerExists(ctx context.Context, cli *client.Client, containerName string) (bool, string) {
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
+	if err != nil {
+		return false, ""
+	}
+
+	for _, container := range containers {
+		for _, name := range container.Names {
+			if name == "/"+containerName {
+				return true, container.ID
+			}
+		}
+	}
+	logs.Normal(fmt.Sprintf("Container %s does not exist", containerName))
+	return false, ""
+}
+
+func PullImage(imageName string) error {
 	cmd := exec.Command("docker", "pull", imageName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -64,7 +81,7 @@ func RunContainer(ctx context.Context, cli *client.Client, containerName string,
 	imageName := config.Image
 	isCreated, _ := ImageExist(ctx, cli, imageName)
 	if !isCreated {
-		if err := PullImage(ctx, cli, imageName); err != nil {
+		if err := PullImage(imageName); err != nil {
 			return "", err
 		}
 	}
