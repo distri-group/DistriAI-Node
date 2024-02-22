@@ -72,7 +72,7 @@ var ClientCommand = cli.Command{
 				var oldOrder solana.PublicKey
 				var containerID string
 				for {
-					time.Sleep(1 * time.Second)
+					time.Sleep(500 * time.Millisecond)
 
 					logs.Normal("=============== Start subscription")
 					order, err := subscribeBlocks.SubscribeEvents(hwInfo.MachineUUID)
@@ -143,11 +143,15 @@ var ClientCommand = cli.Command{
 						oldOrder = subscribeBlocks.ProgramDistriOrder
 						core.StartTimer(distriWrapper, order, isGPU, containerID)
 					case "Refunded":
+						if containerID == "" {
+							continue
+						}
 						logs.Result(fmt.Sprintf("Refunded order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
 
 						if err = core.OrderRefunded(containerID); err != nil {
 							return err
 						}
+						containerID = ""
 					default:
 						logs.Error(fmt.Sprintf("Order status is not training or refunded, status: %v", order.Status.String()))
 						continue

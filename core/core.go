@@ -65,7 +65,6 @@ func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.Pub
 
 func OrderRefunded(containerID string) error {
 	logs.Normal("Order is refunded")
-
 	if err := docker.StopWorkspaceContainer(containerID); err != nil {
 		return err
 	}

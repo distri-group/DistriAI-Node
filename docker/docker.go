@@ -30,7 +30,6 @@ func ImageExistOrPull(imageName string) error {
 
 	isCreated, _ := docker_utils.ImageExist(ctx, cli, imageName)
 	if !isCreated {
-		logs.Normal(fmt.Sprintf("Image %s does not exist", imageName))
 		if err := docker_utils.PullImage(imageName); err != nil {
 			return err
 		}
