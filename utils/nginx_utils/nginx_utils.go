@@ -12,14 +12,14 @@ func GenNginxConfig(nginxPort, consolePort, serverPost string) error {
 
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		logs.Error(fmt.Sprintf("Error reading config file: %v", err))
+		logs.Error(fmt.Sprintf("Error reading nginx config file: %v", err))
 		return err
 	}
 
 	for _, file := range files {
 		err = os.Remove(dir + "/" + file.Name())
 		if err != nil {
-			logs.Error(fmt.Sprintf("Error reading config file: %v", err))
+			logs.Error(fmt.Sprintf("Error reading nginx config file: %v", err))
 			return err
 		}
 	}

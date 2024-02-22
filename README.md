@@ -23,7 +23,6 @@ Please ensure that the following software packages are installed before use.
 ***During the DistriAI-node program execution, all Docker containers will be stopped and the nginx configuration file will be reset. If necessary, please make a backup in advance.***
 
 Additional software packages required for GPU devices.
-- nvidia-container-toolkit
 - nvidia-docker2
 
 ## Instructions for use
