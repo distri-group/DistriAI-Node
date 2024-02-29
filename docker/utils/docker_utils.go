@@ -124,3 +124,36 @@ func DeleteImage(ctx context.Context, cli *client.Client, imageName string) erro
 	}
 	return nil
 }
+
+func GetDockerImageDirSize() (string, error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", fmt.Errorf("NewClientWithOpts: %v", err)
+	}
+	defer cli.Close()
+
+	info, err := cli.Info(context.Background())
+	if err != nil {
+		return "", fmt.Errorf("cli.Info: %v", err)
+	}
+
+	imageDir := fmt.Sprintf("%s/image", info.DockerRootDir)
+
+	size, err := GetDirSize(imageDir)
+	if err != nil {
+		return "", err
+	}
+
+	return size, nil
+}
+
+func GetDirSize(dirPath string) (string, error) {
+	cmd := exec.Command("du", "-sh", dirPath)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("du -sh %v: %v", dirPath, err)
+	}
+
+	sizeInfo := strings.Fields(string(output))[0]
+	return sizeInfo, nil
+}

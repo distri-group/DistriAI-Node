@@ -10,6 +10,7 @@ import (
 	"DistriAI-Node/machine_info/disk"
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/pattern"
+	"DistriAI-Node/utils"
 	logs "DistriAI-Node/utils/log_utils"
 	"encoding/json"
 	"fmt"
@@ -41,6 +42,7 @@ func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, co
 	if err != nil {
 		return err
 	}
+	distri.IsRunning = false
 	return nil
 }
 
@@ -60,6 +62,7 @@ func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.Pub
 	if err != nil {
 		return err
 	}
+	distri.IsRunning = false
 	return nil
 }
 
@@ -161,7 +164,7 @@ func CheckOrder(distri *distri.WrapperDistri, isGPU bool, containerID string) {
 	}
 }
 
-func StartTimer(distri *distri.WrapperDistri, order distri_ai.Order, isGPU bool, containerID string) {
+func StartOrderTimer(distri *distri.WrapperDistri, order distri_ai.Order, isGPU bool, containerID string) {
 
 	duration := time.Unix(order.OrderTime, 0).Add(time.Hour * time.Duration(order.Duration))
 	logs.Normal(fmt.Sprintf("Order OrderTime: %v", time.Unix(order.OrderTime, 0)))
@@ -172,4 +175,34 @@ func StartTimer(distri *distri.WrapperDistri, order distri_ai.Order, isGPU bool,
 	orderTimer = time.AfterFunc(time.Until(oldDuration), func() {
 		CheckOrder(distri, isGPU, containerID)
 	})
+}
+
+// temp
+func StartHeartbeatTask(distri *distri.WrapperDistri, machineID machine_uuid.MachineUUID) {
+	ticker := time.NewTicker(6 * time.Hour)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				taskID, err := utils.GenerateRandomString(16)
+				if err != nil {
+					logs.Error(err.Error())
+				}
+				taskUuid, err := utils.ParseTaskUUID(string(taskID))
+				if err != nil {
+					logs.Error(fmt.Sprintf("error parsing taskUuid: %v", err))
+				}
+
+				machineUuid, err := utils.ParseMachineUUID(string(machineID))
+				if err != nil {
+					logs.Error(fmt.Sprintf("error parsing machineUuid: %v", err))
+				}
+
+				hash, err := distri.SubmitTask(taskUuid, machineUuid, utils.CurrentPeriod(), pattern.TaskMetadata{})
+				if err != nil {
+					logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
+				}
+			}
+		}
+	}()
 }

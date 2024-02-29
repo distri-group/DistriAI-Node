@@ -36,6 +36,14 @@ var ClientCommand = cli.Command{
 					return nil
 				}
 
+				if err = nginx.StartNginx(
+					config.GlobalConfig.Console.NginxPort,
+					config.GlobalConfig.Console.ConsolePost,
+					config.GlobalConfig.Console.ServerPost); err != nil {
+					logs.Error(err.Error())
+					return nil
+				}
+
 				machine, err := distriWrapper.GetMachine()
 				if err != nil {
 					logs.Error(fmt.Sprintf("Error: %v", err))
@@ -57,22 +65,15 @@ var ClientCommand = cli.Command{
 					}
 				}
 
-				if err = nginx.StartNginx(
-					config.GlobalConfig.Console.NginxPort,
-					config.GlobalConfig.Console.ConsolePost,
-					config.GlobalConfig.Console.ServerPost); err != nil {
-					logs.Error(err.Error())
-					return nil
-				}
-
 				go server.StartServer(config.GlobalConfig.Console.ServerPost)
+
+				core.StartHeartbeatTask(distriWrapper, hwInfo.MachineUUID)
 
 				subscribeBlocks := subscribe.NewSubscribeWrapper(chainInfo)
 
 				var oldOrder solana.PublicKey
 				var containerID string
 				for {
-					time.Sleep(500 * time.Millisecond)
 
 					logs.Normal("=============== Start subscription")
 					order, err := subscribeBlocks.SubscribeEvents(hwInfo.MachineUUID)
@@ -82,7 +83,7 @@ var ClientCommand = cli.Command{
 						logs.Normal("Restart subscription")
 						subscribeBlocks.Conn.WsClient.Close()
 						subscribeBlocks.Conn.WsClient = nil
-						time.Sleep(3 * time.Minute)
+						time.Sleep(1 * time.Second)
 						subscribeBlocks.Conn.WsClient, err = ws.Connect(context.Background(), pattern.WsRPC)
 						if err != nil {
 							logs.Error(err.Error())
@@ -141,7 +142,8 @@ var ClientCommand = cli.Command{
 						}
 
 						oldOrder = subscribeBlocks.ProgramDistriOrder
-						core.StartTimer(distriWrapper, order, isGPU, containerID)
+						subscribeBlocks.IsRunning = true
+						core.StartOrderTimer(distriWrapper, order, isGPU, containerID)
 					case "Refunded":
 						if containerID == "" {
 							continue
@@ -149,7 +151,7 @@ var ClientCommand = cli.Command{
 						logs.Result(fmt.Sprintf("Refunded order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
 
 						if err = core.OrderRefunded(containerID); err != nil {
-							return err
+							return nil
 						}
 						containerID = ""
 					default:

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"DistriAI-Node/config"
 	"DistriAI-Node/middleware"
 	"DistriAI-Node/server/template"
 	dbutils "DistriAI-Node/utils/db_utils"
@@ -18,10 +19,7 @@ func StartServer(serverPost string) error {
 	r := gin.Default()
 	r.Use(middleware.Cors())
 	workspace := r.Group(template.WORKSPACE)
-	workspace.POST(template.TOKEN, getToken)
-
-	// order := r.Group(template.ORDER)
-	// order.POST(template.RT, getToken)
+	workspace.GET("/debugToken/:signature", getDebugToken)
 
 	err := r.Run("127.0.0.1:" + serverPost)
 	if err != nil {
@@ -31,14 +29,11 @@ func StartServer(serverPost string) error {
 	return nil
 }
 
-func getToken(c *gin.Context) {
-	logs.Normal("GetToken API")
+func getDebugToken(c *gin.Context) {
+	logs.Normal("GetDebugToken API")
 
-	var requestToken template.RequestToken
-	if err := c.ShouldBindJSON(&requestToken); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	signature := c.Param("signature")
+	logs.Normal(fmt.Sprintf("signature: %v", signature))
 
 	db, err := dbutils.NewDB()
 	if err != nil {
@@ -65,16 +60,21 @@ func getToken(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	signature, err := solana.SignatureFromBase58(requestToken.Signature)
 
+	out, err := solana.SignatureFromBase58(signature)
 	if err != nil {
 		logs.Error(fmt.Sprintf("SignatureFromBase58 error: %v", err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if publicKey.Verify([]byte("workspace/token/"+publicKeyStr), signature) {
-		c.JSON(http.StatusOK, gin.H{"token": string(token)})
+	if publicKey.Verify([]byte("workspace/token/"+publicKeyStr), out) {
+		workspaceURL := fmt.Sprintf("http://%v:%v?token=%v",
+			config.GlobalConfig.Console.OuterNetIP,
+			config.GlobalConfig.Console.OuterNetPort,
+			string(token))
+
+		c.Redirect(http.StatusFound, workspaceURL)
 	} else {
 		logs.Error("Verify failed")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Verify failed"})

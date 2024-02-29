@@ -22,6 +22,7 @@ import (
 type WrapperDistri struct {
 	*chain.InfoChain
 }
+
 // Register the given hardware information with a distributed system or blockchain
 func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %v", pattern.TX_HASHRATE_MARKET_REGISTER))
@@ -117,10 +118,7 @@ func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlace
 		return "", fmt.Errorf("error finding associated token address: %v", err)
 	}
 
-	seedVault := [][]byte{
-		[]byte(pattern.DISTRI_VAULT),
-		ecpc.Bytes(),
-	}
+	seedVault := utils.GenVault()
 	vault, _, err := solana.FindProgramAddress(
 		seedVault,
 		chain.ProgramDistriID,
@@ -204,10 +202,7 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 		return "", fmt.Errorf("error finding associated token address: %v", err)
 	}
 
-	seedVault := [][]byte{
-		[]byte(pattern.DISTRI_VAULT),
-		ecpc.Bytes(),
-	}
+	seedVault := utils.GenVault()
 	vault, _, err := solana.FindProgramAddress(
 		seedVault,
 		chain.ProgramDistriID,
@@ -252,7 +247,7 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 	}
 
 	spew.Dump(tx)
-	
+
 	sig, err := sendandconfirm.SendAndConfirmTransaction(
 		context.TODO(),
 		chain.Conn.RpcClient,
@@ -364,6 +359,92 @@ func (chain WrapperDistri) GetOrder() (distri_ai.Order, error) {
 	}
 
 	return data, nil
+}
+
+func (chain WrapperDistri) SubmitTask(
+	taskUuid pattern.TaskUUID,
+	machineUUID pattern.MachineUUID,
+	period uint32,
+	taskMetadata pattern.TaskMetadata) (string, error) {
+	logs.Normal(fmt.Sprintf("Extrinsic : %v", pattern.TX_HASHRATE_MARKET_SUBMIT_TASK))
+
+	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
+	if err != nil {
+		return "", fmt.Errorf("error getting recent blockhash: %v", err)
+	}
+
+	jsonData, err := json.Marshal(taskMetadata)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling the struct to JSON: %v", err)
+	}
+
+	programID := solana.MustPublicKeyFromBase58(pattern.PROGRAM_DISTRI_ID)
+	seedTask := utils.GenTask(chain.Wallet.Wallet.PublicKey(), taskUuid)
+	task, _, _ := solana.FindProgramAddress(
+		seedTask,
+		programID,
+	)
+	seedReward := utils.GenReward()
+	reward, _, _ := solana.FindProgramAddress(
+		seedReward,
+		programID,
+	)
+	seedRewardMachine := utils.GenRewardMachine(chain.Wallet.Wallet.PublicKey(), machineUUID)
+	rewardMachine, _, _ := solana.FindProgramAddress(
+		seedRewardMachine,
+		programID,
+	)
+
+	distri_ai.SetProgramID(chain.ProgramDistriID)
+	tx, err := solana.NewTransaction(
+		[]solana.Instruction{
+			distri_ai.NewSubmitTaskInstruction(
+				taskUuid,
+				utils.CurrentPeriod(),
+				string(jsonData),
+				chain.ProgramDistriMachine,
+				task,
+				reward,
+				rewardMachine,
+				chain.Wallet.Wallet.PublicKey(),
+				solana.SystemProgramID,
+			).Build(),
+		},
+		recent.Value.Blockhash,
+		solana.TransactionPayer(chain.Wallet.Wallet.PublicKey()),
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("error creating transaction: %v", err)
+	}
+
+	_, err = tx.Sign(
+		func(key solana.PublicKey) *solana.PrivateKey {
+			if chain.Wallet.Wallet.PublicKey().Equals(key) {
+				return &chain.Wallet.Wallet.PrivateKey
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("error signing transaction: %v", err)
+	}
+
+	spew.Dump(tx)
+
+	sig, err := sendandconfirm.SendAndConfirmTransaction(
+		context.TODO(),
+		chain.Conn.RpcClient,
+		chain.Conn.WsClient,
+		tx,
+	)
+	if err != nil {
+		return "", fmt.Errorf("error sending transaction: %v", err)
+	}
+
+	logs.Result(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_SUBMIT_TASK, sig.String()))
+
+	return sig.String(), nil
 }
 
 func NewDistriWrapper(info *chain.InfoChain) *WrapperDistri {

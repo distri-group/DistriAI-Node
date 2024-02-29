@@ -1,19 +1,23 @@
 package utils
 
 import (
+	docker_utils "DistriAI-Node/docker/utils"
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/pattern"
 	logs "DistriAI-Node/utils/log_utils"
 	"archive/zip"
 	"crypto/rand"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
+	"time"
 )
 
 func ByteUUIDToStrUUID(byteUUID pattern.MachineUUID) machine_uuid.MachineUUID {
@@ -31,6 +35,19 @@ func ParseMachineUUID(uuidStr string) (pattern.MachineUUID, error) {
 	copy(machineUUID[:], b[:16])
 
 	return machineUUID, nil
+}
+
+func ParseTaskUUID(uuidStr string) (pattern.TaskUUID, error) {
+	/* Linux */
+	var taskUUID pattern.TaskUUID
+
+	b, err := hex.DecodeString(uuidStr)
+	if err != nil {
+		panic(err)
+	}
+	copy(taskUUID[:], b[:16])
+
+	return taskUUID, nil
 }
 
 func Zip(src, dest string) error {
@@ -190,4 +207,40 @@ func GenerateRandomString(length int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func CompareSpaceWithDocker(sizeLimitGB int) (bool, error) {
+	dockerSizeStr, err := docker_utils.GetDockerImageDirSize()
+	if err != nil {
+		return false, err
+	}
+
+	sizeLimitBytes := int64(sizeLimitGB) * 1024 * 1024 * 1024
+
+	dockerSizeStr = strings.TrimSuffix(dockerSizeStr, "G")
+	dockerSize, err := strconv.ParseFloat(dockerSizeStr, 64)
+	if err != nil {
+		return false, err
+	}
+
+	if int64(dockerSize*1024*1024*1024) < sizeLimitBytes {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+const (
+	genesisTime    int64 = 1708992000
+	periodDuration int64 = 86400
+)
+
+func CurrentPeriod() uint32 {
+	return uint32((time.Now().Unix() - genesisTime) / periodDuration)
+}
+
+func PeriodBytes() []byte {
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, CurrentPeriod())
+	return bytes
 }

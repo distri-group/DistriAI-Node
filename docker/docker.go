@@ -4,7 +4,6 @@ import (
 	"DistriAI-Node/config"
 	docker_utils "DistriAI-Node/docker/utils"
 	"DistriAI-Node/pattern"
-	logs "DistriAI-Node/utils/log_utils"
 	"bufio"
 	"context"
 	"fmt"
@@ -167,7 +166,6 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 }
 
 func StopWorkspaceContainer(containerID string) error {
-	logs.Normal("Stop workspace container")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
