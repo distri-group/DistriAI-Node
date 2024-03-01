@@ -7,7 +7,8 @@ import (
 )
 
 func GenNginxConfig(nginxPort, consolePort, serverPost string) error {
-	logs.Normal(fmt.Sprintf("Start nginx config, nginxPort: %v, consolePort: %v, serverPost: %v", nginxPort, consolePort, serverPost))
+	logs.Normal(fmt.Sprintf("Start nginx. nginxPort: %v, consolePort: %v, serverPost: %v",
+		nginxPort, consolePort, serverPost))
 	dir := "/etc/nginx/sites-enabled"
 
 	files, err := os.ReadDir(dir)

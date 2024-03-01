@@ -32,7 +32,7 @@ Additional software packages required for GPU devices.
 1. Compile binary executable file.
 
 ```
-go build -o bin/DistriAI main.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/DistriAI main.go
 ```
 
 2. Write configuration file.

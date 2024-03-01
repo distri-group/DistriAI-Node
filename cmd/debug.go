@@ -8,11 +8,17 @@ import (
 	// "github.com/docker/docker/client"
 	// "github.com/docker/go-connections/nat"
 
-	docker_utils "DistriAI-Node/docker/utils"
+	"DistriAI-Node/chain"
+	"DistriAI-Node/chain/distri"
+	"DistriAI-Node/config"
+	"DistriAI-Node/machine_info/machine_uuid"
+	"DistriAI-Node/nginx"
+	"DistriAI-Node/pattern"
+	dbutils "DistriAI-Node/utils/db_utils"
 	logs "DistriAI-Node/utils/log_utils"
-	"context"
+	"encoding/json"
 
-	"github.com/docker/docker/client"
+	"github.com/gagliardetto/solana-go"
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -83,94 +89,58 @@ var DebugCommand = cli.Command{
 		// fmt.Println(string(decrypted)) // 输出: Hello, World!
 
 		/* Debug : Force Complete */
-		// machineUUID, err := machine_uuid.GetInfoMachineUUID()
-		// if err != nil {
-		// 	return err
-		// }
+		machineUUID, err := machine_uuid.GetInfoMachineUUID()
+		if err != nil {
+			return err
+		}
 
-		// key := config.GlobalConfig.Base.PrivateKey
+		key := config.GlobalConfig.Base.PrivateKey
 
-		// newConfig := config.NewConfig(
-		// 	key,
-		// 	pattern.RPC,
-		// 	pattern.WsRPC)
+		newConfig := config.NewConfig(
+			key,
+			pattern.RPC,
+			pattern.WsRPC)
 
-		// var chainInfo *chain.InfoChain
-		// chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
-		// if err != nil {
-		// 	return err
-		// }
+		var chainInfo *chain.InfoChain
+		chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
+		if err != nil {
+			return err
+		}
 
-		// var orderPlacedMetadata pattern.OrderPlacedMetadata
+		var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-		// metadata := "{\"formData\":{\"taskName\":\"Computing Task - 32\",\"duration\":1},\"MachineInfo\":{\"UUID\":\"0565268338504c89ba51231d75ab4735\",\"Provider\":\"AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF\",\"Region\":\"China\",\"GPU\":\"1xNVIDIA GeForce GTX 1080 Ti\",\"CPU\":\"11th Gen Intel(R) Core(TM) i5-11400 @ 2.60GHz\",\"TFLOPS\":0,\"RAM\":\"15GB\",\"AvailDiskStorage\":100,\"Reliability\":\"--\",\"CPS\":\"78.97\",\"Speed\":{\"Upload\":\"76.00 Mbit/s\",\"Download\":\"23.64 Mbit/s\"}},\"machinePublicKey\":\"Go7DjYCFcKXZ1AUdWW3wq9yqQCMBJDL4Vsvu2qEdcyAv\"}"
+		metadata := "{\"formData\":{\"taskName\":\"Computing Task - 2\",\"duration\":1},\"MachineInfo\":{\"UUID\":\"0565268338504c89ba51231d75ab4735\",\"Provider\":\"AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF\",\"Region\":\"China\",\"GPU\":\"1xNVIDIA GeForce GTX 1080 Ti\",\"CPU\":\"11th Gen Intel(R) Core(TM) i5-11400 @ 2.60GHz\",\"TFLOPS\":0,\"RAM\":\"15GB\",\"AvailDiskStorage\":100,\"Reliability\":\"100%\",\"CPS\":\"79.27\",\"Speed\":{\"Upload\":\"74.82 Mbit/s\",\"Download\":\"50.16 Mbit/s\"}},\"machinePublicKey\":\"9ycKDBBa3b1AZWjT6yrePdaPCypFsSSyQtsMuezDb6vv\"}"
 
-		// err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
-		// if err != nil {
-		// 	return err
-		// }
+		err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
+		if err != nil {
+			return err
+		}
 
-		// orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
+		orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
 
-		// chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("AymhSXBLEAF61LXNnN874kDEP66zR19WVg6cf4LfYfbb")
+		chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("5EAjFP6DSX9zAmwNYbmpduYho8Y4sxiZmT5Qhmrz6uVT")
 
-		// buyer := solana.MustPublicKeyFromBase58("ExCX1FnGPjYAbXREqACWp7wSWe2jFXon6pJXTKTxsn4k")
+		buyer := solana.MustPublicKeyFromBase58("4F1fmZAmZ7bwQF3vz3Dv7VFJDyrkyjDyftsKHq9bTb1p")
 
-		// distriWrapper := distri.NewDistriWrapper(chainInfo)
-		// _, err = distriWrapper.OrderFailed(buyer, orderPlacedMetadata)
-		// if err != nil {
-		// 	logs.Error(err.Error())
-		// }
+		distriWrapper := distri.NewDistriWrapper(chainInfo)
+		_, err = distriWrapper.OrderFailed(buyer, orderPlacedMetadata)
+		if err != nil {
+			logs.Error(err.Error())
+		}
+		return nil
 
-		// db, err := dbutils.NewDB()
-		// if err != nil {
-		// 	logs.Error(err.Error())
-		// }
-		// db.Delete([]byte("buyer"))
-		// db.Delete([]byte("token"))
-		// db.Close()
+		db, err := dbutils.NewDB()
+		if err != nil {
+			logs.Error(err.Error())
+		}
+		db.Delete([]byte("buyer"))
+		db.Delete([]byte("token"))
+		db.Close()
 
-		// nginx.StopNginx()
+		nginx.StopNginx()
 
-		/* Dedug : ml-workspace */
-		// mlToken, err := utils.GenerateRandomString(16)
-		// if err != nil {
-		// 	logs.Error(err.Error())
-		// 	return nil
-		// }
-
-		// db, err := dbutils.NewDB()
-		// if err != nil {
-		// 	logs.Error(err.Error())
-		// 	return nil
-		// }
-		// db.Update([]byte("buyer"), []byte("ExCX1FnGPjYAbXREqACWp7wSWe2jFXon6pJXTKTxsn4k"))
-		// db.Update([]byte("token"), []byte(mlToken))
-		// db.Close()
-
-		// config.GlobalConfig.Console.WorkDirectory = "/data/debug"
-		// _, err = docker.RunWorkspaceContainer(true, mlToken)
-		// if err != nil {
-		// 	logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
-		// 	return nil
-		// }
-
-		/* Dedug : nginx */
-		// err = nginx.StartNginx(config.GlobalConfig.Console.NginxPort,
-		// 	config.GlobalConfig.Console.ConsolePost,
-		// 	config.GlobalConfig.Console.ServerPost)
-		// if err != nil {
-		// 	logs.Error(fmt.Sprintln("StartNginx error: ", err))
-		// 	return nil
-		// }
-
-		// if err := server.StartServer(config.GlobalConfig.Console.ServerPost); err != nil {
-		// 	logs.Error(err.Error())
-		// 	return nil
-		// }
-
-		/* Dedug : solana Sign */
-		// private := solana.MustPrivateKeyFromBase58("3wXVb6mVr5UHsetWYZQkGW3er86M3hXXgjw4LFcxAugRg9EQcZHVcW2hWeuTmXahgyQgdRZfuY2XRPaKLm4v2ywz")
+		/* Debug : solana Sign */
+		// private := solana.MustPrivateKeyFromBase58("2hpaRRjxuzhiHJ6ggimgGHi8jCMgG3MRXTUAGm7XNrztXpzKvJJ4fqAfgzb4YNnT9LDvYMfh4GzFh5NBojUcCXaB")
 		// public := private.PublicKey()
 		// logs.Normal(fmt.Sprintf("publicKey: %v", public))
 		// msg := "workspace/token/" + public.String()
@@ -185,17 +155,100 @@ var DebugCommand = cli.Command{
 		// 	logs.Error("Verify failed")
 		// }
 
-		/* Debug : docker container */
-		ctx, cancel := context.WithCancel(context.Background())
-		cli, _ := client.NewClientWithOpts(client.FromEnv)
-		defer cancel()
+		/* Debug : docker space */
+		// sizeLimitGB := 10
 
-		if is, id := docker_utils.ContainerExists(ctx, cli, "debug-workspace-ggh"); is {
-			logs.Normal("Container exists")
-			logs.Normal(id)
-		} else {
-			logs.Normal("Container does not exist")
-		}
+		// result, err := utils.CompareSpaceWithDocker(sizeLimitGB)
+		// if err != nil {
+		// 	logs.Error(fmt.Sprintf("比较空间大小时发生错误: %v\n", err))
+		// 	return nil
+		// }
+
+		// if result {
+		// 	logs.Normal("Docker 镜像目录的可用空间充足")
+		// } else {
+		// 	logs.Normal("Docker 镜像目录的可用空间不足")
+		// }
+		// return nil
+
+		/* Debug : nginx ssl */
+		// if err := nginx.StartNginx(
+		// 	config.GlobalConfig.Console.NginxPort,
+		// 	config.GlobalConfig.Console.ConsolePost,
+		// 	config.GlobalConfig.Console.ServerPost); err != nil {
+		// 	logs.Error(err.Error())
+		// 	return nil
+		// }
+
+		// mlToken, err := utils.GenerateRandomString(16)
+		// if err != nil {
+		// 	logs.Error(err.Error())
+		// 	return nil
+		// }
+
+		// db, err := dbutils.NewDB()
+		// if err != nil {
+		// 	logs.Error(err.Error())
+		// 	return nil
+		// }
+		// db.Update([]byte("buyer"), []byte(public.String()))
+		// db.Update([]byte("token"), []byte(mlToken))
+		// db.Close()
+		// logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", public, mlToken))
+
+		// containerID, err := docker.RunWorkspaceContainer(true, mlToken)
+		// if err != nil {
+		// 	return err
+		// }
+		// logs.Normal(fmt.Sprintf("containerID: %v", containerID))
+
+		// server.StartServer(config.GlobalConfig.Console.ServerPost)
+
+		/* Debug : SubmitTask */
+		// distriWrapper, hwInfo, _, err := core.GetDistri(false)
+		// if err != nil {
+		// 	logs.Error(err.Error())
+		// 	return nil
+		// }
+
+		// hash, err := distriWrapper.AddMachine(*hwInfo)
+		// if err != nil {
+		// 	logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
+		// 	return nil
+		// }
+
+		// core.StartHeartbeatTask(distriWrapper, hwInfo.MachineUUID)
+		// publicKey := solana.MustPublicKeyFromBase58("AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF")
+
+		// var machineUUID pattern.MachineUUID
+
+		// b, err := hex.DecodeString("0565268338504c89ba51231d75ab4735")
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// copy(machineUUID[:], b[:16])
+
+		// period := utils.PeriodBytes()
+		// pubKeyBytes := publicKey.Bytes()
+		// machineUUIDBytes := []byte(machineUUID[:])
+
+		// logs.Normal(fmt.Sprintf("period: %v", period))
+		// logs.Normal(fmt.Sprintf("pubKeyBytes: %v", pubKeyBytes))
+		// logs.Normal(fmt.Sprintf("machineUUIDBytes: %v", machineUUIDBytes))
+
+		// seedRewardMachine := [][]byte{
+		// 	[]byte("reward-machine"),
+		// 	period,
+		// 	pubKeyBytes,
+		// 	machineUUIDBytes,
+		// }
+		// programID := solana.MustPublicKeyFromBase58(pattern.PROGRAM_DISTRI_ID)
+
+		// rewardMachine, _, _ := solana.FindProgramAddress(
+		// 	seedRewardMachine,
+		// 	programID,
+		// )
+		// logs.Normal(fmt.Sprintf("rewardMachine: %v", rewardMachine))
 		return nil
 	},
 }

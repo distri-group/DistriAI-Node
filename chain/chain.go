@@ -6,8 +6,8 @@ import (
 	"DistriAI-Node/config"
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/pattern"
+	"DistriAI-Node/utils"
 	logs "DistriAI-Node/utils/log_utils"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/gagliardetto/solana-go"
@@ -19,6 +19,7 @@ type InfoChain struct {
 	ProgramDistriID      solana.PublicKey
 	ProgramDistriMachine solana.PublicKey
 	ProgramDistriOrder   solana.PublicKey
+	IsRunning            bool
 }
 
 func GetChainInfo(cfg *config.SolanaConfig, machineUUID machine_uuid.MachineUUID) (*InfoChain, error) {
@@ -34,18 +35,7 @@ func GetChainInfo(cfg *config.SolanaConfig, machineUUID machine_uuid.MachineUUID
 
 	programID := solana.MustPublicKeyFromBase58(pattern.PROGRAM_DISTRI_ID)
 
-	var byteUUID pattern.MachineUUID
-	b, err := hex.DecodeString(string(machineUUID))
-	if err != nil {
-		panic(err)
-	}
-	copy(byteUUID[:], b[:16])
-
-	seedMachine := [][]byte{
-		[]byte(pattern.DISTRI_SEED),
-		wallet.Wallet.PublicKey().Bytes(),
-		[]byte(byteUUID[:]),
-	}
+	seedMachine := utils.GenMachine(wallet.Wallet.PublicKey(), machineUUID)
 
 	machineAccount, _, err := solana.FindProgramAddress(
 		seedMachine,

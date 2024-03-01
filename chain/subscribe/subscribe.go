@@ -5,7 +5,6 @@ import (
 	"DistriAI-Node/chain/distri/distri_ai"
 	"DistriAI-Node/machine_info/machine_uuid"
 	"DistriAI-Node/utils"
-	logs "DistriAI-Node/utils/log_utils"
 	"fmt"
 
 	bin "github.com/gagliardetto/binary"
@@ -37,14 +36,10 @@ func (chain *WrapperSubscribe) SubscribeEvents(MachineUUID machine_uuid.MachineU
 		if err != nil {
 			return order, err
 		}
-
-		logs.Normal(fmt.Sprintf("programSubscribe: %v", got.Value.Pubkey))
-
 		borshDec := bin.NewBorshDecoder(got.Value.Account.Data.GetBinary())
 
 		err = order.UnmarshalWithDecoder(borshDec)
 		if err != nil {
-			logs.Warning(fmt.Sprintf("cannot parse distri_ai.Order: %v", err))
 			continue
 		} else {
 			uuid, err := utils.ParseMachineUUID(string(MachineUUID))
@@ -52,7 +47,9 @@ func (chain *WrapperSubscribe) SubscribeEvents(MachineUUID machine_uuid.MachineU
 				return order, fmt.Errorf("error parsing uuid: %v", err)
 			}
 			if order.Seller.Equals(chain.Wallet.Wallet.PublicKey()) && order.MachineId == uuid {
-				chain.ProgramDistriOrder = got.Value.Pubkey
+				if !chain.IsRunning {
+					chain.ProgramDistriOrder = got.Value.Pubkey
+				}
 				return order, nil
 			}
 		}
@@ -60,5 +57,6 @@ func (chain *WrapperSubscribe) SubscribeEvents(MachineUUID machine_uuid.MachineU
 }
 
 func NewSubscribeWrapper(info *chain.InfoChain) *WrapperSubscribe {
+	info.IsRunning = false
 	return &WrapperSubscribe{info}
 }

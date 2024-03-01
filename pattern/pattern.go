@@ -10,12 +10,6 @@ const PROGRAM_DISTRI_ID = "HF4aT6sho2zTySB8nEeN5ThMvDGtGVRrH3jeBvxFNxit"
 
 const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
 
-const DISTRI_SEED = "machine"
-
-const DISTRI_ORDER = "order"
-
-const DISTRI_VAULT = "vault"
-
 const NO_GPU = "No GPU"
 
 // docer
@@ -33,16 +27,16 @@ const (
 
 // docker: ml-workspace image
 const (
-	ML_WORKSPACE_IMAGE     = "ml-workspace"
-	ML_WORKSPACE_TAGS      = "0.2.1"
-	ML_WORKSPACE_CONTAINER = "ml-workspace"
+	ML_WORKSPACE_IMAGE     = "ml-workspace-gpu"
+	ML_WORKSPACE_TAGS      = "0.2.2"
+	ML_WORKSPACE_CONTAINER = "ml-workspace-gpu"
 	ML_WORKSPACE_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_IMAGE + ":" + ML_WORKSPACE_TAGS
 )
 
 // docker: ml-workspace-gpu image
 const (
 	ML_WORKSPACE_GPU_IMAGE     = "ml-workspace-gpu"
-	ML_WORKSPACE_GPU_TAGS      = "0.2.1"
+	ML_WORKSPACE_GPU_TAGS      = "0.2.2"
 	ML_WORKSPACE_GPU_CONTAINER = "ml-workspace-gpu"
 	ML_WORKSPACE_GPU_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_GPU_IMAGE + ":" + ML_WORKSPACE_TAGS
 )
@@ -65,9 +59,12 @@ const (
 	TX_HASHRATE_MARKET_ORDER_FAILED = HASHRATE_MARKET + DOT + "order_failed"
 
 	TX_HASHRATE_MARKET_REMOVE_MACHINE = HASHRATE_MARKET + DOT + "remove_machine"
+
+	TX_HASHRATE_MARKET_SUBMIT_TASK = HASHRATE_MARKET + DOT + "submit_task"
 )
 
 type MachineUUID [16]byte
+type TaskUUID [16]byte
 
 type OrderPlacedMetadata struct {
 	FormData        FormData    `json:"formData"`
@@ -99,4 +96,7 @@ type FormData struct {
 	Duration  int    `json:"duration"`
 	BuyTime   string `json:"buyTime"`
 	OrderTime string `json:"orderTime"`
+}
+
+type TaskMetadata struct {
 }
