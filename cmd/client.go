@@ -86,8 +86,8 @@ var ClientCommand = cli.Command{
 						time.Sleep(1 * time.Second)
 						subscribeBlocks.Conn.WsClient, err = ws.Connect(context.Background(), pattern.WsRPC)
 						if err != nil {
-							logs.Error(err.Error())
-							continue
+							logs.Error(fmt.Sprintf("ws.Connect restart error: %v", err))
+							return nil
 						}
 						continue
 					}
