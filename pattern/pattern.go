@@ -6,7 +6,7 @@ import "github.com/gagliardetto/solana-go/rpc"
 const RPC = rpc.DevNet_RPC
 const WsRPC = rpc.DevNet_WS
 
-const PROGRAM_DISTRI_ID = "6yFTDdiS1W9T9yg6YejkwKggkEE4NYqdSSzVqQvuLn16"
+const PROGRAM_DISTRI_ID = "8WxFh7ZtvTP1587yvyweoRMt41hCHMsmM48PTbZKM4tY"
 
 const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
 
@@ -28,7 +28,7 @@ const (
 // docker: ml-workspace image
 const (
 	ML_WORKSPACE_IMAGE     = "ml-workspace-gpu"
-	ML_WORKSPACE_TAGS      = "0.2.2"
+	ML_WORKSPACE_TAGS      = "0.3.4"
 	ML_WORKSPACE_CONTAINER = "ml-workspace-gpu"
 	ML_WORKSPACE_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_IMAGE + ":" + ML_WORKSPACE_TAGS
 )
@@ -36,7 +36,7 @@ const (
 // docker: ml-workspace-gpu image
 const (
 	ML_WORKSPACE_GPU_IMAGE     = "ml-workspace-gpu"
-	ML_WORKSPACE_GPU_TAGS      = "0.2.2"
+	ML_WORKSPACE_GPU_TAGS      = "0.3.4"
 	ML_WORKSPACE_GPU_CONTAINER = "ml-workspace-gpu"
 	ML_WORKSPACE_GPU_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_GPU_IMAGE + ":" + ML_WORKSPACE_TAGS
 )
@@ -52,6 +52,8 @@ const (
 // Extrinsic
 const (
 	// TX_HASHRATE_MARKET_REGISTER
+	TX_HASHRATE_MARKET_ORDER_START = HASHRATE_MARKET + DOT + "order_start"
+
 	TX_HASHRATE_MARKET_REGISTER = HASHRATE_MARKET + DOT + "add_machine"
 
 	TX_HASHRATE_MARKET_ORDER_COMPLETED = HASHRATE_MARKET + DOT + "order_completed"

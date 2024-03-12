@@ -32,7 +32,7 @@ var ClientCommand = cli.Command{
 			Action: func(c *cli.Context) error {
 				distriWrapper, hwInfo, chainInfo, err := core.GetDistri(true)
 				if err != nil {
-					logs.Error(err.Error())
+					logs.Error(fmt.Sprintf("GetDistri: %v", err))
 					return nil
 				}
 
@@ -40,7 +40,7 @@ var ClientCommand = cli.Command{
 					config.GlobalConfig.Console.NginxPort,
 					config.GlobalConfig.Console.ConsolePost,
 					config.GlobalConfig.Console.ServerPost); err != nil {
-					logs.Error(err.Error())
+					logs.Error(fmt.Sprintf("StartNginx error: %v", err))
 					return nil
 				}
 
@@ -104,7 +104,7 @@ var ClientCommand = cli.Command{
 						if oldOrder.Equals(subscribeBlocks.ProgramDistriOrder) {
 							continue
 						}
-						logs.Result(fmt.Sprintf("Start order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
+						logs.Vital(fmt.Sprintf("Start order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
 
 						isGPU := false
 						if hwInfo.GPUInfo.Number > 0 {
@@ -141,6 +141,12 @@ var ClientCommand = cli.Command{
 							return nil
 						}
 
+						_, err = distriWrapper.OrderStart()
+						if err != nil {
+							logs.Error(fmt.Sprintf("OrderStart: %v", err))
+							return nil
+						}
+
 						oldOrder = subscribeBlocks.ProgramDistriOrder
 						subscribeBlocks.IsRunning = true
 						core.StartOrderTimer(distriWrapper, order, isGPU, containerID)
@@ -148,7 +154,7 @@ var ClientCommand = cli.Command{
 						if containerID == "" {
 							continue
 						}
-						logs.Result(fmt.Sprintf("Refunded order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
+						logs.Vital(fmt.Sprintf("Refunded order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
 
 						if err = core.OrderRefunded(containerID); err != nil {
 							return nil

@@ -25,12 +25,12 @@ type InfoChain struct {
 func GetChainInfo(cfg *config.SolanaConfig, machineUUID machine_uuid.MachineUUID) (*InfoChain, error) {
 	newConn, err := conn.NewConn(cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("> conn.NewConn: %v", err)
 	}
 
 	wallet, err := wallet.InitWallet(cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("> wallet.InitWallet: %v", err)
 	}
 
 	programID := solana.MustPublicKeyFromBase58(pattern.PROGRAM_DISTRI_ID)
@@ -42,7 +42,7 @@ func GetChainInfo(cfg *config.SolanaConfig, machineUUID machine_uuid.MachineUUID
 		programID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("> FindProgramAddress: %v", err)
 	}
 	logs.Normal(fmt.Sprintf("machineAccount : %v", machineAccount.String()))
 

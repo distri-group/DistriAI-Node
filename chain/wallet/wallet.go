@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"DistriAI-Node/config"
+	"fmt"
 
 	"github.com/gagliardetto/solana-go"
 )
@@ -15,7 +16,7 @@ func InitWallet(cfg *config.SolanaConfig) (*Wallet, error) {
 	payerAccount, err := solana.WalletFromPrivateKeyBase58(payerPrivateKey.String())
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("> WalletFromPrivateKeyBase58: %v", err)
 	}
 
 	wallet := &Wallet{

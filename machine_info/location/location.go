@@ -21,13 +21,13 @@ func GetLocationInfo(ip string) (InfoLocation, error) {
 	url := fmt.Sprintf("http://ip-api.com/json/%v", ip)
 	resp, err := http.Get(url)
 	if err != nil {
-		return InfoLocation{}, err
+		return InfoLocation{}, fmt.Errorf("> http.Get: %v", err)
 	}
 
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return InfoLocation{}, err
+		return InfoLocation{}, fmt.Errorf("> io.ReadAll: %v", err)
 	}
 
 	// Easy debugging

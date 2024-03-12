@@ -12,6 +12,7 @@ import (
 	"DistriAI-Node/machine_info/speedtest"
 	"DistriAI-Node/machine_info/tflops"
 	logs "DistriAI-Node/utils/log_utils"
+	"fmt"
 )
 
 type MachineInfo struct {
@@ -35,13 +36,13 @@ func GetMachineInfo() (MachineInfo, error) {
 
 	ipInfo, err := ip.GetIpInfo()
 	if err != nil {
-		return hwInfo, err
+		return hwInfo, fmt.Errorf("> GetIpInfo: %v", err)
 	}
 	hwInfo.IpInfo = ipInfo
 
 	locationInfo, err := location.GetLocationInfo(ipInfo.IP)
 	if err != nil {
-		return hwInfo, err
+		return hwInfo, fmt.Errorf("> GetLocationInfo: %v", err)
 	}
 	hwInfo.LocationInfo = locationInfo
 

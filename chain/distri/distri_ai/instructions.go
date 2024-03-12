@@ -38,11 +38,15 @@ var (
 
 	Instruction_SubmitTask = ag_binary.TypeID([8]byte{148, 183, 26, 116, 107, 213, 118, 213})
 
+	Instruction_RewardPoolDeposit = ag_binary.TypeID([8]byte{208, 248, 236, 51, 132, 38, 27, 208})
+
 	Instruction_Claim = ag_binary.TypeID([8]byte{62, 198, 214, 193, 213, 159, 108, 210})
 
 	Instruction_PlaceOrder = ag_binary.TypeID([8]byte{51, 194, 155, 175, 109, 130, 96, 106})
 
 	Instruction_RenewOrder = ag_binary.TypeID([8]byte{216, 180, 12, 76, 71, 44, 165, 151})
+
+	Instruction_StartOrder = ag_binary.TypeID([8]byte{8, 217, 8, 81, 184, 75, 128, 198})
 
 	Instruction_RefundOrder = ag_binary.TypeID([8]byte{164, 168, 47, 144, 154, 1, 241, 255})
 
@@ -51,6 +55,14 @@ var (
 	Instruction_OrderFailed = ag_binary.TypeID([8]byte{27, 173, 43, 153, 198, 108, 109, 66})
 
 	Instruction_RemoveOrder = ag_binary.TypeID([8]byte{118, 116, 244, 40, 144, 211, 242, 51})
+
+	Instruction_MigrateMachineNew = ag_binary.TypeID([8]byte{225, 152, 229, 88, 158, 61, 69, 125})
+
+	Instruction_MigrateMachineRename = ag_binary.TypeID([8]byte{188, 135, 117, 64, 94, 119, 3, 147})
+
+	Instruction_MigrateOrderNew = ag_binary.TypeID([8]byte{112, 238, 201, 126, 89, 115, 139, 207})
+
+	Instruction_MigrateOrderRename = ag_binary.TypeID([8]byte{130, 182, 20, 92, 66, 194, 99, 205})
 )
 
 // InstructionIDToName returns the name of the instruction given its ID.
@@ -66,12 +78,16 @@ func InstructionIDToName(id ag_binary.TypeID) string {
 		return "CancelOffer"
 	case Instruction_SubmitTask:
 		return "SubmitTask"
+	case Instruction_RewardPoolDeposit:
+		return "RewardPoolDeposit"
 	case Instruction_Claim:
 		return "Claim"
 	case Instruction_PlaceOrder:
 		return "PlaceOrder"
 	case Instruction_RenewOrder:
 		return "RenewOrder"
+	case Instruction_StartOrder:
+		return "StartOrder"
 	case Instruction_RefundOrder:
 		return "RefundOrder"
 	case Instruction_OrderCompleted:
@@ -80,6 +96,14 @@ func InstructionIDToName(id ag_binary.TypeID) string {
 		return "OrderFailed"
 	case Instruction_RemoveOrder:
 		return "RemoveOrder"
+	case Instruction_MigrateMachineNew:
+		return "MigrateMachineNew"
+	case Instruction_MigrateMachineRename:
+		return "MigrateMachineRename"
+	case Instruction_MigrateOrderNew:
+		return "MigrateOrderNew"
+	case Instruction_MigrateOrderRename:
+		return "MigrateOrderRename"
 	default:
 		return ""
 	}
@@ -116,6 +140,9 @@ var InstructionImplDef = ag_binary.NewVariantDefinition(
 			"submit_task", (*SubmitTask)(nil),
 		},
 		{
+			"reward_pool_deposit", (*RewardPoolDeposit)(nil),
+		},
+		{
 			"claim", (*Claim)(nil),
 		},
 		{
@@ -123,6 +150,9 @@ var InstructionImplDef = ag_binary.NewVariantDefinition(
 		},
 		{
 			"renew_order", (*RenewOrder)(nil),
+		},
+		{
+			"start_order", (*StartOrder)(nil),
 		},
 		{
 			"refund_order", (*RefundOrder)(nil),
@@ -135,6 +165,18 @@ var InstructionImplDef = ag_binary.NewVariantDefinition(
 		},
 		{
 			"remove_order", (*RemoveOrder)(nil),
+		},
+		{
+			"migrate_machine_new", (*MigrateMachineNew)(nil),
+		},
+		{
+			"migrate_machine_rename", (*MigrateMachineRename)(nil),
+		},
+		{
+			"migrate_order_new", (*MigrateOrderNew)(nil),
+		},
+		{
+			"migrate_order_rename", (*MigrateOrderRename)(nil),
 		},
 	},
 )

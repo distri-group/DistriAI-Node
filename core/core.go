@@ -81,7 +81,7 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 
 	machineUUID, err := machine_uuid.GetInfoMachineUUID()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, fmt.Errorf("> GetInfoMachineUUID: %v", err)
 	}
 
 	newConfig := config.NewConfig(
@@ -92,7 +92,7 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 	var chainInfo *chain.InfoChain
 	chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error getting chain info: %v", err)
+		return nil, nil, nil, fmt.Errorf("> GetChainInfo: %v", err)
 	}
 
 	var hwInfo machine_info.MachineInfo
@@ -100,7 +100,7 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 	if isHw {
 		hwInfo, err = machine_info.GetMachineInfo()
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error getting hardware info: %v", err)
+			return nil, nil, nil, fmt.Errorf("> GetMachineInfo: %v", err)
 		}
 
 		diskInfo, err := disk.GetDiskInfo()
@@ -147,7 +147,7 @@ func CheckOrder(distri *distri.WrapperDistri, isGPU bool, containerID string) {
 		return
 	}
 
-	newDuration := time.Unix(newOrder.OrderTime, 0).Add(time.Hour * time.Duration(newOrder.Duration))
+	newDuration := time.Unix(newOrder.StartTime, 0).Add(time.Hour * time.Duration(newOrder.Duration))
 
 	logs.Normal(fmt.Sprintf("CheckOrder oldDuration: %v", oldDuration))
 	logs.Normal(fmt.Sprintf("CheckOrder newDuration: %v", newDuration))
@@ -166,8 +166,10 @@ func CheckOrder(distri *distri.WrapperDistri, isGPU bool, containerID string) {
 
 func StartOrderTimer(distri *distri.WrapperDistri, order distri_ai.Order, isGPU bool, containerID string) {
 
-	duration := time.Unix(order.OrderTime, 0).Add(time.Hour * time.Duration(order.Duration))
-	logs.Normal(fmt.Sprintf("Order OrderTime: %v", time.Unix(order.OrderTime, 0)))
+	// duration := time.Unix(order.OrderTime, 0).Add(time.Hour * time.Duration(order.Duration))
+	now := time.Now()
+	duration := now.Add(time.Hour * time.Duration(order.Duration)).Add(time.Second * 10)
+	logs.Normal(fmt.Sprintf("Order start: %v", now.Format("2006-01-02 15:04:05")))
 	logs.Normal(fmt.Sprintf("Order duration: %v", time.Hour*time.Duration(order.Duration)))
 	logs.Normal(fmt.Sprintf("Order end time: %v", duration))
 
