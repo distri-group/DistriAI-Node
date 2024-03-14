@@ -1,24 +1,19 @@
 package cmd
 
 import (
-	"DistriAI-Node/chain/subscribe"
 	"DistriAI-Node/config"
-	"DistriAI-Node/core"
+	"DistriAI-Node/control"
 	"DistriAI-Node/docker"
 	"DistriAI-Node/nginx"
-	"DistriAI-Node/pattern"
 	"DistriAI-Node/server"
 	"DistriAI-Node/utils"
 	dbutils "DistriAI-Node/utils/db_utils"
 	logs "DistriAI-Node/utils/log_utils"
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/urfave/cli"
 )
 
@@ -30,7 +25,7 @@ var ClientCommand = cli.Command{
 			Name:  "start",
 			Usage: "Upload hardware configuration and initiate listening events.",
 			Action: func(c *cli.Context) error {
-				distriWrapper, hwInfo, chainInfo, err := core.GetDistri(true)
+				distriWrapper, hwInfo, err := control.GetDistri(true)
 				if err != nil {
 					logs.Error(fmt.Sprintf("GetDistri: %v", err))
 					return nil
@@ -46,65 +41,60 @@ var ClientCommand = cli.Command{
 
 				machine, err := distriWrapper.GetMachine()
 				if err != nil {
-					logs.Error(fmt.Sprintf("Error: %v", err))
+					logs.Error(fmt.Sprintf("GetMachine: %v", err))
 					return nil
 				}
 
 				if machine.Metadata == "" {
 					logs.Normal("Machine does not exist")
-					hash, err := distriWrapper.AddMachine(*hwInfo)
+					_, err := distriWrapper.AddMachine(*hwInfo)
 					if err != nil {
-						logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
+						logs.Error(fmt.Sprintf("AddMachine: %v", err))
 						return nil
 					}
 				} else {
 					logs.Normal("Machine already exists")
-					if machine.Status.String() == "Renting" {
-						logs.Error(fmt.Sprintf("Machine is Renting, status: %v", machine.Status.String()))
-						return nil
-					}
 				}
 
 				go server.StartServer(config.GlobalConfig.Console.ServerPost)
 
-				core.StartHeartbeatTask(distriWrapper, hwInfo.MachineUUID)
+				control.StartHeartbeatTask(distriWrapper, hwInfo.MachineUUID)
 
-				subscribeBlocks := subscribe.NewSubscribeWrapper(chainInfo)
-
-				var oldOrder solana.PublicKey
-				var containerID string
 				for {
+					time.Sleep(1 * time.Minute)
 
-					logs.Normal("=============== Start subscription")
-					order, err := subscribeBlocks.SubscribeEvents(hwInfo.MachineUUID)
-					logs.Normal("=============== End subscription")
+					logs.Normal("Start Machine listening")
+
+					machine, err = distriWrapper.GetMachine()
 					if err != nil {
-						logs.Error(err.Error())
-						logs.Normal("Restart subscription")
-						subscribeBlocks.Conn.WsClient.Close()
-						subscribeBlocks.Conn.WsClient = nil
-						time.Sleep(1 * time.Second)
-						subscribeBlocks.Conn.WsClient, err = ws.Connect(context.Background(), pattern.WsRPC)
+						logs.Error(fmt.Sprintf("GetMachine: %v", err))
+						continue
+					}
+
+					logs.Normal(fmt.Sprintf("Machine Status: %v", machine.Status.String()))
+
+				ListenLoop:
+					switch machine.Status.String() {
+					case "Idle":
+						// TODO: Add the logic of the Idle status.
+						break ListenLoop
+					case "ForRent":
+						// TODO: Add the logic of the ForRent status.
+						break ListenLoop
+					case "Renting":
+
+						orderID := machine.OrderPda
+						if orderID.Equals(solana.SystemProgramID) {
+							logs.Error(fmt.Sprintf("machine OrderPda error, OrderPda: %v", orderID))
+							break ListenLoop
+						}
+
+						distriWrapper.ProgramDistriOrder = orderID
+						newOrder, err := distriWrapper.GetOrder()
 						if err != nil {
-							logs.Error(fmt.Sprintf("ws.Connect restart error: %v", err))
-							return nil
+							logs.Error(fmt.Sprintf("GetOrder Error: %v", err))
+							break ListenLoop
 						}
-						continue
-					}
-
-					if order.Metadata == "" {
-						logs.Error("order metadata is empty")
-						continue
-					}
-
-					spew.Dump(order)
-
-					switch order.Status.String() {
-					case "Training":
-						if oldOrder.Equals(subscribeBlocks.ProgramDistriOrder) {
-							continue
-						}
-						logs.Vital(fmt.Sprintf("Start order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
 
 						isGPU := false
 						if hwInfo.GPUInfo.Number > 0 {
@@ -113,56 +103,78 @@ var ClientCommand = cli.Command{
 
 						mlToken, err := utils.GenerateRandomString(16)
 						if err != nil {
-							logs.Error(err.Error())
-							return nil
+							logs.Error(fmt.Sprintf("GenerateRandomString: %v", err))
+							break ListenLoop
 						}
 
 						db, err := dbutils.NewDB()
 						if err != nil {
-							logs.Error(err.Error())
-							return nil
+							logs.Error(fmt.Sprintf("NewDB: %v", err))
+							break ListenLoop
 						}
-						db.Update([]byte("buyer"), []byte(order.Buyer.String()))
+						db.Update([]byte("buyer"), []byte(newOrder.Buyer.String()))
 						db.Update([]byte("token"), []byte(mlToken))
 						db.Close()
-						logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", order.Buyer, mlToken))
+						logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", newOrder.Buyer, mlToken))
 
-						containerID, err = docker.RunWorkspaceContainer(isGPU, mlToken)
+						containerID, err := docker.RunWorkspaceContainer(isGPU, mlToken)
 						if err != nil {
 							if strings.Contains(err.Error(), "container already exists") {
 								logs.Error(err.Error())
-								if err = core.OrderFailed(distriWrapper, order.Metadata, order.Buyer); err != nil {
-									logs.Error(err.Error())
-									return nil
+								if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
+									logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+									break ListenLoop
 								}
-								continue
+								break ListenLoop
 							}
 							logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
-							return nil
+							break ListenLoop
 						}
 
 						_, err = distriWrapper.OrderStart()
 						if err != nil {
 							logs.Error(fmt.Sprintf("OrderStart: %v", err))
-							return nil
+							break ListenLoop
 						}
 
-						oldOrder = subscribeBlocks.ProgramDistriOrder
-						subscribeBlocks.IsRunning = true
-						core.StartOrderTimer(distriWrapper, order, isGPU, containerID)
-					case "Refunded":
-						if containerID == "" {
-							continue
-						}
-						logs.Vital(fmt.Sprintf("Refunded order. OrderAccount: %v", subscribeBlocks.ProgramDistriOrder))
+						orderControl := control.NewOrderControl(distriWrapper)
+						orderControl.StartOrderTimer(newOrder, isGPU, containerID)
 
-						if err = core.OrderRefunded(containerID); err != nil {
-							return nil
+						for {
+							time.Sleep(1 * time.Minute)
+
+							logs.Normal("Start Order listening")
+
+							order, err := distriWrapper.SubscribeAccount()
+
+							logs.Normal(fmt.Sprintf("order: %v", order))
+
+							if err != nil {
+								logs.Error(fmt.Sprintf("SubscribeAccount: %v", err))
+								break ListenLoop
+							}
+							switch order.Status.String() {
+							case "Preparing":
+								logs.Warning(fmt.Sprintf("SubscribeAccount Preparing: %v", order.Status))
+								break ListenLoop
+							case "Training":
+								// TODO: ...
+								continue
+							case "Completed":
+								break ListenLoop
+							case "Failed":
+								break ListenLoop
+							case "Refunded":
+								err = orderControl.OrderRefunded(containerID)
+								if err != nil {
+									logs.Error(fmt.Sprintf("OrderRefunded: %v", err))
+								}
+								break ListenLoop
+							}
 						}
-						containerID = ""
 					default:
-						logs.Error(fmt.Sprintf("Order status is not training or refunded, status: %v", order.Status.String()))
-						continue
+						logs.Error(fmt.Sprintf("machine status error, Status: %v", machine.Status))
+						break ListenLoop
 					}
 				}
 			},
@@ -171,7 +183,7 @@ var ClientCommand = cli.Command{
 			Name:  "stop",
 			Usage: "Stop the client.",
 			Action: func(c *cli.Context) error {
-				distriWrapper, hwInfo, _, err := core.GetDistri(false)
+				distriWrapper, hwInfo, err := control.GetDistri(false)
 				if err != nil {
 					logs.Error(err.Error())
 					return nil

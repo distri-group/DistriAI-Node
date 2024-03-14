@@ -19,7 +19,6 @@ type InfoChain struct {
 	ProgramDistriID      solana.PublicKey
 	ProgramDistriMachine solana.PublicKey
 	ProgramDistriOrder   solana.PublicKey
-	IsRunning            bool
 }
 
 func GetChainInfo(cfg *config.SolanaConfig, machineUUID machine_uuid.MachineUUID) (*InfoChain, error) {

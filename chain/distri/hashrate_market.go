@@ -29,17 +29,17 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 
 	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("> GetRecentBlockhash: %v", err.Error())
 	}
 
 	uuid, err := utils.ParseMachineUUID(string(hardwareInfo.MachineUUID))
 	if err != nil {
-		return "", fmt.Errorf("error parsing uuid: %v", err)
+		return "", fmt.Errorf("> ParseMachineUUID: %v", err.Error())
 	}
 
 	jsonData, err := json.Marshal(hardwareInfo)
 	if err != nil {
-		return "", fmt.Errorf("error marshaling the struct to JSON: %v", err)
+		return "", fmt.Errorf("> json.Marshal: %v", err.Error())
 	}
 
 	distri_ai.SetProgramID(chain.ProgramDistriID)
@@ -59,7 +59,7 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("error creating transaction: %v", err)
+		return "", fmt.Errorf("> NewAddMachineInstruction: %v", err.Error())
 	}
 
 	_, err = tx.Sign(
@@ -71,7 +71,7 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("error signing transaction: %v", err)
+		return "", fmt.Errorf("> tx.Sign: %v", err.Error())
 	}
 
 	logs.Normal("=============== AddMachine Transaction")
@@ -84,7 +84,7 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 		tx,
 	)
 	if err != nil {
-		return "", fmt.Errorf("error sending transaction: %v", err)
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
 	}
 
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_REGISTER, sig.String()))
@@ -245,14 +245,14 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 
 	jsonData, err := json.Marshal(orderPlacedMetadata)
 	if err != nil {
-		return "", fmt.Errorf("error marshaling the struct to JSON: %v", err)
+		return "", fmt.Errorf("> json.Marshal: %v", err.Error())
 	}
 
 	seller := chain.Wallet.Wallet.PublicKey()
 	ecpc := solana.MustPublicKeyFromBase58(pattern.DIST_TOKEN_ID)
 	buyerAta, _, err := solana.FindAssociatedTokenAddress(buyer, ecpc)
 	if err != nil {
-		return "", fmt.Errorf("error finding associated token address: %v", err)
+		return "", fmt.Errorf("> FindAssociatedTokenAddress: %v", err.Error())
 	}
 
 	seedVault := utils.GenVault()
@@ -261,7 +261,7 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 		chain.ProgramDistriID,
 	)
 	if err != nil {
-		return "", fmt.Errorf("error finding program address: %v", err)
+		return "", fmt.Errorf("> FindProgramAddress: %v", err.Error())
 	}
 
 	distri_ai.SetProgramID(chain.ProgramDistriID)
@@ -284,7 +284,7 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("error creating transaction: %v", err)
+		return "", fmt.Errorf("> NewOrderFailedInstruction: %v", err.Error())
 	}
 
 	_, err = tx.Sign(
@@ -296,7 +296,7 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("error signing transaction: %v", err)
+		return "", fmt.Errorf("> tx.Sign: %v", err.Error())
 	}
 
 	spew.Dump(tx)
@@ -308,7 +308,7 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 		tx,
 	)
 	if err != nil {
-		return "", fmt.Errorf("error sending transaction: %v", err)
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
 	}
 
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_FAILED, sig.String()))
@@ -386,7 +386,7 @@ func (chain WrapperDistri) GetMachine() (distri_ai.Machine, error) {
 
 	err = data.UnmarshalWithDecoder(borshDec)
 	if err != nil {
-		return data, fmt.Errorf("error unmarshaling data: %v", err)
+		return data, fmt.Errorf("> UnmarshalWithDecoder: %v", err)
 	}
 
 	return data, nil
@@ -498,6 +498,35 @@ func (chain WrapperDistri) SubmitTask(
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_SUBMIT_TASK, sig.String()))
 
 	return sig.String(), nil
+}
+
+func (chain WrapperDistri) SubscribeAccount() (distri_ai.Order, error) {
+
+	var order distri_ai.Order
+
+	sub, err := chain.Conn.WsClient.AccountSubscribeWithOpts(
+		chain.ProgramDistriID,
+		rpc.CommitmentFinalized,
+		solana.EncodingBase64Zstd,
+	)
+	if err != nil {
+		return order, fmt.Errorf("> AccountSubscribeWithOpts: %v", err)
+	}
+	defer sub.Unsubscribe()
+
+	for {
+		got, err := sub.Recv()
+		if err != nil {
+			return order, fmt.Errorf("> Recv: %v", err)
+		}
+		borshDec := bin.NewBorshDecoder(got.Value.Account.Data.GetBinary())
+
+		err = order.UnmarshalWithDecoder(borshDec)
+		if err != nil {
+			continue
+		}
+		return order, nil
+	}
 }
 
 func NewDistriWrapper(info *chain.InfoChain) *WrapperDistri {

@@ -16,7 +16,7 @@ type WrapperSubscribe struct {
 	*chain.InfoChain
 }
 
-func (chain *WrapperSubscribe) SubscribeEvents(MachineUUID machine_uuid.MachineUUID) (distri_ai.Order, error) {
+func (chain *WrapperSubscribe) SubscribeProgram(MachineUUID machine_uuid.MachineUUID) (distri_ai.Order, error) {
 
 	var order distri_ai.Order
 
@@ -47,16 +47,42 @@ func (chain *WrapperSubscribe) SubscribeEvents(MachineUUID machine_uuid.MachineU
 				return order, fmt.Errorf("error parsing uuid: %v", err)
 			}
 			if order.Seller.Equals(chain.Wallet.Wallet.PublicKey()) && order.MachineId == uuid {
-				if !chain.IsRunning {
-					chain.ProgramDistriOrder = got.Value.Pubkey
-				}
+				chain.ProgramDistriOrder = got.Value.Pubkey
 				return order, nil
 			}
 		}
 	}
 }
 
+func (chain *WrapperSubscribe) SubscribeAccount() (distri_ai.Order, error) {
+
+	var order distri_ai.Order
+
+	sub, err := chain.Conn.WsClient.AccountSubscribeWithOpts(
+		chain.ProgramDistriID,
+		rpc.CommitmentFinalized,
+		solana.EncodingBase64Zstd,
+	)
+	if err != nil {
+		return order, fmt.Errorf("> AccountSubscribeWithOpts: %v", err)
+	}
+	defer sub.Unsubscribe()
+
+	for {
+		got, err := sub.Recv()
+		if err != nil {
+			return order, fmt.Errorf("> Recv: %v", err)
+		}
+		borshDec := bin.NewBorshDecoder(got.Value.Account.Data.GetBinary())
+
+		err = order.UnmarshalWithDecoder(borshDec)
+		if err != nil {
+			continue
+		}
+		return order, nil
+	}
+}
+
 func NewSubscribeWrapper(info *chain.InfoChain) *WrapperSubscribe {
-	info.IsRunning = false
 	return &WrapperSubscribe{info}
 }

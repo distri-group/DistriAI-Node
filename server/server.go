@@ -71,7 +71,7 @@ func getDebugToken(c *gin.Context) {
 	}
 
 	if publicKey.Verify([]byte("workspace/token/"+publicKeyStr), out) {
-		workspaceURL := fmt.Sprintf("https://%v:%v?token=%v",
+		workspaceURL := fmt.Sprintf("http://%v:%v?token=%v",
 			config.GlobalConfig.Console.OuterNetIP,
 			config.GlobalConfig.Console.OuterNetPort,
 			string(token))

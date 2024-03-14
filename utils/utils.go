@@ -30,7 +30,7 @@ func ParseMachineUUID(uuidStr string) (pattern.MachineUUID, error) {
 
 	b, err := hex.DecodeString(uuidStr)
 	if err != nil {
-		panic(err)
+		return machineUUID, fmt.Errorf("> hex.DecodeString: %v", err.Error())
 	}
 	copy(machineUUID[:], b[:16])
 
@@ -204,7 +204,7 @@ func GenerateRandomString(length int) (string, error) {
 	bytes := make([]byte, length/2)
 	_, err := rand.Read(bytes)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("> rand.Read: %v", err.Error())
 	}
 	return hex.EncodeToString(bytes), nil
 }

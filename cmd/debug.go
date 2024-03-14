@@ -8,16 +8,10 @@ import (
 	// "github.com/docker/docker/client"
 	// "github.com/docker/go-connections/nat"
 
-	"DistriAI-Node/config"
-	"DistriAI-Node/docker"
-	"DistriAI-Node/nginx"
-	"DistriAI-Node/server"
-	"DistriAI-Node/utils"
-	dbutils "DistriAI-Node/utils/db_utils"
+	"DistriAI-Node/control"
 	logs "DistriAI-Node/utils/log_utils"
 	"fmt"
 
-	"github.com/gagliardetto/solana-go"
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -139,20 +133,20 @@ var DebugCommand = cli.Command{
 		// nginx.StopNginx()
 
 		/* Debug : solana Sign */
-		private := solana.MustPrivateKeyFromBase58("2hpaRRjxuzhiHJ6ggimgGHi8jCMgG3MRXTUAGm7XNrztXpzKvJJ4fqAfgzb4YNnT9LDvYMfh4GzFh5NBojUcCXaB")
-		public := private.PublicKey()
-		logs.Normal(fmt.Sprintf("publicKey: %v", public))
-		msg := "workspace/token/" + public.String()
-		signature, err := private.Sign([]byte(msg))
-		if err != nil {
-			return err
-		}
-		logs.Normal(fmt.Sprintf("signature: %v", signature.String()))
-		if public.Verify([]byte(msg), signature) {
-			logs.Normal("Verify success")
-		} else {
-			logs.Error("Verify failed")
-		}
+		// private := solana.MustPrivateKeyFromBase58("2hpaRRjxuzhiHJ6ggimgGHi8jCMgG3MRXTUAGm7XNrztXpzKvJJ4fqAfgzb4YNnT9LDvYMfh4GzFh5NBojUcCXaB")
+		// public := private.PublicKey()
+		// logs.Normal(fmt.Sprintf("publicKey: %v", public))
+		// msg := "workspace/token/" + public.String()
+		// signature, err := private.Sign([]byte(msg))
+		// if err != nil {
+		// 	return err
+		// }
+		// logs.Normal(fmt.Sprintf("signature: %v", signature.String()))
+		// if public.Verify([]byte(msg), signature) {
+		// 	logs.Normal("Verify success")
+		// } else {
+		// 	logs.Error("Verify failed")
+		// }
 
 		/* Debug : docker space */
 		// sizeLimitGB := 10
@@ -171,83 +165,57 @@ var DebugCommand = cli.Command{
 		// return nil
 
 		/* Debug : nginx ssl */
-		if err := nginx.StartNginx(
-			config.GlobalConfig.Console.NginxPort,
-			config.GlobalConfig.Console.ConsolePost,
-			config.GlobalConfig.Console.ServerPost); err != nil {
-			logs.Error(err.Error())
-			return nil
-		}
+		// if err := nginx.StartNginx(
+		// 	config.GlobalConfig.Console.NginxPort,
+		// 	config.GlobalConfig.Console.ConsolePost,
+		// 	config.GlobalConfig.Console.ServerPost); err != nil {
+		// 	logs.Error(err.Error())
+		// 	return nil
+		// }
 
-		mlToken, err := utils.GenerateRandomString(16)
-		if err != nil {
-			logs.Error(err.Error())
-			return nil
-		}
-
-		db, err := dbutils.NewDB()
-		if err != nil {
-			logs.Error(err.Error())
-			return nil
-		}
-		db.Update([]byte("buyer"), []byte(public.String()))
-		db.Update([]byte("token"), []byte(mlToken))
-		db.Close()
-		logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", public, mlToken))
-
-		containerID, err := docker.RunWorkspaceContainer(true, mlToken)
-		if err != nil {
-			return err
-		}
-		logs.Normal(fmt.Sprintf("containerID: %v", containerID))
-
-		server.StartServer(config.GlobalConfig.Console.ServerPost)
-
-		/* Debug : SubmitTask */
-		// distriWrapper, hwInfo, _, err := core.GetDistri(false)
+		// mlToken, err := utils.GenerateRandomString(16)
 		// if err != nil {
 		// 	logs.Error(err.Error())
 		// 	return nil
 		// }
 
-		// hash, err := distriWrapper.AddMachine(*hwInfo)
+		// db, err := dbutils.NewDB()
 		// if err != nil {
-		// 	logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
+		// 	logs.Error(err.Error())
 		// 	return nil
 		// }
+		// db.Update([]byte("buyer"), []byte(public.String()))
+		// db.Update([]byte("token"), []byte(mlToken))
+		// db.Close()
+		// logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", public, mlToken))
 
-		// core.StartHeartbeatTask(distriWrapper, hwInfo.MachineUUID)
-		// publicKey := solana.MustPublicKeyFromBase58("AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF")
-
-		// var machineUUID pattern.MachineUUID
-
-		// b, err := hex.DecodeString("0565268338504c89ba51231d75ab4735")
+		// containerID, err := docker.RunWorkspaceContainer(true, mlToken)
 		// if err != nil {
-		// 	panic(err)
+		// 	return err
 		// }
-		// copy(machineUUID[:], b[:16])
+		// logs.Normal(fmt.Sprintf("containerID: %v", containerID))
 
-		// period := utils.PeriodBytes()
-		// pubKeyBytes := publicKey.Bytes()
-		// machineUUIDBytes := []byte(machineUUID[:])
+		// server.StartServer(config.GlobalConfig.Console.ServerPost)
 
-		// logs.Normal(fmt.Sprintf("period: %v", period))
-		// logs.Normal(fmt.Sprintf("pubKeyBytes: %v", pubKeyBytes))
-		// logs.Normal(fmt.Sprintf("machineUUIDBytes: %v", machineUUIDBytes))
+		distriWrapper, hwInfo, err := control.GetDistri(true)
+		if err != nil {
+			logs.Error(fmt.Sprintf("GetDistri: %v", err))
+			return nil
+		}
 
-		// seedRewardMachine := [][]byte{
-		// 	[]byte("reward-machine"),
-		// 	period,
-		// 	pubKeyBytes,
-		// 	machineUUIDBytes,
-		// }
-		// programID := solana.MustPublicKeyFromBase58(pattern.PROGRAM_DISTRI_ID)
+		hash, err := distriWrapper.AddMachine(*hwInfo)
+		if err != nil {
+			logs.Error(fmt.Sprintf("AddMachine: %v", err))
+			return nil
+		}
+		logs.Normal(fmt.Sprintf("AddMachine hash: %v", hash))
 
-		// rewardMachine, _, _ := solana.FindProgramAddress(
-		// 	seedRewardMachine,
-		// 	programID,
-		// )
-		// logs.Normal(fmt.Sprintf("rewardMachine: %v", rewardMachine))
+		hash, err = distriWrapper.RemoveMachine(*hwInfo)
+		if err != nil {
+			logs.Error(fmt.Sprintf("RemoveMachine: %v", err))
+			return nil
+		}
+		logs.Normal(fmt.Sprintf("RemoveMachine hash: %v", hash))
 		return nil
 	},
 }
