@@ -1,6 +1,8 @@
 package dbutils
 
 import (
+	"fmt"
+
 	"github.com/dgraph-io/badger/v4"
 )
 
@@ -9,10 +11,10 @@ type DB struct {
 }
 
 func NewDB() (*DB, error) {
-	opts := badger.DefaultOptions("/tmp/badger")
+	opts := badger.DefaultOptions("/tmp/badger").WithLoggingLevel(badger.WARNING)
 	db, err := badger.Open(opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("> badger.Open: %v", err.Error())
 	}
 	return &DB{db: db}, nil
 }

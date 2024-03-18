@@ -44,14 +44,16 @@ func getDebugToken(c *gin.Context) {
 	buyerPublicKey, err := db.Get([]byte("buyer"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		db.Close()
 		return
 	}
 	token, err := db.Get([]byte("token"))
+	db.Close()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	db.Close()
+
 
 	publicKeyStr := string(buyerPublicKey)
 	publicKey, err := solana.PublicKeyFromBase58(publicKeyStr)
@@ -78,6 +80,5 @@ func getDebugToken(c *gin.Context) {
 	} else {
 		logs.Error("Verify failed")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Verify failed"})
-		return
 	}
 }

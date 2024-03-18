@@ -13,15 +13,13 @@ func GenNginxConfig(nginxPort, consolePort, serverPost string) error {
 
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		logs.Error(fmt.Sprintf("Error reading nginx config file: %v", err))
-		return err
+		return fmt.Errorf("> ReadDir: %v", err)
 	}
 
 	for _, file := range files {
 		err = os.Remove(dir + "/" + file.Name())
 		if err != nil {
-			logs.Error(fmt.Sprintf("Error reading nginx config file: %v", err))
-			return err
+			return fmt.Errorf("> Remove: %v", err)
 		}
 	}
 
@@ -40,7 +38,7 @@ func GenNginxConfig(nginxPort, consolePort, serverPost string) error {
 		}
 
 	location / {
-		proxy_pass http://127.0.0.1:%v;
+		proxy_pass https://127.0.0.1:%v;
 		proxy_http_version 1.1;
 		proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
@@ -53,8 +51,7 @@ func GenNginxConfig(nginxPort, consolePort, serverPost string) error {
 
 	err = os.WriteFile("/etc/nginx/sites-enabled/distri", []byte(nginxConfig), 0644)
 	if err != nil {
-		logs.Error(fmt.Sprintf("Error reading config file: %v", err))
-		return err
+		return fmt.Errorf("> WriteFile: %v", err)
 	}
 
 	return nil

@@ -113,6 +113,7 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 	containerConfig := &container.Config{
 		Image: pattern.ML_WORKSPACE_NAME,
 		Env: []string{
+			fmt.Sprintf("WORKSPACE_SSL_ENABLED=%s", "true"),
 			fmt.Sprintf("AUTHENTICATE_VIA_JUPYTER=%s", mlToken),
 		},
 		Tty: true,

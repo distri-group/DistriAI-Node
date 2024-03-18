@@ -44,7 +44,6 @@ func Normal(message string) {
 
 func Warning(message string) {
 	fmt.Println(yellow + message + reset)
-	Logger.Warn(message)
 }
 
 func Error(message string) {
@@ -52,7 +51,7 @@ func Error(message string) {
 	Logger.Error(message)
 }
 
-func Result(message string) {
+func Vital(message string) {
 	fmt.Println(green + message + reset)
 	Logger.Info(message)
 }

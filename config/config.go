@@ -1,6 +1,7 @@
 package config
 
 import (
+	"DistriAI-Node/pattern"
 	logs "DistriAI-Node/utils/log_utils"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 type Config struct {
 	Base struct {
+		Rpc           string `yaml:"rpc"`
 		PrivateKey    string `yaml:"privateKey"`
 		SecurityLevel string `yaml:"securityLevel"`
 	} `yaml:"base"`
@@ -46,6 +48,9 @@ func InitializeConfig() {
 	}
 	if GlobalConfig.Console.OuterNetPort == "" {
 		GlobalConfig.Console.OuterNetPort = GlobalConfig.Console.NginxPort
+	}
+	if GlobalConfig.Base.Rpc == "" {
+		GlobalConfig.Base.Rpc = pattern.RPC	
 	}
 }
 

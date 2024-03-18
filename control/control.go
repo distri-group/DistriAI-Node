@@ -1,9 +1,8 @@
-package core
+package control
 
 import (
 	"DistriAI-Node/chain"
 	"DistriAI-Node/chain/distri"
-	"DistriAI-Node/chain/distri/distri_ai"
 	"DistriAI-Node/config"
 	"DistriAI-Node/docker"
 	"DistriAI-Node/machine_info"
@@ -18,9 +17,6 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 )
-
-var oldDuration time.Time
-var orderTimer *time.Timer
 
 func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, containerID string) error {
 	logs.Normal("Order is complete")
@@ -42,7 +38,6 @@ func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, co
 	if err != nil {
 		return err
 	}
-	distri.IsRunning = false
 	return nil
 }
 
@@ -53,46 +48,36 @@ func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.Pub
 
 	err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
 	if err != nil {
-		return err
+		return fmt.Errorf("> json.Unmarshal: %v", err.Error())
 	}
 
 	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
 
 	_, err = distri.OrderFailed(buyer, orderPlacedMetadata)
 	if err != nil {
-		return err
+		return fmt.Errorf("> distri.OrderFailed: %v", err.Error())
 	}
-	distri.IsRunning = false
 	return nil
 }
 
-func OrderRefunded(containerID string) error {
-	logs.Normal("Order is refunded")
-	if err := docker.StopWorkspaceContainer(containerID); err != nil {
-		return err
-	}
-	orderTimer.Stop()
-	return nil
-}
-
-func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *chain.InfoChain, error) {
+func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, error) {
 
 	key := config.GlobalConfig.Base.PrivateKey
 
 	machineUUID, err := machine_uuid.GetInfoMachineUUID()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, fmt.Errorf("> GetInfoMachineUUID: %v", err)
 	}
 
 	newConfig := config.NewConfig(
 		key,
-		pattern.RPC,
+		config.GlobalConfig.Base.Rpc,
 		pattern.WsRPC)
 
 	var chainInfo *chain.InfoChain
 	chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error getting chain info: %v", err)
+		return nil, nil, fmt.Errorf("> GetChainInfo: %v", err)
 	}
 
 	var hwInfo machine_info.MachineInfo
@@ -100,12 +85,12 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 	if isHw {
 		hwInfo, err = machine_info.GetMachineInfo()
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("error getting hardware info: %v", err)
+			return nil, nil, fmt.Errorf("> GetMachineInfo: %v", err)
 		}
 
 		diskInfo, err := disk.GetDiskInfo()
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		isGPU := false
@@ -115,7 +100,7 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 		}
 		score, err := docker.RunScoreContainer(isGPU)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		imageWorkspace := pattern.ML_WORKSPACE_NAME
@@ -123,7 +108,7 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 			imageWorkspace = pattern.ML_WORKSPACE_GPU_NAME
 		}
 		if err = docker.ImageExistOrPull(imageWorkspace); err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
 		hwInfo.Score = score
@@ -137,44 +122,18 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, *ch
 	jsonData, _ := json.Marshal(hwInfo)
 	logs.Normal(fmt.Sprintf("Hardware Info : %v", string(jsonData)))
 
-	return distri.NewDistriWrapper(chainInfo), &hwInfo, chainInfo, nil
+	return distri.NewDistriWrapper(chainInfo), &hwInfo, nil
 }
 
-func CheckOrder(distri *distri.WrapperDistri, isGPU bool, containerID string) {
-	newOrder, err := distri.GetOrder()
-	if err != nil {
-		logs.Error(fmt.Sprintf("GetOrder Error: %v", err))
-		return
+// var oldDuration time.Time
+// var orderTimer *time.Timer
+
+func OrderRefunded(containerID string) error {
+	logs.Normal("Order is refunded")
+	if err := docker.StopWorkspaceContainer(containerID); err != nil {
+		return err
 	}
-
-	newDuration := time.Unix(newOrder.OrderTime, 0).Add(time.Hour * time.Duration(newOrder.Duration))
-
-	logs.Normal(fmt.Sprintf("CheckOrder oldDuration: %v", oldDuration))
-	logs.Normal(fmt.Sprintf("CheckOrder newDuration: %v", newDuration))
-
-	if newDuration.After(oldDuration) {
-		logs.Normal("Restart timer")
-		oldDuration = newDuration
-		orderTimer.Reset(time.Until(oldDuration))
-	} else {
-		if err = OrderComplete(distri, newOrder.Metadata, isGPU, containerID); err != nil {
-			logs.Error(fmt.Sprintf("OrderComplete Error: %v", err))
-			return
-		}
-	}
-}
-
-func StartOrderTimer(distri *distri.WrapperDistri, order distri_ai.Order, isGPU bool, containerID string) {
-
-	duration := time.Unix(order.OrderTime, 0).Add(time.Hour * time.Duration(order.Duration))
-	logs.Normal(fmt.Sprintf("Order OrderTime: %v", time.Unix(order.OrderTime, 0)))
-	logs.Normal(fmt.Sprintf("Order duration: %v", time.Hour*time.Duration(order.Duration)))
-	logs.Normal(fmt.Sprintf("Order end time: %v", duration))
-
-	oldDuration = duration
-	orderTimer = time.AfterFunc(time.Until(oldDuration), func() {
-		CheckOrder(distri, isGPU, containerID)
-	})
+	return nil
 }
 
 // temp
