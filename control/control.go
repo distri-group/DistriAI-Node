@@ -3,7 +3,6 @@ package control
 import (
 	"DistriAI-Node/chain"
 	"DistriAI-Node/chain/distri"
-	"DistriAI-Node/chain/distri/distri_ai"
 	"DistriAI-Node/config"
 	"DistriAI-Node/docker"
 	"DistriAI-Node/machine_info"
@@ -72,7 +71,7 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, err
 
 	newConfig := config.NewConfig(
 		key,
-		pattern.RPC,
+		config.GlobalConfig.Base.Rpc,
 		pattern.WsRPC)
 
 	var chainInfo *chain.InfoChain
@@ -128,64 +127,13 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, err
 
 // var oldDuration time.Time
 // var orderTimer *time.Timer
-type OrderControl struct {
-	distri      *distri.WrapperDistri
-	oldDuration *time.Time
-	orderTimer  *time.Timer
-}
 
-func NewOrderControl(distri *distri.WrapperDistri) *OrderControl {
-	return &OrderControl{
-		distri: distri,
-	}
-}
-
-func (orderControl OrderControl) OrderRefunded(containerID string) error {
+func OrderRefunded(containerID string) error {
 	logs.Normal("Order is refunded")
 	if err := docker.StopWorkspaceContainer(containerID); err != nil {
 		return err
 	}
-	orderControl.orderTimer.Stop()
 	return nil
-}
-
-func (orderControl OrderControl) CheckOrder(isGPU bool, containerID string) {
-	newOrder, err := orderControl.distri.GetOrder()
-	if err != nil {
-		logs.Error(fmt.Sprintf("GetOrder Error: %v", err))
-		return
-	}
-
-	newDuration := time.Unix(newOrder.StartTime, 0).Add(time.Hour * time.Duration(newOrder.Duration))
-
-	logs.Normal(fmt.Sprintf("CheckOrder oldDuration: %v", orderControl.oldDuration))
-	logs.Normal(fmt.Sprintf("CheckOrder newDuration: %v", newDuration))
-
-	if newDuration.After(*orderControl.oldDuration) {
-		logs.Normal("Restart timer")
-		orderControl.oldDuration = &newDuration
-		orderControl.orderTimer.Reset(time.Until(*orderControl.oldDuration))
-	} else {
-		if err = OrderComplete(orderControl.distri, newOrder.Metadata, isGPU, containerID); err != nil {
-			logs.Error(fmt.Sprintf("OrderComplete Error: %v", err))
-			return
-		}
-	}
-}
-
-func (orderControl OrderControl) StartOrderTimer(order distri_ai.Order, isGPU bool, containerID string) {
-
-	// duration := time.Unix(order.OrderTime, 0).Add(time.Hour * time.Duration(order.Duration))
-	now := time.Now()
-	duration := now.Add(time.Hour * time.Duration(order.Duration)).Add(time.Second * 10)
-	logs.Normal(fmt.Sprintf("Order start: %v", now.Format("2006-01-02 15:04:05")))
-	logs.Normal(fmt.Sprintf("Order duration: %v", time.Hour*time.Duration(order.Duration)))
-	logs.Normal(fmt.Sprintf("Order end time: %v", duration))
-
-	orderControl.oldDuration = &duration
-	orderControl.orderTimer = time.AfterFunc(time.Until(*orderControl.oldDuration), func() {
-		orderControl.CheckOrder(isGPU, containerID)
-	})
 }
 
 // temp

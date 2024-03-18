@@ -63,15 +63,11 @@ var ClientCommand = cli.Command{
 				for {
 					time.Sleep(1 * time.Minute)
 
-					logs.Normal("Start Machine listening")
-
 					machine, err = distriWrapper.GetMachine()
 					if err != nil {
 						logs.Error(fmt.Sprintf("GetMachine: %v", err))
 						continue
 					}
-
-					logs.Normal(fmt.Sprintf("Machine Status: %v", machine.Status.String()))
 
 				ListenLoop:
 					switch machine.Status.String() {
@@ -82,6 +78,8 @@ var ClientCommand = cli.Command{
 						// TODO: Add the logic of the ForRent status.
 						break ListenLoop
 					case "Renting":
+
+						logs.Normal(fmt.Sprintf("Machine is Renting, Details: %v", machine))
 
 						orderID := machine.OrderPda
 						if orderID.Equals(solana.SystemProgramID) {
@@ -137,35 +135,40 @@ var ClientCommand = cli.Command{
 							break ListenLoop
 						}
 
-						orderControl := control.NewOrderControl(distriWrapper)
-						orderControl.StartOrderTimer(newOrder, isGPU, containerID)
-
 						for {
 							time.Sleep(1 * time.Minute)
 
-							logs.Normal("Start Order listening")
-
-							order, err := distriWrapper.SubscribeAccount()
-
-							logs.Normal(fmt.Sprintf("order: %v", order))
-
+							newOrder, err = distriWrapper.GetOrder()
 							if err != nil {
-								logs.Error(fmt.Sprintf("SubscribeAccount: %v", err))
+								logs.Error(fmt.Sprintf("GetOrder Error: %v", err))
 								break ListenLoop
 							}
-							switch order.Status.String() {
+
+							switch newOrder.Status.String() {
 							case "Preparing":
-								logs.Warning(fmt.Sprintf("SubscribeAccount Preparing: %v", order.Status))
+								logs.Error(fmt.Sprintf("Order error, ID: %v\norder: %v", distriWrapper.ProgramDistriOrder, newOrder))
 								break ListenLoop
 							case "Training":
-								// TODO: ...
+								orderEndTime := time.Unix(newOrder.StartTime, 0).Add(time.Hour * time.Duration(newOrder.Duration))
+								timeNow := time.Now()
+								if timeNow.After(orderEndTime) {
+
+									logs.Normal(fmt.Sprintf("Order completed, Details: %v", newOrder))
+
+									if err = control.OrderComplete(distriWrapper, newOrder.Metadata, isGPU, containerID); err != nil {
+										logs.Error(fmt.Sprintf("OrderComplete: %v", err))
+									}
+									break ListenLoop
+								}
 								continue
 							case "Completed":
+								logs.Error(fmt.Sprintf("Order error, ID: %v\norder: %v", distriWrapper.ProgramDistriOrder, newOrder))
 								break ListenLoop
 							case "Failed":
+								logs.Error(fmt.Sprintf("Order error, ID: %v\norder: %v", distriWrapper.ProgramDistriOrder, newOrder))
 								break ListenLoop
 							case "Refunded":
-								err = orderControl.OrderRefunded(containerID)
+								err = control.OrderRefunded(containerID)
 								if err != nil {
 									logs.Error(fmt.Sprintf("OrderRefunded: %v", err))
 								}

@@ -7,17 +7,24 @@ import (
 	logs "DistriAI-Node/utils/log_utils"
 	"archive/zip"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/cavaliergopher/grab/v3"
+	"github.com/cavaliergopher/grab/v3/pkg/grabtest"
 )
 
 func ByteUUIDToStrUUID(byteUUID pattern.MachineUUID) machine_uuid.MachineUUID {
@@ -243,4 +250,74 @@ func PeriodBytes() []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, CurrentPeriod())
 	return bytes
+}
+
+func GetFilenameFromURL(rawURL string) (string, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return "", err
+	}
+	return path.Base(parsedURL.Path), nil
+}
+
+type DownloadURL struct {
+	URL      string
+	Checksum string
+}
+
+func DownloadFiles(dest string, urls []DownloadURL) (*grab.Response, error) {
+	client := grab.NewClient()
+	reqs := make([]*grab.Request, len(urls))
+
+	for i, url := range urls {
+		req, err := grab.NewRequest(dest, url.URL)
+		if err != nil {
+			return nil, err
+		}
+
+		label, err := GetFilenameFromURL(url.URL)
+		if err != nil {
+			return nil, err
+		}
+		req.Label = label
+		req.SetChecksum(sha256.New(), grabtest.MustHexDecodeString(url.Checksum), true)
+		reqs[i] = req
+	}
+
+	responses := client.DoBatch(len(reqs), reqs...)
+
+	var resp *grab.Response
+	defer resp.Cancel()
+
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	var completed int
+	for range ticker.C {
+		completed = 0
+		for i := 0; i < len(reqs); {
+			select {
+			case resp = <-responses:
+				if resp == nil {
+					return nil, fmt.Errorf("> resp is nil")
+				}
+
+				if err := resp.Err(); err != nil {
+					return nil, fmt.Errorf("> %s resp.Err: %v", resp.Request.Label, err.Error())
+				}
+
+				logs.Normal(fmt.Sprintf("%s (%.2f%%)", resp.Request.Label, 100*resp.Progress()))
+
+				if resp.IsComplete() {
+					completed++
+				}
+				if completed == len(reqs) {
+					logs.Normal("All downloads completed")
+					return resp, nil					
+				}
+				i++
+			}
+		}
+	}
+	return nil, errors.New("> DownloadFiles: unexpected exit")
 }

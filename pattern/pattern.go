@@ -82,10 +82,12 @@ type MachineInfo struct {
 	CPU              string    `json:"CPU"`
 	TFLOPS           float32   `json:"TFLOPS"`
 	RAM              string    `json:"RAM"`
-	AvailDiskStorage int32     `json:"AvailDiskStorage"`
+	AvailDiskStorage uint32    `json:"AvailDiskStorage"`
 	Reliability      string    `json:"Reliability"`
 	CPS              string    `json:"CPS"`
 	Speed            SpeedInfo `json:"Speed"`
+	MaxDuration      uint16    `json:"MaxDuration"`
+	Price            float32   `json:"Price"`
 }
 
 type SpeedInfo struct {
@@ -94,10 +96,8 @@ type SpeedInfo struct {
 }
 
 type FormData struct {
-	TaskName  string `json:"taskName"`
-	Duration  int    `json:"duration"`
-	BuyTime   string `json:"buyTime"`
-	OrderTime string `json:"orderTime"`
+	TaskName string `json:"taskName"`
+	Duration int    `json:"duration"`
 }
 
 type TaskMetadata struct {
