@@ -12,6 +12,7 @@ import (
 type InfoGPU struct {
 	Model  string `json:"Model"`
 	Number int    `json:"Number"`
+	Memory string `json:"Memory"`
 }
 
 func GetGPUInfo() (InfoGPU, error) {
@@ -19,14 +20,14 @@ func GetGPUInfo() (InfoGPU, error) {
 
 	var gpuInfo InfoGPU
 
-	cmd := exec.Command("nvidia-smi", "--query-gpu=count,gpu_name", "--format=csv,noheader")
+	cmd := exec.Command("nvidia-smi", "--query-gpu=count,gpu_name,memory.total", "--format=csv,noheader")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
 		// Easy debugging
 		return InfoGPU{Model: pattern.NO_GPU, Number: 0}, err
-		// return InfoGPU{Model: "NVIDIA Tesla T40 24 GB", Number: 1}, err
+		// return InfoGPU{Model: "NVIDIA Tesla V100 PCIe 16 GB", Number: 8}, err
 	}
 
 	result := strings.Split(strings.TrimSpace(out.String()), ", ")
@@ -41,6 +42,7 @@ func GetGPUInfo() (InfoGPU, error) {
 		gpuInfo = InfoGPU{
 			Model:  result[1],
 			Number: number,
+			Memory: result[2],
 		}
 	}
 	return gpuInfo, nil

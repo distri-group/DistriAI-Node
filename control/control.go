@@ -93,8 +93,8 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, err
 			return nil, nil, err
 		}
 
-		isGPU := false
 		// Easy debugging
+		isGPU := false
 		if hwInfo.GPUInfo.Number > 0 {
 			isGPU = true
 		}

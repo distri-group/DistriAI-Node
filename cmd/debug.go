@@ -8,6 +8,10 @@ import (
 	// "github.com/docker/docker/client"
 	// "github.com/docker/go-connections/nat"
 
+	"DistriAI-Node/control"
+	logs "DistriAI-Node/utils/log_utils"
+	"fmt"
+
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -133,6 +137,16 @@ var DebugCommand = cli.Command{
 
 		// server.StartServer(config.GlobalConfig.Console.ServerPost)
 
+		distriWrapper, hwInfo, err := control.GetDistri(true)
+		if err != nil {
+			logs.Error(fmt.Sprintf("GetDistri: %v", err))
+			return nil
+		}
+		_, err = distriWrapper.AddMachine(*hwInfo)
+		if err != nil {
+			logs.Error(fmt.Sprintf("AddMachine: %v", err))
+			return nil
+		}
 		return nil
 	},
 }

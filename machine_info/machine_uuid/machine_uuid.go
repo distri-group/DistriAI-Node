@@ -18,5 +18,5 @@ func GetInfoMachineUUID() (MachineUUID, error) {
 		return "", fmt.Errorf("> ReadFile: %v", err)
 	}
 	return MachineUUID(strings.TrimSpace(string(mID))), nil
-	// return MachineUUID("0565268338504c89ba51231d75ab4735"), nil
+	// return MachineUUID("105fc89c16980c81fd642af19eacbb18"), nil
 }

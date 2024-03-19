@@ -34,7 +34,7 @@ func GetLocationInfo(ip string) (InfoLocation, error) {
 	var response InfoLocation
 	json.Unmarshal(body, &response)
 	// response.Country = "South Korea"
-	// response.Region = "Gyeonggi-do"
+	// response.Region = "South Korea"
 	// response.City = "Anyang-si"
 	// response.IP = "211.32.126.136"
 	return response, nil
