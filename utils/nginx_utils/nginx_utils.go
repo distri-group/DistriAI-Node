@@ -6,9 +6,9 @@ import (
 	"os"
 )
 
-func GenNginxConfig(nginxPort, consolePort, serverPost string) error {
-	logs.Normal(fmt.Sprintf("Start nginx. nginxPort: %v, consolePort: %v, serverPost: %v",
-		nginxPort, consolePort, serverPost))
+func GenNginxConfig(nginxPort, workPort, serverPort string) error {
+	logs.Normal(fmt.Sprintf("Start nginx. nginxPort: %v, workPort: %v, serverPort: %v",
+		nginxPort, workPort, serverPort))
 	dir := "/etc/nginx/sites-enabled"
 
 	files, err := os.ReadDir(dir)
@@ -38,7 +38,7 @@ func GenNginxConfig(nginxPort, consolePort, serverPost string) error {
 		}
 
 	location / {
-		proxy_pass https://127.0.0.1:%v;
+		proxy_pass http://127.0.0.1:%v;
 		proxy_http_version 1.1;
 		proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
@@ -47,7 +47,7 @@ func GenNginxConfig(nginxPort, consolePort, serverPost string) error {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-}`, nginxPort, nginxPort, serverPost, consolePort)
+}`, nginxPort, nginxPort, serverPort, workPort)
 
 	err = os.WriteFile("/etc/nginx/sites-enabled/distri", []byte(nginxConfig), 0644)
 	if err != nil {

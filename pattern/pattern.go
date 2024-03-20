@@ -41,6 +41,14 @@ const (
 	ML_WORKSPACE_GPU_NAME      = DOCKER_GROUP + "/" + ML_WORKSPACE_GPU_IMAGE + ":" + ML_WORKSPACE_TAGS
 )
 
+// docker: models-deploy image
+const (
+	MODELS_DEPLOY_IMAGE     = "models-deploy"
+	MODELS_DEPLOY_TAGS      = "0.0.1"
+	MODELS_DEPLOY_CONTAINER = "models-deploy"
+	MODELS_DEPLOY_NAME      = DOCKER_GROUP + "/" + MODELS_DEPLOY_IMAGE + ":" + MODELS_DEPLOY_TAGS
+)
+
 // DOT is "." character
 const DOT = "."
 
@@ -71,6 +79,7 @@ type TaskUUID [16]byte
 type OrderPlacedMetadata struct {
 	FormData        FormData    `json:"formData"`
 	MachineInfo     MachineInfo `json:"MachineInfo"`
+	OrderInfo       OrderInfo   `json:"OrderInfo"`
 	MachineAccounts string      `json:"MachineAccounts"`
 }
 
@@ -98,6 +107,11 @@ type SpeedInfo struct {
 type FormData struct {
 	TaskName string `json:"taskName"`
 	Duration int    `json:"duration"`
+}
+
+type OrderInfo struct {
+	Intent      string   `json:"Intent"` // 'train' or 'deploy'
+	DownloadURL []string `json:"DownloadURL"`
 }
 
 type TaskMetadata struct {

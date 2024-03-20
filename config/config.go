@@ -19,9 +19,9 @@ type Config struct {
 		WorkDirectory string `yaml:"workDirectory"`
 		OuterNetIP    string `yaml:"outerNetIP"`
 		OuterNetPort  string `yaml:"outerNetPort"`
-		NginxPort     string `yaml:"nginxPost"`
-		ConsolePost   string `yaml:"consolePost"`
-		ServerPost    string `yaml:"serverPost"`
+		NginxPort     string `yaml:"nginxPort"`
+		WorkPort      string `yaml:"workPort"`
+		ServerPort    string `yaml:"serverPort"`
 	} `yaml:"console"`
 }
 
@@ -37,11 +37,11 @@ func InitializeConfig() {
 		logs.Error(fmt.Sprintf("Error reading config file: %v", err))
 	}
 
-	if GlobalConfig.Console.ServerPost == "" {
-		GlobalConfig.Console.ServerPost = "8088"
+	if GlobalConfig.Console.ServerPort == "" {
+		GlobalConfig.Console.ServerPort = "8088"
 	}
-	if GlobalConfig.Console.ConsolePost == "" {
-		GlobalConfig.Console.ConsolePost = "8080"
+	if GlobalConfig.Console.WorkPort == "" {
+		GlobalConfig.Console.WorkPort = "8080"
 	}
 	if GlobalConfig.Console.NginxPort == "" {
 		GlobalConfig.Console.NginxPort = "80"
@@ -50,7 +50,7 @@ func InitializeConfig() {
 		GlobalConfig.Console.OuterNetPort = GlobalConfig.Console.NginxPort
 	}
 	if GlobalConfig.Base.Rpc == "" {
-		GlobalConfig.Base.Rpc = pattern.RPC	
+		GlobalConfig.Base.Rpc = pattern.RPC
 	}
 }
 

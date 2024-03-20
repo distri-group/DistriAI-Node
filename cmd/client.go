@@ -5,10 +5,12 @@ import (
 	"DistriAI-Node/control"
 	"DistriAI-Node/docker"
 	"DistriAI-Node/nginx"
+	"DistriAI-Node/pattern"
 	"DistriAI-Node/server"
 	"DistriAI-Node/utils"
 	dbutils "DistriAI-Node/utils/db_utils"
 	logs "DistriAI-Node/utils/log_utils"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -33,8 +35,8 @@ var ClientCommand = cli.Command{
 
 				if err = nginx.StartNginx(
 					config.GlobalConfig.Console.NginxPort,
-					config.GlobalConfig.Console.ConsolePost,
-					config.GlobalConfig.Console.ServerPost); err != nil {
+					config.GlobalConfig.Console.WorkPort,
+					config.GlobalConfig.Console.ServerPort); err != nil {
 					logs.Error(fmt.Sprintf("StartNginx error: %v", err))
 					return nil
 				}
@@ -56,7 +58,7 @@ var ClientCommand = cli.Command{
 					logs.Normal("Machine already exists")
 				}
 
-				go server.StartServer(config.GlobalConfig.Console.ServerPost)
+				go server.StartServer(config.GlobalConfig.Console.ServerPort)
 
 				control.StartHeartbeatTask(distriWrapper, hwInfo.MachineUUID)
 
@@ -94,38 +96,67 @@ var ClientCommand = cli.Command{
 							break ListenLoop
 						}
 
+						var orderPlacedMetadata pattern.OrderPlacedMetadata
+
+						err = json.Unmarshal([]byte(newOrder.Metadata), &orderPlacedMetadata)
+						if err != nil {
+							logs.Error(fmt.Sprintf("json.Unmarshal: %v", err))
+							break ListenLoop
+						}
+
 						isGPU := false
-						if hwInfo.GPUInfo.Number > 0 {
-							isGPU = true
-						}
+						var containerID string
 
-						mlToken, err := utils.GenerateRandomString(16)
-						if err != nil {
-							logs.Error(fmt.Sprintf("GenerateRandomString: %v", err))
-							break ListenLoop
-						}
+						switch orderPlacedMetadata.OrderInfo.Intent {
+						case "train":
+							if hwInfo.GPUInfo.Number > 0 {
+								isGPU = true
+							}
 
-						db, err := dbutils.NewDB()
-						if err != nil {
-							logs.Error(fmt.Sprintf("NewDB: %v", err))
-							break ListenLoop
-						}
-						db.Update([]byte("buyer"), []byte(newOrder.Buyer.String()))
-						db.Update([]byte("token"), []byte(mlToken))
-						db.Close()
-						logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", newOrder.Buyer, mlToken))
-
-						containerID, err := docker.RunWorkspaceContainer(isGPU, mlToken)
-						if err != nil {
-							if strings.Contains(err.Error(), "container already exists") {
-								logs.Error(err.Error())
-								if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
-									logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
-									break ListenLoop
-								}
+							mlToken, err := utils.GenerateRandomString(16)
+							if err != nil {
+								logs.Error(fmt.Sprintf("GenerateRandomString: %v", err))
 								break ListenLoop
 							}
-							logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
+
+							db, err := dbutils.NewDB()
+							if err != nil {
+								logs.Error(fmt.Sprintf("NewDB: %v", err))
+								break ListenLoop
+							}
+							db.Update([]byte("buyer"), []byte(newOrder.Buyer.String()))
+							db.Update([]byte("token"), []byte(mlToken))
+							db.Close()
+							logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", newOrder.Buyer, mlToken))
+
+							containerID, err = docker.RunWorkspaceContainer(isGPU, mlToken)
+							if err != nil {
+								if strings.Contains(err.Error(), "container already exists") {
+									logs.Error(err.Error())
+									if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
+										logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+										break ListenLoop
+									}
+									break ListenLoop
+								}
+								logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
+								break ListenLoop
+							}
+						case "deploy":
+							containerID, err = docker.RunDeployContainer(isGPU, orderPlacedMetadata.OrderInfo.DownloadURL)
+							if err != nil {
+								if strings.Contains(err.Error(), "container already exists") {
+									logs.Error(err.Error())
+									if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
+										logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+										break ListenLoop
+									}
+									break ListenLoop
+								}
+								logs.Error(fmt.Sprintln("RunDeployContainer error: ", err))
+								break ListenLoop
+							}
+						default:
 							break ListenLoop
 						}
 

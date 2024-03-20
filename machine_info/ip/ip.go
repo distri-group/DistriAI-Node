@@ -37,13 +37,13 @@ func GetIpInfo() (InfoIP, error) {
 	if !utils.CheckPort(config.GlobalConfig.Console.NginxPort) {
 		return InfoIP{}, fmt.Errorf("> port %s is not available", config.GlobalConfig.Console.NginxPort)
 	}
-	if !utils.CheckPort(config.GlobalConfig.Console.ConsolePost) {
-		return InfoIP{}, fmt.Errorf("> port %s is not available", config.GlobalConfig.Console.ConsolePost)
+	if !utils.CheckPort(config.GlobalConfig.Console.WorkPort) {
+		return InfoIP{}, fmt.Errorf("> port %s is not available", config.GlobalConfig.Console.WorkPort)
 	}
-	if !utils.CheckPort(config.GlobalConfig.Console.ServerPost) {
-		return InfoIP{}, fmt.Errorf("> port %s is not available", config.GlobalConfig.Console.ServerPost)
+	if !utils.CheckPort(config.GlobalConfig.Console.ServerPort) {
+		return InfoIP{}, fmt.Errorf("> port %s is not available", config.GlobalConfig.Console.ServerPort)
 	}
-	
+
 	response.Port = config.GlobalConfig.Console.OuterNetPort
 	return response, nil
 }

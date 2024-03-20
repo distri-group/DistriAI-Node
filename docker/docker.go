@@ -4,6 +4,7 @@ import (
 	"DistriAI-Node/config"
 	docker_utils "DistriAI-Node/docker/utils"
 	"DistriAI-Node/pattern"
+	"DistriAI-Node/utils"
 	"bufio"
 	"context"
 	"fmt"
@@ -113,7 +114,6 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 	containerConfig := &container.Config{
 		Image: pattern.ML_WORKSPACE_NAME,
 		Env: []string{
-			fmt.Sprintf("WORKSPACE_SSL_ENABLED=%s", "true"),
 			fmt.Sprintf("AUTHENTICATE_VIA_JUPYTER=%s", mlToken),
 		},
 		Tty: true,
@@ -123,7 +123,7 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 		nat.Port("8080/tcp"): []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
-				HostPort: config.GlobalConfig.Console.ConsolePost,
+				HostPort: config.GlobalConfig.Console.WorkPort,
 			},
 		}}
 
@@ -141,6 +141,84 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 	if isGPU {
 		containerName = pattern.ML_WORKSPACE_GPU_CONTAINER
 		containerConfig.Image = pattern.ML_WORKSPACE_GPU_NAME
+		hostConfig.Runtime = "nvidia"
+		hostConfig.Resources = container.Resources{
+			DeviceRequests: []container.DeviceRequest{
+				{
+					Count:        -1,
+					Capabilities: [][]string{{"gpu"}},
+				},
+			},
+		}
+	}
+
+	isExists, containerID := docker_utils.ContainerExists(ctx, cli, containerName)
+	if isExists {
+		return containerID, fmt.Errorf("%s container already exists", containerName)
+	}
+
+	containerID, err = docker_utils.RunContainer(ctx, cli, containerName,
+		containerConfig,
+		hostConfig)
+	if err != nil {
+		return "", err
+	}
+	return containerID, nil
+}
+
+func RunDeployContainer(isGPU bool, downloadURL []string) (string, error) {
+
+	if len(downloadURL) == 0 {
+		return "", fmt.Errorf("> downloadURL is empty")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", err
+	}
+	cli.NegotiateAPIVersion(ctx)
+
+	host, path, err := utils.SplitURL(downloadURL[0])
+	if err != nil {
+		return "", fmt.Errorf("> SplitURL downloadURL[0]: %v", err)
+	}
+
+	containerName := pattern.MODELS_DEPLOY_CONTAINER
+	containerConfig := &container.Config{
+		Image: pattern.MODELS_DEPLOY_NAME,
+		Env: []string{
+			fmt.Sprintf("DOWNLOAD_URL=%s", host),
+			fmt.Sprintf("DEPLOY_FILE=%s", path),
+		},
+		Tty: true,
+	}
+
+	if len(downloadURL) == 2 {
+		_, path, err = utils.SplitURL(downloadURL[1])
+		if err != nil {
+			return "", fmt.Errorf("> SplitURL downloadURL[1]: %v", err)
+		}
+		containerConfig.Env = append(containerConfig.Env, fmt.Sprintf("REQUIREMENTS=%s", path))
+	}
+
+	portBind := nat.PortMap{
+		nat.Port("7860/tcp"): []nat.PortBinding{
+			{
+				HostIP:   "0.0.0.0",
+				HostPort: config.GlobalConfig.Console.WorkPort,
+			},
+		}}
+
+	hostConfig := &container.HostConfig{
+		PortBindings: portBind,
+		RestartPolicy: container.RestartPolicy{
+			Name: "always",
+		},
+	}
+	if isGPU {
 		hostConfig.Runtime = "nvidia"
 		hostConfig.Resources = container.Resources{
 			DeviceRequests: []container.DeviceRequest{
