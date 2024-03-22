@@ -133,7 +133,7 @@ func Unzip(src string, dest string) ([]string, error) {
 	defer func(r *zip.ReadCloser) {
 		err := r.Close()
 		if err != nil {
-
+			return
 		}
 	}(r)
 
@@ -169,6 +169,9 @@ func Unzip(src string, dest string) ([]string, error) {
 		}
 
 		_, err = io.Copy(outFile, rc)
+		if err != nil {
+			return nil, err
+		}
 
 		err = outFile.Close()
 		if err != nil {
@@ -177,10 +180,6 @@ func Unzip(src string, dest string) ([]string, error) {
 		err = rc.Close()
 		if err != nil {
 			return nil, err
-		}
-
-		if err != nil {
-			return filenames, err
 		}
 	}
 	return filenames, nil

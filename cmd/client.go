@@ -142,6 +142,25 @@ var ClientCommand = cli.Command{
 								logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
 								break ListenLoop
 							}
+
+							url := orderPlacedMetadata.OrderInfo.DownloadURL
+							if len(url) > 0 {
+								var downloadURL []utils.DownloadURL
+								for _, u := range url {
+									downloadURL = append(downloadURL, utils.DownloadURL{
+										URL:      u,
+										Checksum: "",
+									})
+								}
+
+								logs.Normal("Downloading files...")
+								err = utils.DownloadFiles(config.GlobalConfig.Console.WorkDirectory+"/ml-workspace", downloadURL)
+								if err != nil {
+									logs.Error(fmt.Sprintf("DownloadFiles: %v", err))
+									break ListenLoop
+								}
+								logs.Normal("Download completed")
+							}
 						case "deploy":
 							containerID, err = docker.RunDeployContainer(isGPU, orderPlacedMetadata.OrderInfo.DownloadURL)
 							if err != nil {

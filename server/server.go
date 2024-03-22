@@ -30,8 +30,6 @@ func StartServer(serverPort string) error {
 }
 
 func getDebugToken(c *gin.Context) {
-	logs.Normal("GetDebugToken API")
-
 	signature := c.Param("signature")
 	logs.Normal(fmt.Sprintf("signature: %v", signature))
 
@@ -54,7 +52,6 @@ func getDebugToken(c *gin.Context) {
 		return
 	}
 
-
 	publicKeyStr := string(buyerPublicKey)
 	publicKey, err := solana.PublicKeyFromBase58(publicKeyStr)
 	if err != nil {
@@ -75,6 +72,8 @@ func getDebugToken(c *gin.Context) {
 			config.GlobalConfig.Console.OuterNetIP,
 			config.GlobalConfig.Console.OuterNetPort,
 			string(token))
+
+		logs.Normal(fmt.Sprintf("Redirect to: %v", workspaceURL))
 
 		c.Redirect(http.StatusFound, workspaceURL)
 	} else {

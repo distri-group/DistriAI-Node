@@ -32,6 +32,8 @@ func GetIpInfo() (InfoIP, error) {
 			return InfoIP{}, fmt.Errorf("> io.ReadAll: %v", err)
 		}
 		json.Unmarshal(body, &response)
+		
+		config.GlobalConfig.Console.OuterNetIP = response.IP
 	}
 
 	if !utils.CheckPort(config.GlobalConfig.Console.NginxPort) {
