@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func StartServer(serverPost string) error {
+func StartServer(serverPort string) error {
 	logs.Normal("Start server")
 
 	r := gin.Default()
@@ -21,7 +21,7 @@ func StartServer(serverPost string) error {
 	workspace := r.Group(template.WORKSPACE)
 	workspace.GET("/debugToken/:signature", getDebugToken)
 
-	err := r.Run("127.0.0.1:" + serverPost)
+	err := r.Run("127.0.0.1:" + serverPort)
 	if err != nil {
 		logs.Error(fmt.Sprintf("gin run error: %v", err))
 		return err
@@ -30,8 +30,6 @@ func StartServer(serverPost string) error {
 }
 
 func getDebugToken(c *gin.Context) {
-	logs.Normal("GetDebugToken API")
-
 	signature := c.Param("signature")
 	logs.Normal(fmt.Sprintf("signature: %v", signature))
 
@@ -54,7 +52,6 @@ func getDebugToken(c *gin.Context) {
 		return
 	}
 
-
 	publicKeyStr := string(buyerPublicKey)
 	publicKey, err := solana.PublicKeyFromBase58(publicKeyStr)
 	if err != nil {
@@ -75,6 +72,8 @@ func getDebugToken(c *gin.Context) {
 			config.GlobalConfig.Console.OuterNetIP,
 			config.GlobalConfig.Console.OuterNetPort,
 			string(token))
+
+		logs.Normal(fmt.Sprintf("Redirect to: %v", workspaceURL))
 
 		c.Redirect(http.StatusFound, workspaceURL)
 	} else {

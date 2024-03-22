@@ -51,14 +51,14 @@ console:
   workDirectory:
   # If using a proxy, please specify the public IP address. If not using a proxy, you can ignore this.
   outerNetIP:
-  # If not filled, the value of the 'nginxPost' field will be used to fill this.
+  # If not filled, the value of the 'nginxPort' field will be used to fill this.
   outerNetPort:
   # The port on which the nginx listens. default: 80
-  nginxPost:
+  nginxPort:
   # The port on which the console listens. default: 8080
-  consolePost:
+  workPort:
   # The port on which the Local server listens. default: 8088
-  serverPost:
+  serverPort:
 EOF
 ```
 

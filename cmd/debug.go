@@ -8,6 +8,8 @@ import (
 	// "github.com/docker/docker/client"
 	// "github.com/docker/go-connections/nat"
 
+	"DistriAI-Node/utils"
+
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -133,6 +135,30 @@ var DebugCommand = cli.Command{
 
 		// server.StartServer(config.GlobalConfig.Console.ServerPost)
 
+		urls := []utils.DownloadURL{
+			{
+				URL:      "https://distriai.s3.ap-northeast-2.amazonaws.com/model/Bv3qEmRjPn3z7bB3JynCoXJmopcNM8PGa6ASxPCi7bY/animagine-xl-3.0/pytorch_model.bin",
+				Checksum: "",
+			},
+			{
+				URL:      "https://distriai.s3.ap-northeast-2.amazonaws.com/model/Bv3qEmRjPn3z7bB3JynCoXJmopcNM8PGa6ASxPCi7bY/animagine-xl-3.0/pytorch_model1.bin",
+				Checksum: "",
+			},
+			{
+				URL:      "https://distriai.s3.ap-northeast-2.amazonaws.com/model/Bv3qEmRjPn3z7bB3JynCoXJmopcNM8PGa6ASxPCi7bY/animagine-xl-3.0/pytorch_model2.bin",
+				Checksum: "",
+			},
+		}
+
+		// name, err := utils.GetFilenameFromURL(urls[0].URL)
+		// if err != nil {
+		// 	return err
+		// }
+		// logs.Normal(name)
+		err := utils.DownloadFiles("/data/download", urls)
+		if err != nil {
+			return err
+		}
 		return nil
 	},
 }

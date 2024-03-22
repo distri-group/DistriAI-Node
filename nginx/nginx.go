@@ -6,9 +6,9 @@ import (
 	"os/exec"
 )
 
-func StartNginx(nginxPort, consolePost, serverPost string) error {
+func StartNginx(nginxPort, workPort, serverPort string) error {
 
-	err := nginx_utils.GenNginxConfig(nginxPort, consolePost, serverPost)
+	err := nginx_utils.GenNginxConfig(nginxPort, workPort, serverPort)
 	if err != nil {
 		return fmt.Errorf("> gen nginx config: %v", err)
 	}
