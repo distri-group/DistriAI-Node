@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -172,76 +173,46 @@ func RunDeployContainer(isGPU bool, downloadURL []string) (string, error) {
 		return "", fmt.Errorf("> downloadURL is empty")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	cmd := exec.Command("sudo", "docker", "run", "-d")
 
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return "", err
+	cmd.Args = append(cmd.Args, "-p", fmt.Sprintf("%s:7860", config.GlobalConfig.Console.WorkPort))
+
+	if isGPU {
+		cmd.Args = append(cmd.Args, "--runtime=nvidia")
+		cmd.Args = append(cmd.Args, "--gpus", "all")
 	}
-	cli.NegotiateAPIVersion(ctx)
+
+	cmd.Args = append(cmd.Args, "--name", pattern.MODELS_DEPLOY_CONTAINER)
 
 	host, path, err := utils.SplitURL(downloadURL[0])
 	if err != nil {
 		return "", fmt.Errorf("> SplitURL downloadURL[0]: %v", err)
 	}
 
-	containerName := pattern.MODELS_DEPLOY_CONTAINER
-	containerConfig := &container.Config{
-		Image: pattern.MODELS_DEPLOY_NAME,
-		Env: []string{
-			fmt.Sprintf("DOWNLOAD_URL=%s", host),
-			fmt.Sprintf("DEPLOY_FILE=%s", path),
-		},
-		Tty: true,
-	}
-
+	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("DOWNLOAD_URL=%s", host))
+	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("DEPLOY_FILE=%s", strings.TrimPrefix(path, "/")))
 	if len(downloadURL) == 2 {
 		_, path, err = utils.SplitURL(downloadURL[1])
 		if err != nil {
 			return "", fmt.Errorf("> SplitURL downloadURL[1]: %v", err)
 		}
-		containerConfig.Env = append(containerConfig.Env, fmt.Sprintf("REQUIREMENTS=%s", path))
+		cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("REQUIREMENTS=%s", strings.TrimPrefix(path, "/")))
 	}
 
-	portBind := nat.PortMap{
-		nat.Port("7860/tcp"): []nat.PortBinding{
-			{
-				HostIP:   "0.0.0.0",
-				HostPort: config.GlobalConfig.Console.WorkPort,
-			},
-		}}
+	cmd.Args = append(cmd.Args, "--restart", "always")
 
-	hostConfig := &container.HostConfig{
-		PortBindings: portBind,
-		RestartPolicy: container.RestartPolicy{
-			Name: "always",
-		},
-	}
-	if isGPU {
-		hostConfig.Runtime = "nvidia"
-		hostConfig.Resources = container.Resources{
-			DeviceRequests: []container.DeviceRequest{
-				{
-					Count:        -1,
-					Capabilities: [][]string{{"gpu"}},
-				},
-			},
-		}
-	}
+	cmd.Args = append(cmd.Args, pattern.MODELS_DEPLOY_NAME)
 
-	isExists, containerID := docker_utils.ContainerExists(ctx, cli, containerName)
-	if isExists {
-		return containerID, fmt.Errorf("%s container already exists", containerName)
-	}
-
-	containerID, err = docker_utils.RunContainer(ctx, cli, containerName,
-		containerConfig,
-		hostConfig)
+	output, err := cmd.Output()
 	if err != nil {
-		return "", err
+		fmt.Println("Error:", err)
+		return "", fmt.Errorf("> exec.Command: %s, output: %s", err.Error(), string(output))
 	}
-	return containerID, nil
+	outputStr := string(output)
+	if len(outputStr) > 64 {
+		outputStr = outputStr[:64]
+	}
+	return outputStr, nil
 }
 
 func StopWorkspaceContainer(containerID string) error {

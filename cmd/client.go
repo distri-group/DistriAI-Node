@@ -113,20 +113,11 @@ var ClientCommand = cli.Command{
 								isGPU = true
 							}
 
-							mlToken, err := utils.GenerateRandomString(16)
+							mlToken, err := dbutils.GenToken(newOrder.Buyer.String())
 							if err != nil {
-								logs.Error(fmt.Sprintf("GenerateRandomString: %v", err))
+								logs.Error(fmt.Sprintf("GenToken: %v", err))
 								break ListenLoop
 							}
-
-							db, err := dbutils.NewDB()
-							if err != nil {
-								logs.Error(fmt.Sprintf("NewDB: %v", err))
-								break ListenLoop
-							}
-							db.Update([]byte("buyer"), []byte(newOrder.Buyer.String()))
-							db.Update([]byte("token"), []byte(mlToken))
-							db.Close()
 							logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", newOrder.Buyer, mlToken))
 
 							containerID, err = docker.RunWorkspaceContainer(isGPU, mlToken)
@@ -162,7 +153,17 @@ var ClientCommand = cli.Command{
 								logs.Normal("Download completed")
 							}
 						case "deploy":
+							logs.Normal(fmt.Sprintf("Deploying, DownloadURL details: %v", orderPlacedMetadata.OrderInfo.DownloadURL))
+
+							_, err := dbutils.GenToken(newOrder.Buyer.String())
+							if err != nil {
+								logs.Error(fmt.Sprintf("GenToken: %v", err))
+								break ListenLoop
+							}
+
 							containerID, err = docker.RunDeployContainer(isGPU, orderPlacedMetadata.OrderInfo.DownloadURL)
+							logs.Normal(fmt.Sprintf("DeployContainerID: %v", containerID))
+
 							if err != nil {
 								if strings.Contains(err.Error(), "container already exists") {
 									logs.Error(err.Error())
