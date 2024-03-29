@@ -1,6 +1,7 @@
 package dbutils
 
 import (
+	"DistriAI-Node/utils"
 	"fmt"
 
 	"github.com/dgraph-io/badger/v4"
@@ -49,4 +50,20 @@ func (d *DB) Delete(key []byte) error {
 
 func (d *DB) Close() error {
 	return d.db.Close()
+}
+
+func GenToken(buyer string) (string, error) {
+	mlToken, err := utils.GenerateRandomString(16)
+	if err != nil {
+		return "", fmt.Errorf("> GenerateRandomString: %v", err.Error())
+	}
+
+	db, err := NewDB()
+	if err != nil {
+		return "", fmt.Errorf("> NewDB: %v", err.Error())
+	}
+	db.Update([]byte("buyer"), []byte(buyer))
+	db.Update([]byte("token"), []byte(mlToken))
+	db.Close()
+	return mlToken, nil
 }

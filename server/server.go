@@ -77,7 +77,17 @@ func getDebugToken(c *gin.Context) {
 
 		c.Redirect(http.StatusFound, workspaceURL)
 	} else {
-		logs.Error("Verify failed")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Verify failed"})
+		if publicKey.Verify([]byte("deploy/token/"+publicKeyStr), out) {
+			deployURL := fmt.Sprintf("http://%v:%v",
+				config.GlobalConfig.Console.OuterNetIP,
+				config.GlobalConfig.Console.OuterNetPort)
+
+			logs.Normal(fmt.Sprintf("Redirect to: %v", deployURL))
+
+			c.Redirect(http.StatusFound, deployURL)
+		} else {
+			logs.Error("Verify failed")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Verify failed"})
+		}
 	}
 }
