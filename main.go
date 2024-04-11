@@ -14,6 +14,7 @@ import (
 
 var Version = "v0.1.2"
 
+// create command line instance and set app instructions
 func setupApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "DistriAI-Node"
@@ -28,6 +29,7 @@ func setupApp() *cli.App {
 	app.Before = func(context *cli.Context) error {
 		initLog()
 		config.InitializeConfig()
+		//set the maximum CPU core to the available system core count
 		runtime.GOMAXPROCS(runtime.NumCPU())
 		return nil
 	}

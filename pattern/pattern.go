@@ -12,7 +12,7 @@ const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
 
 const NO_GPU = "No GPU"
 
-// docer
+// docker
 const (
 	DOCKER_GROUP = "distrigroup"
 )
