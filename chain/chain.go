@@ -13,6 +13,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
+// InfoChain encapsulates basic information about the chain
 type InfoChain struct {
 	Conn                 *conn.Conn
 	Wallet               *wallet.Wallet
@@ -21,6 +22,7 @@ type InfoChain struct {
 	ProgramDistriOrder   solana.PublicKey
 }
 
+// GetChainInfo returns *Infochain and error when the connection fails
 func GetChainInfo(cfg *config.SolanaConfig, machineUUID machine_uuid.MachineUUID) (*InfoChain, error) {
 	newConn, err := conn.NewConn(cfg)
 	if err != nil {
