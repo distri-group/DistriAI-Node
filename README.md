@@ -42,6 +42,7 @@ Create config.yml file in the same directory as the executable file.
 cd bin
 cat << EOF > config.yml
 base:
+  rpc:
   # Mnemonics used to complete transactions
   privateKey: <your_private_key>
   # The level of privacy protection provided

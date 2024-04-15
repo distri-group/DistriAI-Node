@@ -6,7 +6,7 @@ import "github.com/gagliardetto/solana-go/rpc"
 const RPC = rpc.DevNet_RPC
 const WsRPC = rpc.DevNet_WS
 
-const PROGRAM_DISTRI_ID = "8WxFh7ZtvTP1587yvyweoRMt41hCHMsmM48PTbZKM4tY"
+const PROGRAM_DISTRI_ID = "6yFTDdiS1W9T9yg6YejkwKggkEE4NYqdSSzVqQvuLn16"
 
 const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
 

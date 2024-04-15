@@ -177,12 +177,16 @@ var ClientCommand = cli.Command{
 								break ListenLoop
 							}
 						default:
+							logs.Error(fmt.Sprintf("OrderInfo.Intent error, Intent: %v", orderPlacedMetadata.OrderInfo.Intent))
 							break ListenLoop
 						}
 
 						_, err = distriWrapper.OrderStart()
 						if err != nil {
 							logs.Error(fmt.Sprintf("OrderStart: %v", err))
+							if err := docker.StopWorkspaceContainer(containerID); err != nil {
+								logs.Error(fmt.Sprintf("> StopWorkspaceContainer, containerID: %s, err: %v", containerID, err))
+							}
 							break ListenLoop
 						}
 
