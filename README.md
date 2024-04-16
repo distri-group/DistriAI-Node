@@ -46,7 +46,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/DistriAI main.go
 
 Create config.yml file in the same directory as the executable file.
 ```
-cd bin
+cd bin &&
 cat << EOF > config.yml
 base:
   rpc:
@@ -82,4 +82,4 @@ EOF
 
 - The following information indicates success.
 
-![success](https://github.com/distri-group/DistriAI-Node/assets/122685398/dd1458a6-04d8-429d-b921-c6491aa893d1)
+![success](https://github.com/distri-group/DistriAI-Node/assets/122685398/f62c2a8a-7612-4a80-a18a-3c912a9559e6)
