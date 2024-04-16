@@ -82,4 +82,4 @@ EOF
 
 - The following information indicates success.
 
-![success](https://github.com/distri-group/DistriAI-Node/assets/122685398/f62c2a8a-7612-4a80-a18a-3c912a9559e6)
+![success](https://github.com/distri-group/DistriAI-Node/assets/122685398/0c87c803-cf49-42b0-962d-fde82219116b)
