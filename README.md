@@ -5,6 +5,7 @@ Share your unused computing capacity to provide support for more AI creators in 
 ### Software
 - Operating System: Ubuntu 22.04
 - Go: 1.21.0
+- Git
 ### Hardware
 - CPU: 4 cores
 - Memory: 8GB
@@ -29,13 +30,19 @@ Additional software packages required for GPU devices.
 
 ***Please make sure to switch to the root account before starting.***
 
-1. Compile binary executable file.
+1. Clone the repository locally.
+
+```
+git clone https://github.com/distri-group/DistriAI-Index.git
+```
+
+2. Compile binary executable file.
 
 ```
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/DistriAI main.go
 ```
 
-2. Write configuration file.
+3. Write configuration file.
 
 Create config.yml file in the same directory as the executable file.
 ```
@@ -63,8 +70,16 @@ console:
 EOF
 ```
 
-3. Run executable file.
+4. Run executable file.
 
 ```
 ./DistriAI node start
 ```
+
+- If you have the following error，please check your account for sufficient SOL and DIST.
+
+![amount](https://github.com/distri-group/DistriAI-Node/assets/122685398/fbc25da5-486b-4c4f-87b6-b555057ee5e7)
+
+- The following information indicates success.
+
+![success](https://github.com/distri-group/DistriAI-Node/assets/122685398/dd1458a6-04d8-429d-b921-c6491aa893d1)
