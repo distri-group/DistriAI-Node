@@ -71,8 +71,7 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, err
 
 	newConfig := config.NewConfig(
 		key,
-		config.GlobalConfig.Base.Rpc,
-		pattern.WsRPC)
+		config.GlobalConfig.Base.Rpc)
 
 	var chainInfo *chain.InfoChain
 	chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)

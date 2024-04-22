@@ -2,6 +2,7 @@ package config
 
 import (
 	"DistriAI-Node/pattern"
+	"DistriAI-Node/utils"
 	logs "DistriAI-Node/utils/log_utils"
 	"fmt"
 	"os"
@@ -17,6 +18,7 @@ type Config struct {
 	} `yaml:"base"`
 	Console struct {
 		WorkDirectory string `yaml:"workDirectory"`
+		IpfsNodeUrl   string `yaml:"ipfsNodeUrl"`
 		OuterNetIP    string `yaml:"outerNetIP"`
 		OuterNetPort  string `yaml:"outerNetPort"`
 		NginxPort     string `yaml:"nginxPort"`
@@ -37,6 +39,11 @@ func InitializeConfig() {
 		logs.Error(fmt.Sprintf("Error reading config file: %v", err))
 	}
 
+	if GlobalConfig.Console.IpfsNodeUrl == "" {
+		GlobalConfig.Console.IpfsNodeUrl = pattern.DefaultIpfsNode
+	} else {
+		GlobalConfig.Console.IpfsNodeUrl = utils.EnsureTrailingSlash(GlobalConfig.Console.IpfsNodeUrl)
+	}
 	if GlobalConfig.Console.ServerPort == "" {
 		GlobalConfig.Console.ServerPort = "8088"
 	}
@@ -57,13 +64,11 @@ func InitializeConfig() {
 type SolanaConfig struct {
 	Key   string
 	RPC   string
-	WsRPC string
 }
 
-func NewConfig(key string, rpc string, wsRPC string) *SolanaConfig {
+func NewConfig(key string, rpc string) *SolanaConfig {
 	return &SolanaConfig{
 		Key:   key,
 		RPC:   rpc,
-		WsRPC: wsRPC,
 	}
 }

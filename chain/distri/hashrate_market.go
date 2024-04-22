@@ -469,35 +469,6 @@ func (chain WrapperDistri) SubmitTask(
 	return sig, nil
 }
 
-func (chain WrapperDistri) SubscribeAccount() (distri_ai.Order, error) {
-
-	var order distri_ai.Order
-
-	sub, err := chain.Conn.WsClient.AccountSubscribeWithOpts(
-		chain.ProgramDistriID,
-		rpc.CommitmentFinalized,
-		solana.EncodingBase64Zstd,
-	)
-	if err != nil {
-		return order, fmt.Errorf("> AccountSubscribeWithOpts: %v", err)
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		got, err := sub.Recv()
-		if err != nil {
-			return order, fmt.Errorf("> Recv: %v", err)
-		}
-		borshDec := bin.NewBorshDecoder(got.Value.Account.Data.GetBinary())
-
-		err = order.UnmarshalWithDecoder(borshDec)
-		if err != nil {
-			continue
-		}
-		return order, nil
-	}
-}
-
 func NewDistriWrapper(info *chain.InfoChain) *WrapperDistri {
 	return &WrapperDistri{info}
 }

@@ -5,6 +5,7 @@ import (
 	docker_utils "DistriAI-Node/docker/utils"
 	"DistriAI-Node/pattern"
 	"DistriAI-Node/utils"
+	logs "DistriAI-Node/utils/log_utils"
 	"bufio"
 	"context"
 	"fmt"
@@ -155,7 +156,9 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 
 	isExists, containerID := docker_utils.ContainerExists(ctx, cli, containerName)
 	if isExists {
-		return containerID, fmt.Errorf("%s container already exists", containerName)
+		if err := StopWorkspaceContainer(containerID); err != nil {
+			return containerID, fmt.Errorf("> StopWorkspaceContainer: %v", err)
+		}
 	}
 
 	containerID, err = docker_utils.RunContainer(ctx, cli, containerName,
@@ -168,6 +171,21 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 }
 
 func RunDeployContainer(isGPU bool, downloadURL []string) (string, error) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", err
+	}
+	cli.NegotiateAPIVersion(ctx)
+	isExists, containerID := docker_utils.ContainerExists(ctx, cli, pattern.MODELS_DEPLOY_CONTAINER)
+	if isExists {
+		if err := StopWorkspaceContainer(containerID); err != nil {
+			return containerID, fmt.Errorf("> StopWorkspaceContainer: %v", err)
+		}
+	}
 
 	if len(downloadURL) == 0 {
 		return "", fmt.Errorf("> downloadURL is empty")
@@ -202,6 +220,8 @@ func RunDeployContainer(isGPU bool, downloadURL []string) (string, error) {
 	cmd.Args = append(cmd.Args, "--restart", "always")
 
 	cmd.Args = append(cmd.Args, pattern.MODELS_DEPLOY_NAME)
+
+	logs.Normal(fmt.Sprintf("Command: %v", strings.Join(cmd.Args, " ")))
 
 	output, err := cmd.Output()
 	if err != nil {

@@ -3,16 +3,17 @@ package pattern
 import "github.com/gagliardetto/solana-go/rpc"
 
 // RPC is the url of the node
-const RPC = rpc.DevNet_RPC
-const WsRPC = rpc.DevNet_WS
+const RPC = rpc.TestNet_RPC
 
-const PROGRAM_DISTRI_ID = "6yFTDdiS1W9T9yg6YejkwKggkEE4NYqdSSzVqQvuLn16"
+const DefaultIpfsNode = "https://ipfs.distri.ai/ipfs/"
 
-const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
+const PROGRAM_DISTRI_ID = "BPDe7oSSsaYTZWkUYgk4f7i9geK7VGx16v15gK1Aaymk"
+
+const DIST_TOKEN_ID = "2mdavGYoNKKYVx4RvM36pPH6MJ1hr6TjkkcdFzCcpFZR"
 
 const NO_GPU = "No GPU"
 
-// docer
+// docker
 const (
 	DOCKER_GROUP = "distrigroup"
 )
@@ -44,7 +45,7 @@ const (
 // docker: models-deploy image
 const (
 	MODELS_DEPLOY_IMAGE     = "models-deploy"
-	MODELS_DEPLOY_TAGS      = "0.0.1"
+	MODELS_DEPLOY_TAGS      = "0.0.2"
 	MODELS_DEPLOY_CONTAINER = "models-deploy"
 	MODELS_DEPLOY_NAME      = DOCKER_GROUP + "/" + MODELS_DEPLOY_IMAGE + ":" + MODELS_DEPLOY_TAGS
 )

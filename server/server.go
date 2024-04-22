@@ -8,6 +8,7 @@ import (
 	logs "DistriAI-Node/utils/log_utils"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gin-gonic/gin"
@@ -67,27 +68,41 @@ func getDebugToken(c *gin.Context) {
 		return
 	}
 
-	if publicKey.Verify([]byte("workspace/token/"+publicKeyStr), out) {
-		workspaceURL := fmt.Sprintf("http://%v:%v?token=%v",
-			config.GlobalConfig.Console.OuterNetIP,
-			config.GlobalConfig.Console.OuterNetPort,
-			string(token))
+	currentTime := time.Now().Unix() / 100
+	msg := fmt.Sprintf("workspace/token/%v/%v", currentTime, publicKeyStr)
 
-		logs.Normal(fmt.Sprintf("Redirect to: %v", workspaceURL))
-
-		c.Redirect(http.StatusFound, workspaceURL)
+	if publicKey.Verify([]byte(msg), out) {
+		RedirectWorkspace(c, string(token))
 	} else {
-		if publicKey.Verify([]byte("deploy/token/"+publicKeyStr), out) {
-			deployURL := fmt.Sprintf("http://%v:%v",
-				config.GlobalConfig.Console.OuterNetIP,
-				config.GlobalConfig.Console.OuterNetPort)
+		currentTime -= 1
+		msg = fmt.Sprintf("workspace/token/%v/%v", currentTime, publicKeyStr)
 
-			logs.Normal(fmt.Sprintf("Redirect to: %v", deployURL))
-
-			c.Redirect(http.StatusFound, deployURL)
+		if publicKey.Verify([]byte(msg), out) {
+			RedirectWorkspace(c, string(token))
 		} else {
-			logs.Error("Verify failed")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Verify failed"})
+			if publicKey.Verify([]byte("deploy/token/"+publicKeyStr), out) {
+				deployURL := fmt.Sprintf("http://%v:%v",
+					config.GlobalConfig.Console.OuterNetIP,
+					config.GlobalConfig.Console.OuterNetPort)
+
+				logs.Normal(fmt.Sprintf("Redirect to: %v", deployURL))
+
+				c.Redirect(http.StatusFound, deployURL)
+			} else {
+				logs.Error("Verify failed")
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Verify failed"})
+			}
 		}
 	}
+}
+
+func RedirectWorkspace(c *gin.Context, token string) {
+	workspaceURL := fmt.Sprintf("http://%v:%v?token=%v",
+		config.GlobalConfig.Console.OuterNetIP,
+		config.GlobalConfig.Console.OuterNetPort,
+		token)
+
+	logs.Normal(fmt.Sprintf("Redirect to: %v", workspaceURL))
+
+	c.Redirect(http.StatusFound, workspaceURL)
 }

@@ -7,12 +7,15 @@ import (
 	logs "DistriAI-Node/utils/log_utils"
 	"archive/zip"
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -119,6 +122,13 @@ func Zip(src, dest string) error {
 func EnsureHttps(url string) string {
 	if !strings.HasPrefix(url, "https://") {
 		return "https://" + url
+	}
+	return url
+}
+
+func EnsureTrailingSlash(url string) string {
+	if !strings.HasSuffix(url, "/") {
+		url += "/"
 	}
 	return url
 }
@@ -271,16 +281,38 @@ func SplitURL(rawURL string) (string, string, error) {
 type DownloadURL struct {
 	URL      string
 	Checksum string
+	Name     string
 }
 
 func DownloadFiles(dest string, urls []DownloadURL) error {
-	client := grab.NewClient()
+	// client := grab.NewClient()
+	client := &grab.Client{
+		UserAgent: "DistriAI",
+		HTTPClient: &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
+		}}
+
+	if len(urls) == 0 {
+		return errors.New("> DownloadFiles: no files to download")
+	}
+
+	logs.Normal(fmt.Sprintf("urls: %v", urls))
+
 	reqs := make([]*grab.Request, len(urls))
 
 	for i, url := range urls {
 		label, err := GetFilenameFromURL(url.URL)
 		if err != nil {
 			return err
+		}
+
+		if url.Name != "" {
+			label = url.Name
 		}
 
 		req, err := grab.NewRequest(dest+"/"+label, url.URL)
@@ -295,9 +327,6 @@ func DownloadFiles(dest string, urls []DownloadURL) error {
 	}
 
 	responses := client.DoBatch(len(reqs), reqs...)
-
-	ticker := time.NewTicker(3 * time.Second)
-	defer ticker.Stop()
 
 	var completed int
 	for i := 0; i < len(reqs); {
@@ -324,4 +353,27 @@ func DownloadFiles(dest string, urls []DownloadURL) error {
 		}
 	}
 	return errors.New("> DownloadFiles: unexpected exit")
+}
+
+type CidItem struct {
+	Name string `json:"name"`
+	Cid  string `json:"cid"`
+}
+
+func GetCidItemsFromFile(file string) ([]CidItem, error) {
+	var items []CidItem
+
+	files, err := os.ReadFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("> os.ReadFile: %v", err)
+	}
+
+	str := string(files)
+	logs.Normal(fmt.Sprintf("file: %v", str))
+	
+	err = json.Unmarshal([]byte(str), &items)
+	if err != nil {
+		return nil, fmt.Errorf("> json.Unmarshal: %v", err)
+	}
+	return items, nil
 }

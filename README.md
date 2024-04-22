@@ -57,6 +57,8 @@ base:
 console:
   # Directory provided for training models. default: /data/distri
   workDirectory:
+  # default: https://ipfs.distri.ai/ipfs/
+  ipfsNodeUrl:
   # If using a proxy, please specify the public IP address. If not using a proxy, you can ignore this.
   outerNetIP:
   # If not filled, the value of the 'nginxPort' field will be used to fill this.

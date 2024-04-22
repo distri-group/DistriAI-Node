@@ -12,7 +12,7 @@ import (
 	logs "DistriAI-Node/utils/log_utils"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"os"
 	"time"
 
 	"github.com/gagliardetto/solana-go"
@@ -122,58 +122,106 @@ var ClientCommand = cli.Command{
 
 							containerID, err = docker.RunWorkspaceContainer(isGPU, mlToken)
 							if err != nil {
-								if strings.Contains(err.Error(), "container already exists") {
-									logs.Error(err.Error())
-									if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
-										logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
-										break ListenLoop
-									}
-									break ListenLoop
-								}
 								logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
+								if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
+									logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+								}
 								break ListenLoop
 							}
 
 							url := orderPlacedMetadata.OrderInfo.DownloadURL
 							if len(url) > 0 {
-								var downloadURL []utils.DownloadURL
+								modelDir := config.GlobalConfig.Console.WorkDirectory + "/ml-workspace"
+								var modelURL []utils.DownloadURL
+
 								for _, u := range url {
-									downloadURL = append(downloadURL, utils.DownloadURL{
-										URL:      u,
+									modelURL = append(modelURL, utils.DownloadURL{
+										URL:      config.GlobalConfig.Console.IpfsNodeUrl + u,
 										Checksum: "",
+										Name:     "CID.json",
 									})
 								}
 
-								logs.Normal("Downloading files...")
-								err = utils.DownloadFiles(config.GlobalConfig.Console.WorkDirectory+"/ml-workspace", downloadURL)
+								logs.Normal("Downloading CID.json ...")
+								err = utils.DownloadFiles(modelDir, modelURL)
 								if err != nil {
-									logs.Error(fmt.Sprintf("DownloadFiles: %v", err))
-									break ListenLoop
+									logs.Error(fmt.Sprintf("DownloadFiles %v", err))
 								}
-								logs.Normal("Download completed")
+
+								items, err := utils.GetCidItemsFromFile(modelDir + "/CID.json")
+								if err != nil {
+									logs.Error(fmt.Sprintf("GetCidItemsFromFile %v", err))
+								}
+
+								modelURL = nil
+								for _, item := range items {
+									modelURL = append(modelURL, utils.DownloadURL{
+										URL:      config.GlobalConfig.Console.IpfsNodeUrl + item.Cid,
+										Checksum: "",
+										Name:     item.Name,
+									})
+								}
+
+								logs.Normal("Downloading the following files...")
+								for _, url := range modelURL {
+									logs.Normal(url.Name)
+								}
+
+								err = utils.DownloadFiles(modelDir, modelURL)
+								if err != nil {
+									logs.Error(fmt.Sprintf("DownloadFiles %v", err))
+								}
 							}
 						case "deploy":
-							logs.Normal(fmt.Sprintf("Deploying, DownloadURL details: %v", orderPlacedMetadata.OrderInfo.DownloadURL))
-
 							_, err := dbutils.GenToken(newOrder.Buyer.String())
 							if err != nil {
 								logs.Error(fmt.Sprintf("GenToken: %v", err))
 								break ListenLoop
 							}
 
-							containerID, err = docker.RunDeployContainer(isGPU, orderPlacedMetadata.OrderInfo.DownloadURL)
-							logs.Normal(fmt.Sprintf("DeployContainerID: %v", containerID))
+							var downloadDeployURL []string
 
-							if err != nil {
-								if strings.Contains(err.Error(), "container already exists") {
-									logs.Error(err.Error())
-									if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
-										logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
-										break ListenLoop
-									}
-									break ListenLoop
+							url := orderPlacedMetadata.OrderInfo.DownloadURL
+							if len(url) > 0 {
+								deployDir := config.GlobalConfig.Console.WorkDirectory
+								var deployURL []utils.DownloadURL
+								deployURL = append(deployURL, utils.DownloadURL{
+									URL:      config.GlobalConfig.Console.IpfsNodeUrl + url[0],
+									Checksum: "",
+									Name:     "CID.json",
+								})
+
+								logs.Normal("Downloading CID.json ...")
+								err = utils.DownloadFiles(deployDir, deployURL)
+								if err != nil {
+									logs.Error(fmt.Sprintf("DownloadFiles: %v", err))
 								}
-								logs.Error(fmt.Sprintln("RunDeployContainer error: ", err))
+
+								items, err := utils.GetCidItemsFromFile(deployDir + "/CID.json")
+								if err != nil {
+									logs.Error(fmt.Sprintf("GetCidItemsFromFile: %v", err))
+								}
+
+								err = os.Remove(deployDir + "/CID.json")
+								if err != nil {
+									logs.Error(fmt.Sprintf("Remove CID.json: %v", err))
+								}
+
+								for _, item := range items {
+									downloadDeployURL = append(downloadDeployURL, config.GlobalConfig.Console.IpfsNodeUrl+item.Cid)
+								}
+							}
+
+							logs.Normal("Run deploy container ...")
+							logs.Normal(fmt.Sprintf("DownloadDeployURL: %v", downloadDeployURL))
+
+							containerID, err = docker.RunDeployContainer(isGPU, downloadDeployURL)
+							if err != nil {
+								logs.Error(fmt.Sprintln("RunDeployContainer error ", err))
+
+								if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
+									logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+								}
 								break ListenLoop
 							}
 						default:
