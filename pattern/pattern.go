@@ -3,13 +3,13 @@ package pattern
 import "github.com/gagliardetto/solana-go/rpc"
 
 // RPC is the url of the node
-const RPC = rpc.TestNet_RPC
+const RPC = rpc.DevNet_RPC
 
 const DefaultIpfsNode = "https://ipfs.distri.ai/ipfs/"
 
-const PROGRAM_DISTRI_ID = "BPDe7oSSsaYTZWkUYgk4f7i9geK7VGx16v15gK1Aaymk"
+const PROGRAM_DISTRI_ID = "6yFTDdiS1W9T9yg6YejkwKggkEE4NYqdSSzVqQvuLn16"
 
-const DIST_TOKEN_ID = "2mdavGYoNKKYVx4RvM36pPH6MJ1hr6TjkkcdFzCcpFZR"
+const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
 
 const NO_GPU = "No GPU"
 

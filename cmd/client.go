@@ -105,13 +105,14 @@ var ClientCommand = cli.Command{
 						}
 
 						isGPU := false
+						if hwInfo.GPUInfo.Number > 0 {
+							isGPU = true
+						}
+
 						var containerID string
 
 						switch orderPlacedMetadata.OrderInfo.Intent {
 						case "train":
-							if hwInfo.GPUInfo.Number > 0 {
-								isGPU = true
-							}
 
 							mlToken, err := dbutils.GenToken(newOrder.Buyer.String())
 							if err != nil {
@@ -134,9 +135,11 @@ var ClientCommand = cli.Command{
 								modelDir := config.GlobalConfig.Console.WorkDirectory + "/ml-workspace"
 								var modelURL []utils.DownloadURL
 
+								// Easy debugging
 								for _, u := range url {
 									modelURL = append(modelURL, utils.DownloadURL{
-										URL:      config.GlobalConfig.Console.IpfsNodeUrl + u,
+										URL: config.GlobalConfig.Console.IpfsNodeUrl + u,
+										// URL:      u,
 										Checksum: "",
 										Name:     "CID.json",
 									})
@@ -179,6 +182,7 @@ var ClientCommand = cli.Command{
 								break ListenLoop
 							}
 
+							// Easy debugging
 							var downloadDeployURL []string
 
 							url := orderPlacedMetadata.OrderInfo.DownloadURL
@@ -224,6 +228,15 @@ var ClientCommand = cli.Command{
 								}
 								break ListenLoop
 							}
+							// containerID, err = docker.RunDeployContainer(isGPU, orderPlacedMetadata.OrderInfo.DownloadURL)
+							// if err != nil {
+							// 	logs.Error(fmt.Sprintln("RunDeployContainer error ", err))
+
+							// 	if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
+							// 		logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+							// 	}
+							// 	break ListenLoop
+							// }
 						default:
 							logs.Error(fmt.Sprintf("OrderInfo.Intent error, Intent: %v", orderPlacedMetadata.OrderInfo.Intent))
 							break ListenLoop

@@ -60,38 +60,22 @@ func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.Pub
 	return nil
 }
 
-func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, error) {
-
-	key := config.GlobalConfig.Base.PrivateKey
-
-	machineUUID, err := machine_uuid.GetInfoMachineUUID()
-	if err != nil {
-		return nil, nil, fmt.Errorf("> GetInfoMachineUUID: %v", err)
-	}
-
-	newConfig := config.NewConfig(
-		key,
-		config.GlobalConfig.Base.Rpc)
-
-	var chainInfo *chain.InfoChain
-	chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("> GetChainInfo: %v", err)
-	}
+func GetDistri(longTime bool) (*distri.WrapperDistri, *machine_info.MachineInfo, error) {
 
 	var hwInfo machine_info.MachineInfo
 
-	if isHw {
-		hwInfo, err = machine_info.GetMachineInfo()
-		if err != nil {
-			return nil, nil, fmt.Errorf("> GetMachineInfo: %v", err)
-		}
+	hwInfo, err := machine_info.GetMachineInfo(longTime)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> GetMachineInfo: %v", err)
+	}
 
-		diskInfo, err := disk.GetDiskInfo()
-		if err != nil {
-			return nil, nil, err
-		}
+	diskInfo, err := disk.GetDiskInfo()
+	if err != nil {
+		return nil, nil, err
+	}
+	hwInfo.DiskInfo = diskInfo
 
+	if longTime {
 		// Easy debugging
 		isGPU := false
 		if hwInfo.GPUInfo.Number > 0 {
@@ -111,10 +95,32 @@ func GetDistri(isHw bool) (*distri.WrapperDistri, *machine_info.MachineInfo, err
 		}
 
 		hwInfo.Score = score
-		hwInfo.MachineAccounts = chainInfo.ProgramDistriMachine.String()
-		hwInfo.DiskInfo = diskInfo
 	}
 
+	key := config.GlobalConfig.Base.PrivateKey
+
+	machineUUID, err := machine_uuid.GetInfoMachineUUID(
+		hwInfo.CPUInfo.ModelName,
+		hwInfo.GPUInfo.Model,
+		hwInfo.IpInfo.IP,
+		hwInfo.LocationInfo.Country,
+		hwInfo.LocationInfo.Region,
+		hwInfo.LocationInfo.City)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> GetInfoMachineUUID: %v", err)
+	}
+
+	newConfig := config.NewConfig(
+		key,
+		config.GlobalConfig.Base.Rpc)
+
+	var chainInfo *chain.InfoChain
+	chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> GetChainInfo: %v", err)
+	}
+
+	hwInfo.MachineAccounts = chainInfo.ProgramDistriMachine.String()
 	hwInfo.Addr = chainInfo.Wallet.Wallet.PublicKey().String()
 	hwInfo.MachineUUID = machineUUID
 

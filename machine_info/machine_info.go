@@ -31,7 +31,7 @@ type MachineInfo struct {
 	MachineAccounts string                   `json:"MachineAccounts"`
 }
 
-func GetMachineInfo() (MachineInfo, error) {
+func GetMachineInfo(longTime bool) (MachineInfo, error) {
 	var hwInfo MachineInfo
 
 	ipInfo, err := ip.GetIpInfo()
@@ -64,16 +64,18 @@ func GetMachineInfo() (MachineInfo, error) {
 	// }
 	hwInfo.GPUInfo = gpuInfo
 
-	// Easy debugging
-	speedInfo, err := speedtest.GetSpeedInfo()
-	if err != nil {
-		logs.Warning(err.Error())
+	if longTime {
+		// Easy debugging
+		speedInfo, err := speedtest.GetSpeedInfo()
+		if err != nil {
+			logs.Warning(err.Error())
+		}
+		// speedInfo := speedtest.InfoSpeed{
+		// 	Download: "1000 Mbit/s",
+		// 	Upload:   "1000 Mbit/s",
+		// }
+		hwInfo.SpeedInfo = speedInfo
 	}
-	// speedInfo := speedtest.InfoSpeed{
-	// 	Download: "1000 Mbit/s",
-	// 	Upload:   "1000 Mbit/s",
-	// }
-	hwInfo.SpeedInfo = speedInfo
 
 	hwInfo.TFLOPSInfo = tflops.GetFlopsInfo(gpuInfo.Model)
 

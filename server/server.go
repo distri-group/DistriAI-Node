@@ -19,6 +19,7 @@ func StartServer(serverPort string) error {
 
 	r := gin.Default()
 	r.Use(middleware.Cors())
+	r.SetTrustedProxies([]string{"127.0.0.1"})
 	workspace := r.Group(template.WORKSPACE)
 	workspace.GET("/debugToken/:signature", getDebugToken)
 
