@@ -16,7 +16,6 @@ import (
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	sendandconfirm "github.com/gagliardetto/solana-go/rpc/sendAndConfirmTransaction"
 )
 
 type WrapperDistri struct {
@@ -77,19 +76,63 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 	logs.Normal("=============== AddMachine Transaction")
 	spew.Dump(tx)
 
-	sig, err := sendandconfirm.SendAndConfirmTransaction(
-		context.TODO(),
-		chain.Conn.RpcClient,
-		chain.Conn.WsClient,
-		tx,
-	)
+	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
 	}
 
-	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_REGISTER, sig.String()))
+	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_REGISTER, sig))
 
-	return sig.String(), nil
+	return sig, nil
+}
+
+func (chain WrapperDistri) RemoveMachine(hardwareInfo machine_info.MachineInfo) (string, error) {
+	logs.Normal(fmt.Sprintf("Extrinsic : %s", pattern.TX_HASHRATE_MARKET_REMOVE_MACHINE))
+
+	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
+	if err != nil {
+		panic(err)
+	}
+
+	distri_ai.SetProgramID(chain.ProgramDistriID)
+	tx, err := solana.NewTransaction(
+		[]solana.Instruction{
+			distri_ai.NewRemoveMachineInstruction(
+				chain.ProgramDistriMachine,
+				chain.Wallet.Wallet.PublicKey(),
+			).Build(),
+		},
+		recent.Value.Blockhash,
+		solana.TransactionPayer(chain.Wallet.Wallet.PublicKey()),
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("error creating transaction: %v", err)
+	}
+
+	_, err = tx.Sign(
+		func(key solana.PublicKey) *solana.PrivateKey {
+			if chain.Wallet.Wallet.PublicKey().Equals(key) {
+				return &chain.Wallet.Wallet.PrivateKey
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("error signing transaction: %v", err)
+	}
+
+	logs.Normal("=============== RemoveMachine Transaction")
+	spew.Dump(tx)
+
+	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
+	if err != nil {
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
+	}
+
+	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_REMOVE_MACHINE, sig))
+
+	return sig, nil
 }
 
 func (chain WrapperDistri) OrderStart() (string, error) {
@@ -130,19 +173,14 @@ func (chain WrapperDistri) OrderStart() (string, error) {
 
 	spew.Dump(tx)
 
-	sig, err := sendandconfirm.SendAndConfirmTransaction(
-		context.TODO(),
-		chain.Conn.RpcClient,
-		chain.Conn.WsClient,
-		tx,
-	)
+	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err)
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
 	}
 
-	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_START, sig.String()))
+	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_START, sig))
 
-	return sig.String(), nil
+	return sig, nil
 }
 
 func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlacedMetadata, isGPU bool) (string, error) {
@@ -220,19 +258,14 @@ func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlace
 	logs.Normal("=============== OrderCompleted Transaction ==================")
 	spew.Dump(tx)
 
-	sig, err := sendandconfirm.SendAndConfirmTransaction(
-		context.TODO(),
-		chain.Conn.RpcClient,
-		chain.Conn.WsClient,
-		tx,
-	)
+	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("error sending transaction: %v", err)
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
 	}
 
-	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_COMPLETED, sig.String()))
+	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_COMPLETED, sig))
 
-	return sig.String(), nil
+	return sig, nil
 }
 
 func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetadata pattern.OrderPlacedMetadata) (string, error) {
@@ -301,73 +334,14 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 
 	spew.Dump(tx)
 
-	sig, err := sendandconfirm.SendAndConfirmTransaction(
-		context.TODO(),
-		chain.Conn.RpcClient,
-		chain.Conn.WsClient,
-		tx,
-	)
+	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
 	}
 
-	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_FAILED, sig.String()))
+	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_FAILED, sig))
 
-	return sig.String(), nil
-}
-
-func (chain WrapperDistri) RemoveMachine(hardwareInfo machine_info.MachineInfo) (string, error) {
-	logs.Normal(fmt.Sprintf("Extrinsic : %s", pattern.TX_HASHRATE_MARKET_REMOVE_MACHINE))
-
-	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
-	if err != nil {
-		panic(err)
-	}
-
-	distri_ai.SetProgramID(chain.ProgramDistriID)
-	tx, err := solana.NewTransaction(
-		[]solana.Instruction{
-			distri_ai.NewRemoveMachineInstruction(
-				chain.ProgramDistriMachine,
-				chain.Wallet.Wallet.PublicKey(),
-			).Build(),
-		},
-		recent.Value.Blockhash,
-		solana.TransactionPayer(chain.Wallet.Wallet.PublicKey()),
-	)
-
-	if err != nil {
-		return "", fmt.Errorf("error creating transaction: %v", err)
-	}
-
-	_, err = tx.Sign(
-		func(key solana.PublicKey) *solana.PrivateKey {
-			if chain.Wallet.Wallet.PublicKey().Equals(key) {
-				return &chain.Wallet.Wallet.PrivateKey
-			}
-			return nil
-		},
-	)
-	if err != nil {
-		return "", fmt.Errorf("error signing transaction: %v", err)
-	}
-
-	logs.Normal("=============== RemoveMachine Transaction")
-	spew.Dump(tx)
-
-	sig, err := sendandconfirm.SendAndConfirmTransaction(
-		context.TODO(),
-		chain.Conn.RpcClient,
-		chain.Conn.WsClient,
-		tx,
-	)
-	if err != nil {
-		return "", fmt.Errorf("error sending transaction: %v", err)
-	}
-
-	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_REMOVE_MACHINE, sig.String()))
-
-	return sig.String(), nil
+	return sig, nil
 }
 
 func (chain WrapperDistri) GetMachine() (distri_ai.Machine, error) {
@@ -485,48 +459,14 @@ func (chain WrapperDistri) SubmitTask(
 
 	spew.Dump(tx)
 
-	sig, err := sendandconfirm.SendAndConfirmTransaction(
-		context.TODO(),
-		chain.Conn.RpcClient,
-		chain.Conn.WsClient,
-		tx,
-	)
+	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("error sending transaction: %v", err)
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
 	}
 
-	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_SUBMIT_TASK, sig.String()))
+	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_SUBMIT_TASK, sig))
 
-	return sig.String(), nil
-}
-
-func (chain WrapperDistri) SubscribeAccount() (distri_ai.Order, error) {
-
-	var order distri_ai.Order
-
-	sub, err := chain.Conn.WsClient.AccountSubscribeWithOpts(
-		chain.ProgramDistriID,
-		rpc.CommitmentFinalized,
-		solana.EncodingBase64Zstd,
-	)
-	if err != nil {
-		return order, fmt.Errorf("> AccountSubscribeWithOpts: %v", err)
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		got, err := sub.Recv()
-		if err != nil {
-			return order, fmt.Errorf("> Recv: %v", err)
-		}
-		borshDec := bin.NewBorshDecoder(got.Value.Account.Data.GetBinary())
-
-		err = order.UnmarshalWithDecoder(borshDec)
-		if err != nil {
-			continue
-		}
-		return order, nil
-	}
+	return sig, nil
 }
 
 func NewDistriWrapper(info *chain.InfoChain) *WrapperDistri {

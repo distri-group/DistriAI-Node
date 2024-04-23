@@ -144,6 +144,12 @@ func InitGpuInfos() []GpuInfo {
 		GpuInfo{Name: "NVIDIA Tesla P100 DGXS", Fp16: 21.22, Fp32: 10.61, Fp64: 5.304},
 		GpuInfo{Name: "NVIDIA Tesla P100 PCIe 12 GB", Fp16: 19.05, Fp32: 9.526, Fp64: 4.763},
 		GpuInfo{Name: "NVIDIA Tesla P100 PCIe 16 GB", Fp16: 19.05, Fp32: 9.526, Fp64: 4.763},
-		GpuInfo{Name: "NVIDIA Tesla P100 SXM2", Fp16: 21.22, Fp32: 21.22, Fp64: 5.304},)
+		GpuInfo{Name: "NVIDIA Tesla P100 SXM2", Fp16: 21.22, Fp32: 21.22, Fp64: 5.304},
+		GpuInfo{Name: "NVIDIA GeForce RTX 2080 SUPER", Fp16: 22.30, Fp32: 11.15, Fp64: 0.348},
+		GpuInfo{Name: "NVIDIA GeForce RTX 2080 Ti", Fp16: 26.90, Fp32: 13.45, Fp64: 0.420},
+		GpuInfo{Name: "NVIDIA GeForce RTX 2080 Ti 12 GB", Fp16: 30.41, Fp32: 15.21, Fp64: 0.475},
+		GpuInfo{Name: "NVIDIA RTX 2000 Ada Generation", Fp16: 12, Fp32: 12, Fp64: 0.187},
+		GpuInfo{Name: "NVIDIA GeForce RTX 4070 AD103", Fp16: 29.15, Fp32: 29.15, Fp64: 0.455},
+		GpuInfo{Name: "NVIDIA GeForce RTX 4060 AD106", Fp16: 15.11, Fp32: 15.11, Fp64: 0.236},)
 	return gpuInfos
 }
