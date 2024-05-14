@@ -19,11 +19,13 @@ type Config struct {
 	Console struct {
 		WorkDirectory string `yaml:"workDirectory"`
 		IpfsNodeUrl   string `yaml:"ipfsNodeUrl"`
-		OuterNetIP    string `yaml:"outerNetIP"`
-		OuterNetPort  string `yaml:"outerNetPort"`
-		NginxPort     string `yaml:"nginxPort"`
+		PublicIP      string `yaml:"publicIP"`
+		DistriPort    string `yaml:"distriPort"`
 		WorkPort      string `yaml:"workPort"`
 		ServerPort    string `yaml:"serverPort"`
+		ExpandPort1   string `yaml:"publicPortExpand1"`
+		ExpandPort2   string `yaml:"publicPortExpand2"`
+		ExpandPort3   string `yaml:"publicPortExpand3"`
 	} `yaml:"console"`
 }
 
@@ -39,22 +41,24 @@ func InitializeConfig() {
 		logs.Error(fmt.Sprintf("Error reading config file: %v", err))
 	}
 
+	if GlobalConfig.Console.WorkDirectory != "" {
+		GlobalConfig.Console.WorkDirectory = utils.RemoveTrailingSlash(GlobalConfig.Console.WorkDirectory)
+		GlobalConfig.Console.WorkDirectory = utils.EnsureLeadingSlash(GlobalConfig.Console.WorkDirectory)
+	}
+
 	if GlobalConfig.Console.IpfsNodeUrl == "" {
 		GlobalConfig.Console.IpfsNodeUrl = pattern.DefaultIpfsNode
 	} else {
-		GlobalConfig.Console.IpfsNodeUrl = utils.EnsureTrailingSlash(GlobalConfig.Console.IpfsNodeUrl)
+		GlobalConfig.Console.IpfsNodeUrl = utils.RemoveTrailingSlash(GlobalConfig.Console.IpfsNodeUrl)
 	}
 	if GlobalConfig.Console.ServerPort == "" {
-		GlobalConfig.Console.ServerPort = "8088"
+		GlobalConfig.Console.ServerPort = "13012"
 	}
 	if GlobalConfig.Console.WorkPort == "" {
-		GlobalConfig.Console.WorkPort = "8080"
+		GlobalConfig.Console.WorkPort = "13011"
 	}
-	if GlobalConfig.Console.NginxPort == "" {
-		GlobalConfig.Console.NginxPort = "80"
-	}
-	if GlobalConfig.Console.OuterNetPort == "" {
-		GlobalConfig.Console.OuterNetPort = GlobalConfig.Console.NginxPort
+	if GlobalConfig.Console.DistriPort == "" {
+		GlobalConfig.Console.DistriPort = "13010"
 	}
 	if GlobalConfig.Base.Rpc == "" {
 		GlobalConfig.Base.Rpc = pattern.RPC
@@ -62,13 +66,13 @@ func InitializeConfig() {
 }
 
 type SolanaConfig struct {
-	Key   string
-	RPC   string
+	Key string
+	RPC string
 }
 
 func NewConfig(key string, rpc string) *SolanaConfig {
 	return &SolanaConfig{
-		Key:   key,
-		RPC:   rpc,
+		Key: key,
+		RPC: rpc,
 	}
 }

@@ -1,8 +1,10 @@
 package template
 
 const (
-	WORKSPACE = "/workspace"
-	TOKEN     = "/token"
+	WORKSPACE   = "/workspace"
+	UPLOAD_file = "/uploadfile"
+	PROXY       = "/proxy"
+	TOKEN       = "/token"
 )
 
 const (

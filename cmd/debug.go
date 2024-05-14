@@ -8,6 +8,9 @@ import (
 	// "github.com/docker/docker/client"
 	// "github.com/docker/go-connections/nat"
 
+	"DistriAI-Node/utils"
+	logs "DistriAI-Node/utils/log_utils"
+
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -97,6 +100,38 @@ var DebugCommand = cli.Command{
 		// 	logs.Normal("Insufficient free space in the Docker directory")
 		// }
 		// return nil
+
+		/* =============================================== */
+
+		// res, err := utils.UploadFileToIPFS(config.GlobalConfig.Console.IpfsNodeUrl, "/root/hank/DistriAI-Node/bin/logs/log_2024-04-15_13:58:10.txt")
+		// if err != nil {
+		// 	return err
+		// }
+		// logs.Normal(res)
+
+		// fileList, err := utils.GetAllFiles("/root/hank/DistriAI-Node/chain")
+		// if err != nil {
+		// 	return err
+		// }
+		// jsonBody, err := json.Marshal(fileList)
+		// if err != nil {
+		// 	return err
+		// }
+		// logs.Normal(fmt.Sprintf("fileList: %v", string(jsonBody)))
+
+		// isExists, err := utils.PathExists("/root/hank/DistriAI-Node/chain")
+		// if err != nil {
+		// 	return err			
+		// }
+		// logs.Normal(fmt.Sprintf("isExists1: %v", isExists))
+		// isExists, err = utils.PathExists("/root/hank/DistriAI-Node/chain1")
+		// if err != nil {
+		// 	return err			
+		// }
+		// logs.Normal(fmt.Sprintf("isExists2: %v", isExists))
+
+		res := utils.RemovePrefix("/opt/dlami/nvme/distriAI/ml-workspace/tutorials/visualization-tutorial.ipynb", "/opt/dlami/nvme/distriAI/ml-workspace")
+		logs.Normal(res)
 		return nil
 	},
 }

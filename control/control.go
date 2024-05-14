@@ -41,19 +41,12 @@ func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, co
 	return nil
 }
 
-func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.PublicKey) error {
+func OrderFailed(distri *distri.WrapperDistri, orderPlacedMetadata pattern.OrderPlacedMetadata, buyer solana.PublicKey) error {
 	logs.Normal("Order is failed")
-
-	var orderPlacedMetadata pattern.OrderPlacedMetadata
-
-	err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
-	if err != nil {
-		return fmt.Errorf("> json.Unmarshal: %v", err.Error())
-	}
 
 	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
 
-	_, err = distri.OrderFailed(buyer, orderPlacedMetadata)
+	_, err := distri.OrderFailed(buyer, orderPlacedMetadata)
 	if err != nil {
 		return fmt.Errorf("> distri.OrderFailed: %v", err.Error())
 	}

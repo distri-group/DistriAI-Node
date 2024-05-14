@@ -51,24 +51,28 @@ cat << EOF > config.yml
 base:
   rpc:
   # Mnemonics used to complete transactions
-  privateKey: <your_private_key>
+  privateKey:
   # The level of privacy protection provided
   securityLevel: 0
 console:
   # Directory provided for training models. default: /data/distri
   workDirectory:
-  # default: https://ipfs.distri.ai/ipfs/
+  # default: https://ipfs.distri.ai
   ipfsNodeUrl:
   # If using a proxy, please specify the public IP address. If not using a proxy, you can ignore this.
-  outerNetIP:
-  # If not filled, the value of the 'nginxPort' field will be used to fill this.
-  outerNetPort:
-  # The port on which the nginx listens. default: 80
-  nginxPort:
-  # The port on which the console listens. default: 8080
+  publicIP:
+  # The port on which the DistriAI listens. default: 13010
+  # Make sure the public network is accessible
+  distriPort:
+  # The port on which the workspace or deploy listens. default: 13011
   workPort:
-  # The port on which the Local server listens. default: 8088
+  # The port on which the Local server listens. default: 13012
   serverPort:
+  # Optional, ease of use for users to deploy tools such as visualization or data tracking.
+  # Make sure the public network is accessible
+  publicPortExpand1:
+  publicPortExpand2:
+  publicPortExpand3:
 EOF
 ```
 

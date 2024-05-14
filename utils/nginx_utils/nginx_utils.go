@@ -9,19 +9,21 @@ import (
 func GenNginxConfig(nginxPort, workPort, serverPort string) error {
 	logs.Normal(fmt.Sprintf("Start nginx. nginxPort: %v, workPort: %v, serverPort: %v",
 		nginxPort, workPort, serverPort))
-	dir := "/etc/nginx/sites-enabled"
+	nginxDir := "/etc/nginx/sites-enabled"
 
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		return fmt.Errorf("> ReadDir: %v", err)
-	}
+	os.Remove(nginxDir + "/distri")
 
-	for _, file := range files {
-		err = os.Remove(dir + "/" + file.Name())
-		if err != nil {
-			return fmt.Errorf("> Remove: %v", err)
-		}
-	}
+	// files, err := os.ReadDir(nginxDir)
+	// if err != nil {
+	// 	return fmt.Errorf("> ReadDir: %v", err)
+	// }
+
+	// for _, file := range files {
+	// 	err = os.Remove(nginxDir + "/" + file.Name())
+	// 	if err != nil {
+	// 		return fmt.Errorf("> Remove: %v", err)
+	// 	}
+	// }
 
 	nginxConfig := fmt.Sprintf(`server {
 	listen %v;
@@ -35,7 +37,12 @@ func GenNginxConfig(nginxPort, workPort, serverPort string) error {
 		proxy_set_header X-Real-IP $remote_addr;
 		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto $scheme;
-		}
+	}
+
+	location /uploadfiles {
+		alias /home/ubuntu/DistriAI-Model-Create;
+		index index.html;
+	}
 
 	location / {
 		proxy_pass http://127.0.0.1:%v;
@@ -49,7 +56,7 @@ func GenNginxConfig(nginxPort, workPort, serverPort string) error {
     }
 }`, nginxPort, nginxPort, serverPort, workPort)
 
-	err = os.WriteFile("/etc/nginx/sites-enabled/distri", []byte(nginxConfig), 0644)
+	err := os.WriteFile(nginxDir+"/distri", []byte(nginxConfig), 0644)
 	if err != nil {
 		return fmt.Errorf("> WriteFile: %v", err)
 	}
