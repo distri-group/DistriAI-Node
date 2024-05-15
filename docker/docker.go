@@ -129,6 +129,36 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 			},
 		}}
 
+	if config.GlobalConfig.Console.ExpandPort1 != "" {
+		hostPort1 := config.GlobalConfig.Console.ExpandPort1
+		port1 := fmt.Sprintf("%s/tcp", hostPort1)
+		logs.Normal(fmt.Sprintf("port1: %s", port1))
+		portBind[nat.Port(port1)] = []nat.PortBinding{
+			{
+				HostIP:   "0.0.0.0",
+				HostPort: hostPort1,
+			}}
+	}
+	if config.GlobalConfig.Console.ExpandPort2 != "" {
+		hostPort2 := config.GlobalConfig.Console.ExpandPort2
+		port2 := fmt.Sprintf("%s/tcp", hostPort2)
+		logs.Normal(fmt.Sprintf("port2: %s", port2))
+		portBind[nat.Port(port2)] = []nat.PortBinding{
+			{
+				HostIP:   "0.0.0.0",
+				HostPort: hostPort2,
+			}}
+	}
+	if config.GlobalConfig.Console.ExpandPort3 != "" {
+		hostPort3 := config.GlobalConfig.Console.ExpandPort3
+		port3 := fmt.Sprintf("%s/tcp", hostPort3)
+		logs.Normal(fmt.Sprintf("port3: %s", port3))
+		portBind[nat.Port(port3)] = []nat.PortBinding{
+			{
+				HostIP:   "0.0.0.0",
+				HostPort: hostPort3,
+			}}
+	}
 	hostConfig := &container.HostConfig{
 		PortBindings: portBind,
 		Binds: []string{
@@ -168,6 +198,69 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 		return "", err
 	}
 	return containerID, nil
+}
+
+func TestRunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return "", err
+	}
+	cli.NegotiateAPIVersion(ctx)
+
+	containerName := pattern.ML_WORKSPACE_CONTAINER
+	if isGPU {
+		containerName = pattern.ML_WORKSPACE_GPU_CONTAINER
+	}
+
+	isExists, containerID := docker_utils.ContainerExists(ctx, cli, containerName)
+	if isExists {
+		if err := StopWorkspaceContainer(containerID); err != nil {
+			return containerID, fmt.Errorf("> StopWorkspaceContainer: %v", err)
+		}
+	}
+
+	cmd := exec.Command("sudo", "docker", "run", "-d")
+	cmd.Args = append(cmd.Args, "-p", fmt.Sprintf("%s:8080", config.GlobalConfig.Console.WorkPort))
+
+	if config.GlobalConfig.Console.ExpandPort1 != "" {
+		cmd.Args = append(cmd.Args, "-p", fmt.Sprintf("%s:%s", config.GlobalConfig.Console.ExpandPort1, config.GlobalConfig.Console.ExpandPort1))
+	}
+	if config.GlobalConfig.Console.ExpandPort2 != "" {
+		cmd.Args = append(cmd.Args, "-p", fmt.Sprintf("%s:%s", config.GlobalConfig.Console.ExpandPort2, config.GlobalConfig.Console.ExpandPort2))
+	}
+	if config.GlobalConfig.Console.ExpandPort3 != "" {
+		cmd.Args = append(cmd.Args, "-p", fmt.Sprintf("%s:%s", config.GlobalConfig.Console.ExpandPort3, config.GlobalConfig.Console.ExpandPort3))
+	}
+
+	if isGPU {
+		cmd.Args = append(cmd.Args, "--runtime=nvidia")
+		cmd.Args = append(cmd.Args, "--gpus", "all")
+	}
+
+	cmd.Args = append(cmd.Args, "--env", fmt.Sprintf("AUTHENTICATE_VIA_JUPYTER=%s", mlToken))
+
+	cmd.Args = append(cmd.Args, "--name", pattern.ML_WORKSPACE_CONTAINER)
+	cmd.Args = append(cmd.Args, "-v", fmt.Sprintf("%s/ml-workspace:/workspace", config.GlobalConfig.Console.WorkDirectory))
+	cmd.Args = append(cmd.Args, "--shm-size", "512m")
+	cmd.Args = append(cmd.Args, "--restart", "always")
+
+	cmd.Args = append(cmd.Args, pattern.ML_WORKSPACE_GPU_NAME)
+
+	logs.Normal(fmt.Sprintf("Command: %v", strings.Join(cmd.Args, " ")))
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("> exec.Command: %s, output: %s", err.Error(), string(output))
+	}
+	outputStr := string(output)
+	if len(outputStr) > 64 {
+		outputStr = outputStr[:64]
+	}
+	return outputStr, nil
 }
 
 func RunDeployContainer(isGPU bool, downloadURL []string) (string, error) {
@@ -225,7 +318,6 @@ func RunDeployContainer(isGPU bool, downloadURL []string) (string, error) {
 
 	output, err := cmd.Output()
 	if err != nil {
-		fmt.Println("Error:", err)
 		return "", fmt.Errorf("> exec.Command: %s, output: %s", err.Error(), string(output))
 	}
 	outputStr := string(output)

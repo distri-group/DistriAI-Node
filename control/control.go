@@ -13,6 +13,7 @@ import (
 	logs "DistriAI-Node/utils/log_utils"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gagliardetto/solana-go"
@@ -41,19 +42,12 @@ func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, co
 	return nil
 }
 
-func OrderFailed(distri *distri.WrapperDistri, metadata string, buyer solana.PublicKey) error {
+func OrderFailed(distri *distri.WrapperDistri, orderPlacedMetadata pattern.OrderPlacedMetadata, buyer solana.PublicKey) error {
 	logs.Normal("Order is failed")
-
-	var orderPlacedMetadata pattern.OrderPlacedMetadata
-
-	err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
-	if err != nil {
-		return fmt.Errorf("> json.Unmarshal: %v", err.Error())
-	}
 
 	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
 
-	_, err = distri.OrderFailed(buyer, orderPlacedMetadata)
+	_, err := distri.OrderFailed(buyer, orderPlacedMetadata)
 	if err != nil {
 		return fmt.Errorf("> distri.OrderFailed: %v", err.Error())
 	}
@@ -126,6 +120,27 @@ func GetDistri(longTime bool) (*distri.WrapperDistri, *machine_info.MachineInfo,
 
 	jsonData, _ := json.Marshal(hwInfo)
 	logs.Normal(fmt.Sprintf("Hardware Info : %v", string(jsonData)))
+
+	modleCreatePath := pattern.ModleCreatePath
+	err = os.MkdirAll(modleCreatePath, 0755)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> MkdirAll: %v", err)
+	}
+	var modelURL []utils.DownloadURL
+	modelURL = append(modelURL, utils.DownloadURL{
+		URL:      config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash("QmZQpwwUTne3rR1ZHfSTAwMQAsGChBBc7Mm8yHCb3QsEhE"),
+		Checksum: "",
+		Name:     "DistriAI-Model-Create.zip",
+	})
+	err = utils.DownloadFiles(modleCreatePath, modelURL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> DownloadFiles: %v", err)
+	}
+	_, err = utils.Unzip(modleCreatePath+"/DistriAI-Model-Create.zip", modleCreatePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> Unzip: %v", err)
+	}
+	logs.Normal("Model upload web static resources have been downloaded")
 
 	return distri.NewDistriWrapper(chainInfo), &hwInfo, nil
 }

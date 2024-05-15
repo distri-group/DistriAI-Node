@@ -6,6 +6,8 @@ import (
 	"DistriAI-Node/pattern"
 	logs "DistriAI-Node/utils/log_utils"
 	"archive/zip"
+	"bufio"
+	"bytes"
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/binary"
@@ -14,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"net/url"
@@ -131,6 +134,20 @@ func EnsureTrailingSlash(url string) string {
 		url += "/"
 	}
 	return url
+}
+
+func RemoveTrailingSlash(s string) string {
+	if strings.HasSuffix(s, "/") {
+		return s[:len(s)-1]
+	}
+	return s
+}
+
+func EnsureLeadingSlash(s string) string {
+	if !strings.HasPrefix(s, "/") {
+		return "/" + s
+	}
+	return s
 }
 
 func Unzip(src string, dest string) ([]string, error) {
@@ -355,6 +372,147 @@ func DownloadFiles(dest string, urls []DownloadURL) error {
 	return errors.New("> DownloadFiles: unexpected exit")
 }
 
+type UploadCidItem struct {
+	Name string `json:"Name"`
+	Hash string `json:"Hash"`
+}
+
+func UploadFileToIPFS(ipfsNodeUrl, filePath string, timeout time.Duration) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("> os.Open: %v", err)
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	part, err := writer.CreateFormFile("file", filePath)
+	if err != nil {
+		return "", fmt.Errorf("> writer.CreateFormFile: %v", err)
+	}
+
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return "", fmt.Errorf("> io.Copy: %v", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return "", fmt.Errorf("> writer.Close: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", ipfsNodeUrl+"/rpc/api/v0/add?stream-channels=true&progress=false", body)
+	if err != nil {
+		return "", fmt.Errorf("> http.NewRequest: %v", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	client := &http.Client{
+		Timeout: timeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("> client.Do: %v", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("> io.ReadAll: %v", err)
+	}
+
+	scanner := bufio.NewScanner(bytes.NewReader(respBody))
+	for scanner.Scan() {
+		line := scanner.Text()
+		var item UploadCidItem
+		err := json.Unmarshal([]byte(line), &item)
+		if err != nil {
+			return "", fmt.Errorf("> json.Unmarshal: %v", err)
+		}
+		// 返回第一行的 Hash 值
+		return item.Hash, nil
+	}
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("> scanner.Err: %v", err)
+	}
+	return "", fmt.Errorf("no lines in response")
+}
+
+func CopyFileInIPFS(ipfsNodeUrl, source, destination string) error {
+	req, err := http.NewRequest("POST", ipfsNodeUrl+"/rpc/api/v0/files/cp?parents=true&arg="+source+"&arg="+destination, nil)
+	if err != nil {
+		return fmt.Errorf("> http.NewRequest: %v", err)
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("> client.Do: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("> io.ReadAll: %v", err)
+		}
+		jsonBody, err := json.Marshal(respBody)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("> unexpected status code: %v, boby: %s", resp.StatusCode, string(jsonBody))
+	}
+
+	return nil
+}
+
+func RmFileInIPFS(ipfsNodeUrl, destination string) error {
+	req, err := http.NewRequest("POST", ipfsNodeUrl+"/rpc/api/v0/files/rm?arg="+destination+"&recursive=true&force=true", nil)
+	if err != nil {
+		return fmt.Errorf("> http.NewRequest: %v", err)
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("> client.Do: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("> io.ReadAll: %v", err)
+		}
+		jsonBody, err := json.Marshal(respBody)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("> unexpected status code: %v, boby: %s", resp.StatusCode, string(jsonBody))
+	}
+
+	return nil
+}
+
 type CidItem struct {
 	Name string `json:"name"`
 	Cid  string `json:"cid"`
@@ -370,10 +528,47 @@ func GetCidItemsFromFile(file string) ([]CidItem, error) {
 
 	str := string(files)
 	logs.Normal(fmt.Sprintf("file: %v", str))
-	
+
 	err = json.Unmarshal([]byte(str), &items)
 	if err != nil {
 		return nil, fmt.Errorf("> json.Unmarshal: %v", err)
 	}
 	return items, nil
+}
+
+type FileItem struct {
+	Name string
+	Path string
+}
+
+func GetAllFiles(dirPath string) ([]FileItem, error) {
+	var files []FileItem
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return fmt.Errorf("> filepath.WalkFunc: %v", err)
+		}
+		if !info.IsDir() {
+			files = append(files, FileItem{Name: info.Name(), Path: path})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("> filepath.Walk: %v", err)
+	}
+	return files, nil
+}
+
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, fmt.Errorf("> os.Stat: %v", err)
+}
+
+func RemovePrefix(s, prefix string) string {
+	return strings.TrimPrefix(s, prefix)
 }

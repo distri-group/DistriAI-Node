@@ -27,6 +27,8 @@ var ClientCommand = cli.Command{
 			Name:  "start",
 			Usage: "Upload hardware configuration and initiate listening events.",
 			Action: func(c *cli.Context) error {
+				defer dbutils.CloseDB()
+
 				distriWrapper, hwInfo, err := control.GetDistri(true)
 				if err != nil {
 					logs.Error(fmt.Sprintf("GetDistri: %v", err))
@@ -34,7 +36,7 @@ var ClientCommand = cli.Command{
 				}
 
 				if err = nginx.StartNginx(
-					config.GlobalConfig.Console.NginxPort,
+					config.GlobalConfig.Console.DistriPort,
 					config.GlobalConfig.Console.WorkPort,
 					config.GlobalConfig.Console.ServerPort); err != nil {
 					logs.Error(fmt.Sprintf("StartNginx error: %v", err))
@@ -113,6 +115,11 @@ var ClientCommand = cli.Command{
 
 						switch orderPlacedMetadata.OrderInfo.Intent {
 						case "train":
+							// orderPlacedMetadata.OrderInfo.Message = "This is a test text.This is a test text.This is a test text.This is a test text.This is a test text."
+							// if err = control.OrderFailed(distriWrapper, orderPlacedMetadata, newOrder.Buyer); err != nil {
+							// 	logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+							// }
+							// break ListenLoop
 
 							mlToken, err := dbutils.GenToken(newOrder.Buyer.String())
 							if err != nil {
@@ -121,10 +128,11 @@ var ClientCommand = cli.Command{
 							}
 							logs.Normal(fmt.Sprintf("From buyer: %v ; mlToken: %v", newOrder.Buyer, mlToken))
 
-							containerID, err = docker.RunWorkspaceContainer(isGPU, mlToken)
+							containerID, err = docker.TestRunWorkspaceContainer(isGPU, mlToken)
 							if err != nil {
 								logs.Error(fmt.Sprintln("RunWorkspaceContainer error: ", err))
-								if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
+								orderPlacedMetadata.OrderInfo.Message = err.Error()
+								if err = control.OrderFailed(distriWrapper, orderPlacedMetadata, newOrder.Buyer); err != nil {
 									logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
 								}
 								break ListenLoop
@@ -138,7 +146,7 @@ var ClientCommand = cli.Command{
 								// Easy debugging
 								for _, u := range url {
 									modelURL = append(modelURL, utils.DownloadURL{
-										URL: config.GlobalConfig.Console.IpfsNodeUrl + u,
+										URL: config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash(u),
 										// URL:      u,
 										Checksum: "",
 										Name:     "CID.json",
@@ -159,7 +167,7 @@ var ClientCommand = cli.Command{
 								modelURL = nil
 								for _, item := range items {
 									modelURL = append(modelURL, utils.DownloadURL{
-										URL:      config.GlobalConfig.Console.IpfsNodeUrl + item.Cid,
+										URL:      config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash(item.Cid),
 										Checksum: "",
 										Name:     item.Name,
 									})
@@ -190,7 +198,7 @@ var ClientCommand = cli.Command{
 								deployDir := config.GlobalConfig.Console.WorkDirectory
 								var deployURL []utils.DownloadURL
 								deployURL = append(deployURL, utils.DownloadURL{
-									URL:      config.GlobalConfig.Console.IpfsNodeUrl + url[0],
+									URL:      config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash(url[0]),
 									Checksum: "",
 									Name:     "CID.json",
 								})
@@ -212,7 +220,7 @@ var ClientCommand = cli.Command{
 								}
 
 								for _, item := range items {
-									downloadDeployURL = append(downloadDeployURL, config.GlobalConfig.Console.IpfsNodeUrl+item.Cid)
+									downloadDeployURL = append(downloadDeployURL, config.GlobalConfig.Console.IpfsNodeUrl+utils.EnsureLeadingSlash(item.Cid))
 								}
 							}
 
@@ -222,8 +230,8 @@ var ClientCommand = cli.Command{
 							containerID, err = docker.RunDeployContainer(isGPU, downloadDeployURL)
 							if err != nil {
 								logs.Error(fmt.Sprintln("RunDeployContainer error ", err))
-
-								if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
+								orderPlacedMetadata.OrderInfo.Message = err.Error()
+								if err = control.OrderFailed(distriWrapper, orderPlacedMetadata, newOrder.Buyer); err != nil {
 									logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
 								}
 								break ListenLoop
@@ -266,6 +274,10 @@ var ClientCommand = cli.Command{
 								break ListenLoop
 							case "Training":
 								orderEndTime := time.Unix(newOrder.StartTime, 0).Add(time.Hour * time.Duration(newOrder.Duration))
+
+								db := dbutils.GetDB()
+								dbutils.Update(db, []byte("orderEndTime"), []byte(orderEndTime.Format(time.RFC3339)))
+
 								timeNow := time.Now()
 								if timeNow.After(orderEndTime) {
 
@@ -302,6 +314,8 @@ var ClientCommand = cli.Command{
 			Name:  "stop",
 			Usage: "Stop the client.",
 			Action: func(c *cli.Context) error {
+				nginx.StopNginx()
+
 				distriWrapper, hwInfo, err := control.GetDistri(false)
 				if err != nil {
 					logs.Error(err.Error())
@@ -313,15 +327,18 @@ var ClientCommand = cli.Command{
 					logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
 				}
 
-				db, err := dbutils.NewDB()
-				if err != nil {
-					logs.Error(err.Error())
-				}
-				db.Delete([]byte("buyer"))
-				db.Delete([]byte("token"))
-				db.Close()
+				db := dbutils.GetDB()
+				defer dbutils.CloseDB()
+				dbutils.Delete(db, []byte("buyer"))
+				dbutils.Delete(db, []byte("token"))
+				dbutils.Delete(db, []byte("orderEndTime"))
+				dbutils.CloseDB()
 
-				nginx.StopNginx()
+				err = os.RemoveAll(pattern.ModleCreatePath)
+				if err != nil {
+					logs.Error(fmt.Sprintf("RemoveAll: %v", err))
+				}
+
 				return nil
 			},
 		},
