@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func GenNginxConfig(nginxPort, workPort, serverPort string) error {
+func GenNginxConfig(nginxPort, workPort, serverPort, modleCreatePath string) error {
 	logs.Normal(fmt.Sprintf("Start nginx. nginxPort: %v, workPort: %v, serverPort: %v",
 		nginxPort, workPort, serverPort))
 	nginxDir := "/etc/nginx/sites-enabled"
@@ -40,7 +40,7 @@ func GenNginxConfig(nginxPort, workPort, serverPort string) error {
 	}
 
 	location /uploadfiles {
-		alias /home/ubuntu/DistriAI-Model-Create;
+		alias %v;
 		index index.html;
 	}
 
@@ -54,7 +54,7 @@ func GenNginxConfig(nginxPort, workPort, serverPort string) error {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-}`, nginxPort, nginxPort, serverPort, workPort)
+}`, nginxPort, nginxPort, serverPort, modleCreatePath, workPort)
 
 	err := os.WriteFile(nginxDir+"/distri", []byte(nginxConfig), 0644)
 	if err != nil {

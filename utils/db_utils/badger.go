@@ -3,32 +3,63 @@ package dbutils
 import (
 	"DistriAI-Node/utils"
 	"fmt"
+	"sync"
 
 	"github.com/dgraph-io/badger/v4"
 )
 
-type DB struct {
-	db *badger.DB
+// type DB struct {
+// 	db *badger.DB
+// }
+
+// func NewDB() (*DB, error) {
+// 	opts := badger.DefaultOptions("/tmp/badger").WithLoggingLevel(badger.WARNING)
+// 	db, err := badger.Open(opts)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("> badger.Open: %v", err.Error())
+// 	}
+// 	return &DB{db: db}, nil
+// }
+
+// func Close(db *badger.DB) error {
+// 	return db.Close()
+// }
+
+var (
+	db     *badger.DB
+	once   sync.Once
+	dbOpen = false
+)
+
+func GetDB() *badger.DB {
+	once.Do(func() {
+		opts := badger.DefaultOptions("/tmp/badger").WithLoggingLevel(badger.WARNING)
+		var err error
+		db, err = badger.Open(opts)
+		if err != nil {
+			panic(err)
+		}
+		dbOpen = true
+	})
+	return db
 }
 
-func NewDB() (*DB, error) {
-	opts := badger.DefaultOptions("/tmp/badger").WithLoggingLevel(badger.WARNING)
-	db, err := badger.Open(opts)
-	if err != nil {
-		return nil, fmt.Errorf("> badger.Open: %v", err.Error())
+func CloseDB() {
+	if dbOpen {
+		db.Close()
+		dbOpen = false
 	}
-	return &DB{db: db}, nil
 }
 
-func (d *DB) Update(key, value []byte) error {
-	return d.db.Update(func(txn *badger.Txn) error {
+func Update(db *badger.DB, key, value []byte) error {
+	return db.Update(func(txn *badger.Txn) error {
 		return txn.Set(key, value)
 	})
 }
 
-func (d *DB) Get(key []byte) ([]byte, error) {
+func Get(db *badger.DB, key []byte) ([]byte, error) {
 	var valCopy []byte
-	err := d.db.View(func(txn *badger.Txn) error {
+	err := db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(key)
 		if err != nil {
 			return err
@@ -42,14 +73,10 @@ func (d *DB) Get(key []byte) ([]byte, error) {
 	return valCopy, nil
 }
 
-func (d *DB) Delete(key []byte) error {
-	return d.db.Update(func(txn *badger.Txn) error {
+func Delete(db *badger.DB, key []byte) error {
+	return db.Update(func(txn *badger.Txn) error {
 		return txn.Delete(key)
 	})
-}
-
-func (d *DB) Close() error {
-	return d.db.Close()
 }
 
 func GenToken(buyer string) (string, error) {
@@ -58,12 +85,8 @@ func GenToken(buyer string) (string, error) {
 		return "", fmt.Errorf("> GenerateRandomString: %v", err.Error())
 	}
 
-	db, err := NewDB()
-	if err != nil {
-		return "", fmt.Errorf("> NewDB: %v", err.Error())
-	}
-	db.Update([]byte("buyer"), []byte(buyer))
-	db.Update([]byte("token"), []byte(mlToken))
-	db.Close()
+	db := GetDB()
+	Update(db, []byte("buyer"), []byte(buyer))
+	Update(db, []byte("token"), []byte(mlToken))
 	return mlToken, nil
 }

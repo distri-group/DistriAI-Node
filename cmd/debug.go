@@ -8,9 +8,6 @@ import (
 	// "github.com/docker/docker/client"
 	// "github.com/docker/go-connections/nat"
 
-	"DistriAI-Node/utils"
-	logs "DistriAI-Node/utils/log_utils"
-
 	"github.com/urfave/cli"
 	// "golang.org/x/crypto/nacl/box"
 )
@@ -121,17 +118,14 @@ var DebugCommand = cli.Command{
 
 		// isExists, err := utils.PathExists("/root/hank/DistriAI-Node/chain")
 		// if err != nil {
-		// 	return err			
+		// 	return err
 		// }
 		// logs.Normal(fmt.Sprintf("isExists1: %v", isExists))
 		// isExists, err = utils.PathExists("/root/hank/DistriAI-Node/chain1")
 		// if err != nil {
-		// 	return err			
+		// 	return err
 		// }
 		// logs.Normal(fmt.Sprintf("isExists2: %v", isExists))
-
-		res := utils.RemovePrefix("/opt/dlami/nvme/distriAI/ml-workspace/tutorials/visualization-tutorial.ipynb", "/opt/dlami/nvme/distriAI/ml-workspace")
-		logs.Normal(res)
 		return nil
 	},
 }

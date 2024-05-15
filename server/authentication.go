@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dgraph-io/badger/v4"
 	"github.com/gagliardetto/solana-go"
 )
 
-func UserAuthentication(db *dbutils.DB, validityPeriod int64, signature string, message string) (bool, error) {
-	buyerPublicKey, err := db.Get([]byte("buyer"))
+func UserAuthentication(db *badger.DB, validityPeriod int64, signature string, message string) (bool, error) {
+	buyerPublicKey, err := dbutils.Get(db, []byte("buyer"))
 	if err != nil {
 		return false, fmt.Errorf("> Get error: %v", err)
 	}

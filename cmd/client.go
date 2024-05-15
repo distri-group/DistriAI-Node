@@ -27,6 +27,8 @@ var ClientCommand = cli.Command{
 			Name:  "start",
 			Usage: "Upload hardware configuration and initiate listening events.",
 			Action: func(c *cli.Context) error {
+				defer dbutils.CloseDB()
+
 				distriWrapper, hwInfo, err := control.GetDistri(true)
 				if err != nil {
 					logs.Error(fmt.Sprintf("GetDistri: %v", err))
@@ -144,7 +146,7 @@ var ClientCommand = cli.Command{
 								// Easy debugging
 								for _, u := range url {
 									modelURL = append(modelURL, utils.DownloadURL{
-										URL: config.GlobalConfig.Console.IpfsNodeUrl + utils.EnsureLeadingSlash(u),
+										URL: config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash(u),
 										// URL:      u,
 										Checksum: "",
 										Name:     "CID.json",
@@ -165,7 +167,7 @@ var ClientCommand = cli.Command{
 								modelURL = nil
 								for _, item := range items {
 									modelURL = append(modelURL, utils.DownloadURL{
-										URL:      config.GlobalConfig.Console.IpfsNodeUrl + utils.EnsureLeadingSlash(item.Cid),
+										URL:      config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash(item.Cid),
 										Checksum: "",
 										Name:     item.Name,
 									})
@@ -196,7 +198,7 @@ var ClientCommand = cli.Command{
 								deployDir := config.GlobalConfig.Console.WorkDirectory
 								var deployURL []utils.DownloadURL
 								deployURL = append(deployURL, utils.DownloadURL{
-									URL:      config.GlobalConfig.Console.IpfsNodeUrl + utils.EnsureLeadingSlash(url[0]),
+									URL:      config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash(url[0]),
 									Checksum: "",
 									Name:     "CID.json",
 								})
@@ -273,14 +275,8 @@ var ClientCommand = cli.Command{
 							case "Training":
 								orderEndTime := time.Unix(newOrder.StartTime, 0).Add(time.Hour * time.Duration(newOrder.Duration))
 
-								db, err := dbutils.NewDB()
-								if err != nil {
-									logs.Error(fmt.Sprintf("NewDB: %v", err))
-									break ListenLoop
-								}
-								defer db.Close()
-								db.Update([]byte("orderEndTime"), []byte(orderEndTime.Format(time.RFC3339)))
-								db.Close()
+								db := dbutils.GetDB()
+								dbutils.Update(db, []byte("orderEndTime"), []byte(orderEndTime.Format(time.RFC3339)))
 
 								timeNow := time.Now()
 								if timeNow.After(orderEndTime) {
@@ -331,14 +327,18 @@ var ClientCommand = cli.Command{
 					logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
 				}
 
-				db, err := dbutils.NewDB()
+				db := dbutils.GetDB()
+				defer dbutils.CloseDB()
+				dbutils.Delete(db, []byte("buyer"))
+				dbutils.Delete(db, []byte("token"))
+				dbutils.Delete(db, []byte("orderEndTime"))
+				dbutils.CloseDB()
+
+				err = os.RemoveAll(pattern.ModleCreatePath)
 				if err != nil {
-					logs.Error(err.Error())
+					logs.Error(fmt.Sprintf("RemoveAll: %v", err))
 				}
-				db.Delete([]byte("buyer"))
-				db.Delete([]byte("token"))
-				db.Delete([]byte("orderEndTime"))
-				db.Close()
+
 				return nil
 			},
 		},

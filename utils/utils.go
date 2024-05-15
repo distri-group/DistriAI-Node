@@ -465,7 +465,49 @@ func CopyFileInIPFS(ipfsNodeUrl, source, destination string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %v", resp.StatusCode)
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("> io.ReadAll: %v", err)
+		}
+		jsonBody, err := json.Marshal(respBody)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("> unexpected status code: %v, boby: %s", resp.StatusCode, string(jsonBody))
+	}
+
+	return nil
+}
+
+func RmFileInIPFS(ipfsNodeUrl, destination string) error {
+	req, err := http.NewRequest("POST", ipfsNodeUrl+"/rpc/api/v0/files/rm?arg="+destination+"&recursive=true&force=true", nil)
+	if err != nil {
+		return fmt.Errorf("> http.NewRequest: %v", err)
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("> client.Do: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("> io.ReadAll: %v", err)
+		}
+		jsonBody, err := json.Marshal(respBody)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("> unexpected status code: %v, boby: %s", resp.StatusCode, string(jsonBody))
 	}
 
 	return nil

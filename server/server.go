@@ -80,14 +80,9 @@ func getDebugToken(c *gin.Context) {
 	signature := c.Param("signature")
 	logs.Normal(fmt.Sprintf("signature: %v", signature))
 
-	db, err := dbutils.NewDB()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	defer db.Close()
+	db := dbutils.GetDB()
 
-	token, err := db.Get([]byte("token"))
+	token, err := dbutils.Get(db, []byte("token"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -115,14 +110,9 @@ func getDebugToken(c *gin.Context) {
 func getToken(c *gin.Context) {
 	signature := c.Param("signature")
 
-	db, err := dbutils.NewDB()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	defer db.Close()
+	db := dbutils.GetDB()
 
-	token, err := db.Get([]byte("token"))
+	token, err := dbutils.Get(db, []byte("token"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -139,7 +129,6 @@ func getToken(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("> UserAuthentication %v", err.Error())})
 		return
 	}
-	db.Close()
 
 	if ok {
 		c.JSON(http.StatusOK, gin.H{"token": string(token)})
@@ -171,14 +160,9 @@ func uploadFile(c *gin.Context) {
 		return
 	}
 
-	db, err := dbutils.NewDB()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("> NewDB %v", err.Error())})
-		return
-	}
-	defer db.Close()
+	db := dbutils.GetDB()
 
-	buyerPublicKey, err := db.Get([]byte("buyer"))
+	buyerPublicKey, err := dbutils.Get(db, []byte("buyer"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("> Get buyer %v", err.Error())})
 		return
@@ -190,7 +174,7 @@ func uploadFile(c *gin.Context) {
 		return
 	}
 
-	orderEndTime, err := db.Get([]byte("orderEndTime"))
+	orderEndTime, err := dbutils.Get(db, []byte("orderEndTime"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("> Get orderEndTime %v", err.Error())})
 		return
@@ -207,7 +191,6 @@ func uploadFile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("> UserAuthentication %v", err.Error())})
 		return
 	}
-	db.Close()
 
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "verification failed"})
@@ -249,6 +232,11 @@ func uploadFile(c *gin.Context) {
 					publicKey,
 					uploadFile.ModelName,
 					utils.EnsureLeadingSlash(utils.RemovePrefix(fileItem.Path, config.GlobalConfig.Console.WorkDirectory+"/ml-workspace")))
+				err = utils.RmFileInIPFS(config.GlobalConfig.Console.IpfsNodeUrl, destination)
+				if err != nil {
+					logs.Normal(fmt.Sprintf("> RmFileInIPFS fileItem %v", err.Error()))
+					return
+				}
 				err = utils.CopyFileInIPFS(
 					config.GlobalConfig.Console.IpfsNodeUrl,
 					"/ipfs/"+cid,
@@ -274,6 +262,11 @@ func uploadFile(c *gin.Context) {
 				publicKey,
 				uploadFile.ModelName,
 				utils.EnsureLeadingSlash(utils.RemovePrefix(file.Path, config.GlobalConfig.Console.WorkDirectory+"/ml-workspace")))
+			err = utils.RmFileInIPFS(config.GlobalConfig.Console.IpfsNodeUrl, destination)
+			if err != nil {
+				logs.Normal(fmt.Sprintf("> RmFileInIPFS fileItem %v", err.Error()))
+				return
+			}
 			err = utils.CopyFileInIPFS(
 				config.GlobalConfig.Console.IpfsNodeUrl,
 				"/ipfs/"+cid,
