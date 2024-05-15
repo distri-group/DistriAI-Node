@@ -63,24 +63,7 @@ var DebugCommand = cli.Command{
 		// db.Delete([]byte("buyer"))
 		// db.Delete([]byte("token"))
 		// db.Close()
-
 		// nginx.StopNginx()
-
-		/* Debug : solana Sign */
-		// private := solana.MustPrivateKeyFromBase58("2hpaRRjxuzhiHJ6ggimgGHi8jCMgG3MRXTUAGm7XNrztXpzKvJJ4fqAfgzb4YNnT9LDvYMfh4GzFh5NBojUcCXaB")
-		// public := private.PublicKey()
-		// logs.Normal(fmt.Sprintf("publicKey: %v", public))
-		// msg := "workspace/token/" + public.String()
-		// signature, err := private.Sign([]byte(msg))
-		// if err != nil {
-		// 	return err
-		// }
-		// logs.Normal(fmt.Sprintf("signature: %v", signature.String()))
-		// if public.Verify([]byte(msg), signature) {
-		// 	logs.Normal("Verify success")
-		// } else {
-		// 	logs.Error("Verify failed")
-		// }
 
 		/* Debug : docker space */
 		// sizeLimitGB := 10
@@ -99,33 +82,6 @@ var DebugCommand = cli.Command{
 		// return nil
 
 		/* =============================================== */
-
-		// res, err := utils.UploadFileToIPFS(config.GlobalConfig.Console.IpfsNodeUrl, "/root/hank/DistriAI-Node/bin/logs/log_2024-04-15_13:58:10.txt")
-		// if err != nil {
-		// 	return err
-		// }
-		// logs.Normal(res)
-
-		// fileList, err := utils.GetAllFiles("/root/hank/DistriAI-Node/chain")
-		// if err != nil {
-		// 	return err
-		// }
-		// jsonBody, err := json.Marshal(fileList)
-		// if err != nil {
-		// 	return err
-		// }
-		// logs.Normal(fmt.Sprintf("fileList: %v", string(jsonBody)))
-
-		// isExists, err := utils.PathExists("/root/hank/DistriAI-Node/chain")
-		// if err != nil {
-		// 	return err
-		// }
-		// logs.Normal(fmt.Sprintf("isExists1: %v", isExists))
-		// isExists, err = utils.PathExists("/root/hank/DistriAI-Node/chain1")
-		// if err != nil {
-		// 	return err
-		// }
-		// logs.Normal(fmt.Sprintf("isExists2: %v", isExists))
 		return nil
 	},
 }
