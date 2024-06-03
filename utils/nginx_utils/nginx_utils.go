@@ -11,7 +11,7 @@ func GenNginxConfig(nginxPort, workPort, serverPort, modleCreatePath string) err
 		nginxPort, workPort, serverPort))
 	nginxDir := "/etc/nginx/sites-enabled"
 
-	os.Remove(nginxDir + "/distri")
+	os.Remove(nginxDir + "/distri.conf")
 
 	// files, err := os.ReadDir(nginxDir)
 	// if err != nil {
@@ -56,7 +56,7 @@ func GenNginxConfig(nginxPort, workPort, serverPort, modleCreatePath string) err
     }
 }`, nginxPort, nginxPort, serverPort, modleCreatePath, workPort)
 
-	err := os.WriteFile(nginxDir+"/distri", []byte(nginxConfig), 0644)
+	err := os.WriteFile(nginxDir+"/distri.conf", []byte(nginxConfig), 0644)
 	if err != nil {
 		return fmt.Errorf("> WriteFile: %v", err)
 	}

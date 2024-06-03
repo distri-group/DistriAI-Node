@@ -78,7 +78,7 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 
 	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
 	}
 
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_REGISTER, sig))
@@ -86,7 +86,7 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 	return sig, nil
 }
 
-func (chain WrapperDistri) RemoveMachine(hardwareInfo machine_info.MachineInfo) (string, error) {
+func (chain WrapperDistri) RemoveMachine() (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %s", pattern.TX_HASHRATE_MARKET_REMOVE_MACHINE))
 
 	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
@@ -127,7 +127,7 @@ func (chain WrapperDistri) RemoveMachine(hardwareInfo machine_info.MachineInfo) 
 
 	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
 	}
 
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_REMOVE_MACHINE, sig))
@@ -175,7 +175,7 @@ func (chain WrapperDistri) OrderStart() (string, error) {
 
 	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
 	}
 
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_START, sig))
@@ -260,7 +260,7 @@ func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlace
 
 	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
 	}
 
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_COMPLETED, sig))
@@ -336,7 +336,7 @@ func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetada
 
 	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
 	}
 
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_ORDER_FAILED, sig))
@@ -461,7 +461,7 @@ func (chain WrapperDistri) SubmitTask(
 
 	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
-		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())		
+		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
 	}
 
 	logs.Vital(fmt.Sprintf("%s completed : %v", pattern.TX_HASHRATE_MARKET_SUBMIT_TASK, sig))
