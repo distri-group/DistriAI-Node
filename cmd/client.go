@@ -26,7 +26,17 @@ var ClientCommand = cli.Command{
 		{
 			Name:  "start",
 			Usage: "Upload hardware configuration and initiate listening events.",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:  "preload, L",
+					Value: "n",
+					Usage: "Preload AI models during idle time at night.",
+				},
+			},
 			Action: func(c *cli.Context) error {
+
+				logs.Normal(pattern.LOGO)
+				
 				defer dbutils.CloseDB()
 
 				distriWrapper, hwInfo, err := control.GetDistri(true)
@@ -316,13 +326,13 @@ var ClientCommand = cli.Command{
 			Action: func(c *cli.Context) error {
 				nginx.StopNginx()
 
-				distriWrapper, hwInfo, err := control.GetDistri(false)
+				distriWrapper, _, err := control.GetDistri(false)
 				if err != nil {
 					logs.Error(err.Error())
 					return nil
 				}
 
-				hash, err := distriWrapper.RemoveMachine(*hwInfo)
+				hash, err := distriWrapper.RemoveMachine()
 				if err != nil {
 					logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
 				}
