@@ -181,10 +181,6 @@ func OrderRefunded(containerID string) error {
 
 // temp
 // StartHeartbeatTask initiates a periodic task that sends heartbeat signals to the distributed system.
-// Heartbeat signals maintain the machine's presence and availability within the distributed system.
-// Parameters:
-// - distri (*distri.WrapperDistri): A wrapper for interacting with the distributed system.
-// - machineID (machine_uuid.MachineUUID): A unique identifier for the machine sending the heartbeat.
 func StartHeartbeatTask(distri *distri.WrapperDistri, machineID machine_uuid.MachineUUID) {
 	// Create a new ticker that triggers every 6 hours.
 	ticker := time.NewTicker(6 * time.Hour)
