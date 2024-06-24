@@ -18,199 +18,182 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 )
-
 // OrderComplete marks the completion of an order process.
 func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, containerID string) error {
-    logs.Normal("Order is complete")
+	logs.Normal("Order is complete")
+// Stop the workspace container associated with the order.
+	if err := docker.StopWorkspaceContainer(containerID); err != nil {
+		return err
+	}
+// Unmarshal the order placement metadata JSON string into a structured object.
+	var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-    // Stops the container associated with the order
-    if err := docker.StopWorkspaceContainer(containerID); err != nil {
-        return err
-    }
-
-    // Parses the order placement metadata
-    var orderPlacedMetadata pattern.OrderPlacedMetadata
-    err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
-    if err != nil {
-        return err
-    }
-
-    // Updates machine account information in the order metadata
-    orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
-
-    // Notifies the distribution system that the order is completed
-    _, err = distri.OrderCompleted(orderPlacedMetadata, isGPU)
-    if err != nil {
-        return err
-    }
-    return nil
+	err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
+	if err != nil {
+		return err
+	}
+// Update the machine accounts information in the metadata with the current distribution machine details.
+	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
+	// Notify the distribution system that the order has been completed, providing the updated metadata and GPU usage flag.
+	_, err = distri.OrderCompleted(orderPlacedMetadata, isGPU)
+	if err != nil {
+		return err
+	}
+	return nil
 }
-
+// OrderFailed Handles the scenario where an order has failed.
 func OrderFailed(distri *distri.WrapperDistri, orderPlacedMetadata pattern.OrderPlacedMetadata, buyer solana.PublicKey) error {
-    // Logs the event of the order failing.
-    logs.Normal("Order is failed")
-
-    // Updates the order placement metadata with the machine account details on order failure.
-    orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
-
-    // Attempts to flag the order as failed using the distri module's method.
-    _, err := distri.OrderFailed(buyer, orderPlacedMetadata)
-    // If the order fails to be flagged as failed, returns an error with details.
-    if err != nil {
-        return fmt.Errorf("> distri.OrderFailed: %v", err.Error())
-    }
-    // Returns nil indicating successful processing of the order failure.
-    return nil
+	logs.Normal("Order is failed")
+// Update the metadata with the machine account from the distribution service
+	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
+// Attempt to mark the order as failed within the distribution system
+	_, err := distri.OrderFailed(buyer, orderPlacedMetadata)
+	if err != nil {
+		// Return a formatted error if the order fail processing encounters an issue
+		return fmt.Errorf("> distri.OrderFailed: %v", err.Error())
+	}
+	return nil
 }
 
-// GetDistri retrieves a distribution wrapper, machine information, and potential errors based on machine details and a flag indicating a long runtime.
+// GetDistri retrieves a distribution wrapper, machine information, and an error based on the provided longTime flag.
 func GetDistri(longTime bool) (*distri.WrapperDistri, *machine_info.MachineInfo, error) {
-    // Initialize machine information structure
-    var hwInfo machine_info.MachineInfo
 
-    // Fetch basic machine info which may include CPU, GPU, disk, etc.
-    hwInfo, err := machine_info.GetMachineInfo(longTime)
-    if err != nil {
-        return nil, nil, fmt.Errorf("> GetMachineInfo: %v", err)
-    }
+	var hwInfo machine_info.MachineInfo
 
-    // Obtain disk information and incorporate it into machine info
-    diskInfo, err := disk.GetDiskInfo()
-    if err != nil {
-        return nil, nil, err
-    }
-    hwInfo.DiskInfo = diskInfo
+	// Retrieve basic machine information; if an error occurs, return with an error message.
+	hwInfo, err := machine_info.GetMachineInfo(longTime)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> GetMachineInfo: %v", err)
+	}
 
-    // For a long runtime, perform extra GPU checks and scoring
-    if longTime {
-        // Determine if GPU is present and run scoring container accordingly
-        // Simplified debugging logic
-        isGPU := hwInfo.GPUInfo.Number > 0
+	// Gather disk information and attach it to the hardware info.
+	diskInfo, err := disk.GetDiskInfo()
+	if err != nil {
+		return nil, nil, err
+	}
+	hwInfo.DiskInfo = diskInfo
 
-        score, err := docker.RunScoreContainer(isGPU)
-        if err != nil {
-            return nil, nil, err
-        }
+	// Perform extended operations when longTime is true for detailed debugging and scoring.
+	if longTime {
+		// Easy debugging
+		isGPU := false
+		if hwInfo.GPUInfo.Number > 0 {
+			isGPU = true
+		}
+		score, err := docker.RunScoreContainer(isGPU)
+		if err != nil {
+			return nil, nil, err
+		}
 
-        // Select the appropriate ML workspace image based on GPU presence
-        imageWorkspace := pattern.ML_WORKSPACE_NAME
-        if isGPU {
-            imageWorkspace = pattern.ML_WORKSPACE_GPU_NAME
-        }
-        // Ensure the required Docker image is available
-        if err = docker.ImageExistOrPull(imageWorkspace); err != nil {
-            return nil, nil, err
-        }
+		imageWorkspace := pattern.ML_WORKSPACE_NAME
+		if isGPU {
+			imageWorkspace = pattern.ML_WORKSPACE_GPU_NAME
+		}
+		if err = docker.ImageExistOrPull(imageWorkspace); err != nil {
+			return nil, nil, err
+		}
 
-        // Include scoring in machine information
-        hwInfo.Score = score
-    }
+		hwInfo.Score = score
+	}
 
-    // Create a new configuration object using the global private key and RPC settings
-    key := config.GlobalConfig.Base.PrivateKey
-    newConfig := config.NewConfig(key, config.GlobalConfig.Base.Rpc)
+	key := config.GlobalConfig.Base.PrivateKey
 
-    // Retrieve chain information using machine hardware details and UUID
-    machineUUID, err := machine_uuid.GetInfoMachineUUID(
-        hwInfo.CPUInfo.ModelName,
-        hwInfo.GPUInfo.Model,
-        hwInfo.IpInfo.IP,
-        hwInfo.LocationInfo.Country,
-        hwInfo.LocationInfo.Region,
-        hwInfo.LocationInfo.City)
-    if err != nil {
-        return nil, nil, fmt.Errorf("> GetInfoMachineUUID: %v", err)
-    }
+	// Derive a unique machine UUID considering various hardware specifics; return an error if unable to do so.	
+	machineUUID, err := machine_uuid.GetInfoMachineUUID(
+		hwInfo.CPUInfo.ModelName,
+		hwInfo.GPUInfo.Model,
+		hwInfo.IpInfo.IP,
+		hwInfo.LocationInfo.Country,
+		hwInfo.LocationInfo.Region,
+		hwInfo.LocationInfo.City)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> GetInfoMachineUUID: %v", err)
+	}
 
-    chainInfo, err := chain.GetChainInfo(newConfig, machineUUID)
-    if err != nil {
-        return nil, nil, fmt.Errorf("> GetChainInfo: %v", err)
-    }
+	// Initialize a new configuration and fetch chain information using the machine UUID.
+	newConfig := config.NewConfig(
+		key,
+		config.GlobalConfig.Base.Rpc)
 
-    // Update machine info to include chain-related details
-    hwInfo.MachineAccounts = chainInfo.ProgramDistriMachine.String()
-    hwInfo.Addr = chainInfo.Wallet.Wallet.PublicKey().String() // Truncated for brevity
-    hwInfo.MachineUUID = machineUUID
+	var chainInfo *chain.InfoChain
+	chainInfo, err = chain.GetChainInfo(newConfig, machineUUID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> GetChainInfo: %v", err)
+	}
 
-    // Log machine information after marshaling to JSON
-    jsonData, _ := json.Marshal(hwInfo)
-    logs.Normal(fmt.Sprintf("Hardware Info : %v", string(jsonData)))
+	// Update hardware info with chain details and UUID.
+	hwInfo.MachineAccounts = chainInfo.ProgramDistriMachine.String()
+	hwInfo.Addr = chainInfo.Wallet.Wallet.PublicKey().String()
+	hwInfo.MachineUUID = machineUUID
 
-    // Prepare directory for model creation
-    modleCreatePath := pattern.ModleCreatePath
-    if err = os.MkdirAll(modleCreatePath, 0755); err != nil {
-        return nil, nil, fmt.Errorf("> MkdirAll: %v", err)
-    }
+	// Log the hardware information in a human-readable format.
+	jsonData, _ := json.Marshal(hwInfo)
+	logs.Normal(fmt.Sprintf("Hardware Info : %v", string(jsonData)))
 
-    // Download model upload web static resources (ZIP file)
-    modelURL := []utils.DownloadURL{
-        {URL: config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash("QmZQpwwUTne3rR1ZHfSTAwMQAsGChBBc7Mm8yHCb3QsEhE"),
-         Checksum: "", Name: "DistriAI-Model-Create.zip"},
-    }
-    if err = utils.DownloadFiles(modleCreatePath, modelURL); err != nil {
-        return nil, nil, fmt.Errorf("> DownloadFiles: %v", err)
-    }
-
-    // Unzip the downloaded model resources
-    _, err = utils.Unzip(modleCreatePath+"/DistriAI-Model-Create.zip", modleCreatePath)
-    if err != nil {
-        return nil, nil, fmt.Errorf("> Unzip: %v", err)
-    }
-    logs.Normal("Model upload web static resources have been downloaded")
-
-    // Return the distribution wrapper, machine info, and no error upon successful completion
-    return distri.NewDistriWrapper(chainInfo), &hwInfo, nil
+	// Ensure the directory for model creation exists; handle any errors during creation.
+	modleCreatePath := pattern.ModleCreatePath
+	err = os.MkdirAll(modleCreatePath, 0755)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> MkdirAll: %v", err)
+	}
+	// Define and download model-related static resources, unzip them, and log the completion.
+	var modelURL []utils.DownloadURL
+	modelURL = append(modelURL, utils.DownloadURL{
+		URL:      config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash("QmZQpwwUTne3rR1ZHfSTAwMQAsGChBBc7Mm8yHCb3QsEhE"),
+		Checksum: "",
+		Name:     "DistriAI-Model-Create.zip",
+	})
+	err = utils.DownloadFiles(modleCreatePath, modelURL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> DownloadFiles: %v", err)
+	}
+	_, err = utils.Unzip(modleCreatePath+"/DistriAI-Model-Create.zip", modleCreatePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("> Unzip: %v", err)
+	}
+	logs.Normal("Model upload web static resources have been downloaded")
+// Instantiate and return the distribution wrapper along with the updated machine info.
+	return distri.NewDistriWrapper(chainInfo), &hwInfo, nil
 }
 
 // var oldDuration time.Time
 // var orderTimer *time.Timer
 
+// OrderRefunded Handles the logic for processing a refunded order.
 func OrderRefunded(containerID string) error {
-    // Logs that the order refund process has started.
 	logs.Normal("Order is refunded")
-	
-    // Calls the Docker service to stop the specified container.
-    // If the stop operation fails, an error is returned.
 	if err := docker.StopWorkspaceContainer(containerID); err != nil {
 		return err
 	}
-	
-    // Returns nil indicating a successful container stop operation.
 	return nil
 }
 
 // temp
-// StartHeartbeatTask initiates a periodic task that sends heartbeat signals to the distributed system.
 func StartHeartbeatTask(distri *distri.WrapperDistri, machineID machine_uuid.MachineUUID) {
-	// Create a new ticker that triggers every 6 hours.
 	ticker := time.NewTicker(6 * time.Hour)
-	// Launch a goroutine to handle the heartbeat task.
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				// Generate a random task ID.
 				taskID, err := utils.GenerateRandomString(16)
 				if err != nil {
 					logs.Error(err.Error())
 				}
-				// Parse the generated task ID into a TaskUUID.
 				taskUuid, err := utils.ParseTaskUUID(string(taskID))
 				if err != nil {
-					logs.Error(fmt.Sprintf("Error parsing taskUuid: %v", err))
+					logs.Error(fmt.Sprintf("error parsing taskUuid: %v", err))
 				}
-				// Parse the machine ID into a MachineUUID.
+
 				machineUuid, err := utils.ParseMachineUUID(string(machineID))
 				if err != nil {
-					logs.Error(fmt.Sprintf("Error parsing machineUuid: %v", err))
+					logs.Error(fmt.Sprintf("error parsing machineUuid: %v", err))
 				}
-				// Submit the heartbeat task to the distributed system.
+
 				hash, err := distri.SubmitTask(taskUuid, machineUuid, utils.CurrentPeriod(), pattern.TaskMetadata{})
 				if err != nil {
-					logs.Error(fmt.Sprintf("Error submitting task: Hash %v, Error: %v", hash, err))
+					logs.Error(fmt.Sprintf("Error block : %v, msg : %v\n", hash, err))
 				}
 			}
-			// The select loop continues indefinitely to keep the heartbeat task running.
 		}
 	}()
 }
