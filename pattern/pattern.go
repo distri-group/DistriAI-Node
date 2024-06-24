@@ -22,9 +22,16 @@ const PROGRAM_DISTRI_ID = "6yFTDdiS1W9T9yg6YejkwKggkEE4NYqdSSzVqQvuLn16"
 
 const DIST_TOKEN_ID = "896KfVVY6VRGQs1d9CKLnKUEgXXCCJcEEg7LwSK84vWE"
 
+const DistriServeUrl = "https://test.distri.ai/index-api"
+
 const NO_GPU = "No GPU"
 
 const ModleCreatePath = "/home/DistriAI-Model-Create"
+
+// path name
+const (
+	IdlePreload = "idle-preload"
+)
 
 // docker
 const (
@@ -80,6 +87,8 @@ const (
 
 	TX_HASHRATE_MARKET_ORDER_COMPLETED = HASHRATE_MARKET + DOT + "order_completed"
 
+	TX_HASHRATE_MARKET_ORDER_REFUND = HASHRATE_MARKET + DOT + "order_refund"
+
 	TX_HASHRATE_MARKET_ORDER_FAILED = HASHRATE_MARKET + DOT + "order_failed"
 
 	TX_HASHRATE_MARKET_REMOVE_MACHINE = HASHRATE_MARKET + DOT + "remove_machine"
@@ -94,7 +103,6 @@ type OrderPlacedMetadata struct {
 	FormData        FormData    `json:"formData"`
 	MachineInfo     MachineInfo `json:"MachineInfo"`
 	OrderInfo       OrderInfo   `json:"OrderInfo"`
-	MachineAccounts string      `json:"MachineAccounts"`
 }
 
 type MachineInfo struct {

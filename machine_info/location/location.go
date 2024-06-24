@@ -36,6 +36,6 @@ func GetLocationInfo(ip string) (InfoLocation, error) {
 	// response.Country = "South Korea"
 	// response.Region = "South Korea"
 	// response.City = "Anyang-si"
-	// response.IP = "211.32.126.136"
+	// response.IP = "67.185.75.5"
 	return response, nil
 }

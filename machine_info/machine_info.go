@@ -71,8 +71,8 @@ func GetMachineInfo(longTime bool) (MachineInfo, error) {
 			logs.Warning(err.Error())
 		}
 		// speedInfo := speedtest.InfoSpeed{
-		// 	Download: "1000 Mbit/s",
-		// 	Upload:   "1000 Mbit/s",
+		// 	Download: "61.90 Mbit/s",
+		// 	Upload:   "59.49 Mbit/s",
 		// }
 		hwInfo.SpeedInfo = speedInfo
 	}

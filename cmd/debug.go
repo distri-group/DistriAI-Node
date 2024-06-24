@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	logs "DistriAI-Node/utils/log_utils"
 
 	// "github.com/jdgcs/ed25519/extra25519"
 
@@ -16,9 +17,31 @@ var DebugCommand = cli.Command{
 	Name:  "debug",
 	Usage: "debug.",
 	Action: func(c *cli.Context) error {
+		logs.Normal("Debug")
 
 		/* Debug : Force Complete */
-		// machineUUID, err := machine_uuid.GetInfoMachineUUID()
+		// nginx.StopNginx()
+
+		// var hwInfo machine_info.MachineInfo
+
+		// hwInfo, err := machine_info.GetMachineInfo(false)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// diskInfo, err := disk.GetDiskInfo()
+		// if err != nil {
+		// 	return err
+		// }
+		// hwInfo.DiskInfo = diskInfo
+
+		// machineUUID, err := machine_uuid.GetInfoMachineUUID(
+		// 	hwInfo.CPUInfo.ModelName,
+		// 	hwInfo.GPUInfo.Model,
+		// 	hwInfo.IpInfo.IP,
+		// 	hwInfo.LocationInfo.Country,
+		// 	hwInfo.LocationInfo.Region,
+		// 	hwInfo.LocationInfo.City)
 		// if err != nil {
 		// 	return err
 		// }
@@ -37,33 +60,33 @@ var DebugCommand = cli.Command{
 
 		// var orderPlacedMetadata pattern.OrderPlacedMetadata
 
-		// metadata := "{\"formData\":{\"duration\":2,\"taskName\":\"Computing Task-48\"},\"MachineInfo\":{\"Uuid\":\"0xec29d2a3323b6812b091d70610d2e17b\",\"Provider\":\"AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF\",\"Region\":\"United States\",\"GPU\":\"1xNVIDIA A10G\",\"CPU\":\"AMD EPYC 7R32\",\"Tflops\":31.52,\"RAM\":\"15GB\",\"AvailDiskStorage\":100,\"Reliability\":\"100%\",\"CPS\":\"53.15\",\"Speed\":{\"Upload\":\"1180.81 Mbit/s\",\"Download\":\"1980.73 Mbit/s\"},\"MaxDuration\":10,\"Price\":1,\"IP\":\"44.220.54.244\",\"Port\":\"80\"},\"OrderInfo\":{\"Model\":22,\"Intent\":\"deploy\",\"DownloadURL\":[\"QmQ54jKv8A3XjcD2qs8HAyuyFotdkzXfZ2baMk6Fv9a3fy\"]}}"
+		// metadata := "{\"formData\":{\"duration\":2,\"taskName\":\"Computing Task-28\"},\"MachineInfo\":{\"Uuid\":\"0x90899f35b7fa4c1e6cd51e3b03023a35\",\"Provider\":\"AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF\",\"Region\":\"United States\",\"GPU\":\"1x NVIDIA A10G\",\"CPU\":\"AMD EPYC 7R32\",\"Tflops\":31.52,\"RAM\":\"15\",\"AvailDiskStorage\":100,\"Reliability\":\"0%\",\"CPS\":\"52.77\",\"Speed\":{\"Upload\":\"496.68 Mbit/s\",\"Download\":\"698.15 Mbit/s\"},\"MaxDuration\":10,\"Price\":1,\"IP\":\"44.220.54.244\",\"Port\":\"80\"},\"OrderInfo\":{\"Model\":\"\",\"Intent\":\"train\",\"DownloadURL\":[]}}"
 
 		// err = json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
 		// if err != nil {
 		// 	return err
 		// }
 
-		// orderPlacedMetadata.MachineAccounts = chainInfo.ProgramDistriMachine.String()
-
-		// chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("7cSAPAPqm2tKA5yyKAz8vxvKVu51oTSDXSVnpsPVr9YV")
+		// chainInfo.ProgramDistriOrder = solana.MustPublicKeyFromBase58("EdPB44J5h3WSw4xow1tez7cBsW6VZhFC9BmMjfA7QRoJ")
 
 		// buyer := solana.MustPublicKeyFromBase58("AxBoDKGYKBa54qkDusWWYgf8QXufvBKTJTQBaKyEiEzF")
 
 		// distriWrapper := distri.NewDistriWrapper(chainInfo)
-		// _, err = distriWrapper.OrderFailed(buyer, orderPlacedMetadata)
+		// // _, err = distriWrapper.OrderFailed(buyer, orderPlacedMetadata)
+		// // if err != nil {
+		// // 	logs.Error(err.Error())
+		// // }
+		// _, err = distriWrapper.OrderRefund(buyer)
 		// if err != nil {
 		// 	logs.Error(err.Error())
 		// }
 
-		// db, err := dbutils.NewDB()
-		// if err != nil {
-		// 	logs.Error(err.Error())
-		// }
-		// db.Delete([]byte("buyer"))
-		// db.Delete([]byte("token"))
-		// db.Close()
-		// nginx.StopNginx()
+		// db := dbutils.GetDB()
+		// defer dbutils.CloseDB()
+		// dbutils.Delete(db, []byte("buyer"))
+		// dbutils.Delete(db, []byte("token"))
+		// dbutils.Delete(db, []byte("orderEndTime"))
+		// dbutils.CloseDB()
 
 		/* Debug : docker space */
 		// sizeLimitGB := 10

@@ -16,6 +16,7 @@ type InfoCPU struct {
 func GetCPUInfo() (InfoCPU, error) {
 	logs.Normal("Getting CPU info...")
 
+	// Easy debugging
 	cpuInfoStats, err := cpu.Info()
 	if err != nil {
 		return InfoCPU{}, fmt.Errorf("failed to get CPU info: %w", err)
@@ -26,17 +27,11 @@ func GetCPUInfo() (InfoCPU, error) {
 		return InfoCPU{}, fmt.Errorf("failed to get CPU Counts : %w", err)
 	}
 
-	// Easy debugging
 	cpuInfo := InfoCPU{
 		ModelName: cpuInfoStats[0].ModelName,
 		Cores:     int32(counts),
 		Mhz:       cpuInfoStats[0].Mhz,
 	}
-	// cpuInfo := InfoCPU{
-	// 	ModelName: "Intel(R) Xeon(R) Platinum",
-	// 	Cores:     int32(counts),
-	// 	Mhz:       cpuInfoStats[0].Mhz,
-	// }
 
 	return cpuInfo, nil
 }

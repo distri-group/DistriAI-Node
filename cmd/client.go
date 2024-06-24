@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gagliardetto/solana-go"
@@ -34,10 +35,9 @@ var ClientCommand = cli.Command{
 				},
 			},
 			Action: func(c *cli.Context) error {
-
-				logs.Normal(pattern.LOGO)
-				
 				defer dbutils.CloseDB()
+
+				preload := c.String("preload")
 
 				distriWrapper, hwInfo, err := control.GetDistri(true)
 				if err != nil {
@@ -45,6 +45,7 @@ var ClientCommand = cli.Command{
 					return nil
 				}
 
+				// Easy debugging
 				if err = nginx.StartNginx(
 					config.GlobalConfig.Console.DistriPort,
 					config.GlobalConfig.Console.WorkPort,
@@ -70,6 +71,8 @@ var ClientCommand = cli.Command{
 					logs.Normal("Machine already exists")
 				}
 
+				logs.Normal(pattern.LOGO)
+
 				go server.StartServer(config.GlobalConfig.Console.ServerPort)
 
 				control.StartHeartbeatTask(distriWrapper, hwInfo.MachineUUID)
@@ -89,7 +92,26 @@ var ClientCommand = cli.Command{
 						// TODO: Add the logic of the Idle status.
 						break ListenLoop
 					case "ForRent":
-						// TODO: Add the logic of the ForRent status.
+						if preload != "y" && preload != "yes" {
+							break ListenLoop
+						}
+						// Easy debug
+						if !utils.IsLateNight() {
+							break ListenLoop
+						}
+
+						if utils.RandomInt(26) != 1 {
+							break ListenLoop
+						}
+						// if utils.RandomInt(3) != 1 {
+						// 	logs.Normal("Not in the preload range")
+						// 	break ListenLoop
+						// }
+
+						err = control.IdlePreload(distriWrapper.Wallet.Wallet.PublicKey().String(), string(hwInfo.MachineUUID), hwInfo.DiskInfo.TotalSpace)
+						if err != nil {
+							logs.Error(fmt.Sprintf("IdlePreload: %v", err))
+						}
 						break ListenLoop
 					case "Renting":
 
@@ -125,12 +147,6 @@ var ClientCommand = cli.Command{
 
 						switch orderPlacedMetadata.OrderInfo.Intent {
 						case "train":
-							// orderPlacedMetadata.OrderInfo.Message = "This is a test text.This is a test text.This is a test text.This is a test text.This is a test text."
-							// if err = control.OrderFailed(distriWrapper, orderPlacedMetadata, newOrder.Buyer); err != nil {
-							// 	logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
-							// }
-							// break ListenLoop
-
 							mlToken, err := dbutils.GenToken(newOrder.Buyer.String())
 							if err != nil {
 								logs.Error(fmt.Sprintf("GenToken: %v", err))
@@ -148,49 +164,64 @@ var ClientCommand = cli.Command{
 								break ListenLoop
 							}
 
-							url := orderPlacedMetadata.OrderInfo.DownloadURL
-							if len(url) > 0 {
-								modelDir := config.GlobalConfig.Console.WorkDirectory + "/ml-workspace"
-								var modelURL []utils.DownloadURL
+							modelNames := orderPlacedMetadata.OrderInfo.DownloadURL
 
-								// Easy debugging
-								for _, u := range url {
-									modelURL = append(modelURL, utils.DownloadURL{
-										URL: config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash(u),
-										// URL:      u,
-										Checksum: "",
-										Name:     "CID.json",
-									})
+							if len(modelNames) <= 0 {
+								break ListenLoop
+							}
+							if len(modelNames) > 5 {
+								errMsg := "The number of models exceeds the limit"
+								logs.Error(errMsg)
+								orderPlacedMetadata.OrderInfo.Message = errMsg
+								if err = control.OrderFailed(distriWrapper, orderPlacedMetadata, newOrder.Buyer); err != nil {
+									logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+								}
+								break ListenLoop
+							}
+
+							fileNames, err := utils.ListFiles(config.GlobalConfig.Console.WorkDirectory + "/" + pattern.IdlePreload)
+							if err != nil {
+								logs.Error(fmt.Sprintf("ListFiles: %v", err))
+								break ListenLoop
+							}
+							fileNames = utils.FilterStrings(fileNames, ".zip")
+							logs.Normal(fmt.Sprintf("Current local AI model: %v", fileNames))
+
+							for _, modelName := range modelNames {
+								isExist := false
+								for _, fileName := range fileNames {
+									if strings.Contains(fileName, modelName) {
+										isExist = true
+										break
+									}
 								}
 
-								logs.Normal("Downloading CID.json ...")
-								err = utils.DownloadFiles(modelDir, modelURL)
+								if !isExist {
+									errMsg := fmt.Sprintf("Model file does not exist, URL: %v", modelName)
+									logs.Error(errMsg)
+									orderPlacedMetadata.OrderInfo.Message = errMsg
+									if err = control.OrderFailed(distriWrapper, orderPlacedMetadata, newOrder.Buyer); err != nil {
+										logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
+									}
+									break ListenLoop
+								}
+							}
+
+							modelDir := config.GlobalConfig.Console.WorkDirectory + "/ml-workspace"
+
+							for _, modelName := range modelNames {
+								name := modelName
+								idx := strings.Index(modelName, "-")
+								if idx != -1 {
+									name = modelName[idx+1:]
+								}
+
+								_, err = utils.Unzip(
+									config.GlobalConfig.Console.WorkDirectory+"/"+pattern.IdlePreload+"/"+modelName+".zip",
+									modelDir+"/"+name)
 								if err != nil {
-									logs.Error(fmt.Sprintf("DownloadFiles %v", err))
-								}
-
-								items, err := utils.GetCidItemsFromFile(modelDir + "/CID.json")
-								if err != nil {
-									logs.Error(fmt.Sprintf("GetCidItemsFromFile %v", err))
-								}
-
-								modelURL = nil
-								for _, item := range items {
-									modelURL = append(modelURL, utils.DownloadURL{
-										URL:      config.GlobalConfig.Console.IpfsNodeUrl + "/ipfs" + utils.EnsureLeadingSlash(item.Cid),
-										Checksum: "",
-										Name:     item.Name,
-									})
-								}
-
-								logs.Normal("Downloading the following files...")
-								for _, url := range modelURL {
-									logs.Normal(url.Name)
-								}
-
-								err = utils.DownloadFiles(modelDir, modelURL)
-								if err != nil {
-									logs.Error(fmt.Sprintf("DownloadFiles %v", err))
+									logs.Error(fmt.Sprintf("Unzip: %v", err))
+									break ListenLoop
 								}
 							}
 						case "deploy":
@@ -200,7 +231,6 @@ var ClientCommand = cli.Command{
 								break ListenLoop
 							}
 
-							// Easy debugging
 							var downloadDeployURL []string
 
 							url := orderPlacedMetadata.OrderInfo.DownloadURL
@@ -246,15 +276,6 @@ var ClientCommand = cli.Command{
 								}
 								break ListenLoop
 							}
-							// containerID, err = docker.RunDeployContainer(isGPU, orderPlacedMetadata.OrderInfo.DownloadURL)
-							// if err != nil {
-							// 	logs.Error(fmt.Sprintln("RunDeployContainer error ", err))
-
-							// 	if err = control.OrderFailed(distriWrapper, newOrder.Metadata, newOrder.Buyer); err != nil {
-							// 		logs.Error(fmt.Sprintf("control.OrderFailed: %v", err))
-							// 	}
-							// 	break ListenLoop
-							// }
 						default:
 							logs.Error(fmt.Sprintf("OrderInfo.Intent error, Intent: %v", orderPlacedMetadata.OrderInfo.Intent))
 							break ListenLoop
@@ -293,7 +314,7 @@ var ClientCommand = cli.Command{
 
 									logs.Normal(fmt.Sprintf("Order completed, Details: %v", newOrder))
 
-									if err = control.OrderComplete(distriWrapper, newOrder.Metadata, isGPU, containerID); err != nil {
+									if err = control.OrderComplete(distriWrapper, newOrder, isGPU, containerID); err != nil {
 										logs.Error(fmt.Sprintf("OrderComplete: %v", err))
 									}
 									break ListenLoop

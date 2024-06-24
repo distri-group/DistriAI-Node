@@ -20,26 +20,36 @@ type PlaceOrder struct {
 	//
 	// [1] = [WRITE] order
 	//
-	// [2] = [WRITE, SIGNER] buyer
+	// [2] = [] model1
 	//
-	// [3] = [WRITE] buyerAta
+	// [3] = [] model2
 	//
-	// [4] = [WRITE] vault
+	// [4] = [] model3
 	//
-	// [5] = [] mint
+	// [5] = [] model4
 	//
-	// [6] = [] tokenProgram
+	// [6] = [] model5
 	//
-	// [7] = [] associatedTokenProgram
+	// [7] = [WRITE, SIGNER] buyer
 	//
-	// [8] = [] systemProgram
+	// [8] = [WRITE] buyerAta
+	//
+	// [9] = [WRITE] vault
+	//
+	// [10] = [] mint
+	//
+	// [11] = [] tokenProgram
+	//
+	// [12] = [] associatedTokenProgram
+	//
+	// [13] = [] systemProgram
 	ag_solanago.AccountMetaSlice `bin:"-"`
 }
 
 // NewPlaceOrderInstructionBuilder creates a new `PlaceOrder` instruction builder.
 func NewPlaceOrderInstructionBuilder() *PlaceOrder {
 	nd := &PlaceOrder{
-		AccountMetaSlice: make(ag_solanago.AccountMetaSlice, 9),
+		AccountMetaSlice: make(ag_solanago.AccountMetaSlice, 14),
 	}
 	return nd
 }
@@ -84,81 +94,136 @@ func (inst *PlaceOrder) GetOrderAccount() *ag_solanago.AccountMeta {
 	return inst.AccountMetaSlice.Get(1)
 }
 
+// SetModel1Account sets the "model1" account.
+func (inst *PlaceOrder) SetModel1Account(model1 ag_solanago.PublicKey) *PlaceOrder {
+	inst.AccountMetaSlice[2] = ag_solanago.Meta(model1)
+	return inst
+}
+
+// GetModel1Account gets the "model1" account.
+func (inst *PlaceOrder) GetModel1Account() *ag_solanago.AccountMeta {
+	return inst.AccountMetaSlice.Get(2)
+}
+
+// SetModel2Account sets the "model2" account.
+func (inst *PlaceOrder) SetModel2Account(model2 ag_solanago.PublicKey) *PlaceOrder {
+	inst.AccountMetaSlice[3] = ag_solanago.Meta(model2)
+	return inst
+}
+
+// GetModel2Account gets the "model2" account.
+func (inst *PlaceOrder) GetModel2Account() *ag_solanago.AccountMeta {
+	return inst.AccountMetaSlice.Get(3)
+}
+
+// SetModel3Account sets the "model3" account.
+func (inst *PlaceOrder) SetModel3Account(model3 ag_solanago.PublicKey) *PlaceOrder {
+	inst.AccountMetaSlice[4] = ag_solanago.Meta(model3)
+	return inst
+}
+
+// GetModel3Account gets the "model3" account.
+func (inst *PlaceOrder) GetModel3Account() *ag_solanago.AccountMeta {
+	return inst.AccountMetaSlice.Get(4)
+}
+
+// SetModel4Account sets the "model4" account.
+func (inst *PlaceOrder) SetModel4Account(model4 ag_solanago.PublicKey) *PlaceOrder {
+	inst.AccountMetaSlice[5] = ag_solanago.Meta(model4)
+	return inst
+}
+
+// GetModel4Account gets the "model4" account.
+func (inst *PlaceOrder) GetModel4Account() *ag_solanago.AccountMeta {
+	return inst.AccountMetaSlice.Get(5)
+}
+
+// SetModel5Account sets the "model5" account.
+func (inst *PlaceOrder) SetModel5Account(model5 ag_solanago.PublicKey) *PlaceOrder {
+	inst.AccountMetaSlice[6] = ag_solanago.Meta(model5)
+	return inst
+}
+
+// GetModel5Account gets the "model5" account.
+func (inst *PlaceOrder) GetModel5Account() *ag_solanago.AccountMeta {
+	return inst.AccountMetaSlice.Get(6)
+}
+
 // SetBuyerAccount sets the "buyer" account.
 func (inst *PlaceOrder) SetBuyerAccount(buyer ag_solanago.PublicKey) *PlaceOrder {
-	inst.AccountMetaSlice[2] = ag_solanago.Meta(buyer).WRITE().SIGNER()
+	inst.AccountMetaSlice[7] = ag_solanago.Meta(buyer).WRITE().SIGNER()
 	return inst
 }
 
 // GetBuyerAccount gets the "buyer" account.
 func (inst *PlaceOrder) GetBuyerAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(2)
+	return inst.AccountMetaSlice.Get(7)
 }
 
 // SetBuyerAtaAccount sets the "buyerAta" account.
 func (inst *PlaceOrder) SetBuyerAtaAccount(buyerAta ag_solanago.PublicKey) *PlaceOrder {
-	inst.AccountMetaSlice[3] = ag_solanago.Meta(buyerAta).WRITE()
+	inst.AccountMetaSlice[8] = ag_solanago.Meta(buyerAta).WRITE()
 	return inst
 }
 
 // GetBuyerAtaAccount gets the "buyerAta" account.
 func (inst *PlaceOrder) GetBuyerAtaAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(3)
+	return inst.AccountMetaSlice.Get(8)
 }
 
 // SetVaultAccount sets the "vault" account.
 func (inst *PlaceOrder) SetVaultAccount(vault ag_solanago.PublicKey) *PlaceOrder {
-	inst.AccountMetaSlice[4] = ag_solanago.Meta(vault).WRITE()
+	inst.AccountMetaSlice[9] = ag_solanago.Meta(vault).WRITE()
 	return inst
 }
 
 // GetVaultAccount gets the "vault" account.
 func (inst *PlaceOrder) GetVaultAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(4)
+	return inst.AccountMetaSlice.Get(9)
 }
 
 // SetMintAccount sets the "mint" account.
 func (inst *PlaceOrder) SetMintAccount(mint ag_solanago.PublicKey) *PlaceOrder {
-	inst.AccountMetaSlice[5] = ag_solanago.Meta(mint)
+	inst.AccountMetaSlice[10] = ag_solanago.Meta(mint)
 	return inst
 }
 
 // GetMintAccount gets the "mint" account.
 func (inst *PlaceOrder) GetMintAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(5)
+	return inst.AccountMetaSlice.Get(10)
 }
 
 // SetTokenProgramAccount sets the "tokenProgram" account.
 func (inst *PlaceOrder) SetTokenProgramAccount(tokenProgram ag_solanago.PublicKey) *PlaceOrder {
-	inst.AccountMetaSlice[6] = ag_solanago.Meta(tokenProgram)
+	inst.AccountMetaSlice[11] = ag_solanago.Meta(tokenProgram)
 	return inst
 }
 
 // GetTokenProgramAccount gets the "tokenProgram" account.
 func (inst *PlaceOrder) GetTokenProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(6)
+	return inst.AccountMetaSlice.Get(11)
 }
 
 // SetAssociatedTokenProgramAccount sets the "associatedTokenProgram" account.
 func (inst *PlaceOrder) SetAssociatedTokenProgramAccount(associatedTokenProgram ag_solanago.PublicKey) *PlaceOrder {
-	inst.AccountMetaSlice[7] = ag_solanago.Meta(associatedTokenProgram)
+	inst.AccountMetaSlice[12] = ag_solanago.Meta(associatedTokenProgram)
 	return inst
 }
 
 // GetAssociatedTokenProgramAccount gets the "associatedTokenProgram" account.
 func (inst *PlaceOrder) GetAssociatedTokenProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(7)
+	return inst.AccountMetaSlice.Get(12)
 }
 
 // SetSystemProgramAccount sets the "systemProgram" account.
 func (inst *PlaceOrder) SetSystemProgramAccount(systemProgram ag_solanago.PublicKey) *PlaceOrder {
-	inst.AccountMetaSlice[8] = ag_solanago.Meta(systemProgram)
+	inst.AccountMetaSlice[13] = ag_solanago.Meta(systemProgram)
 	return inst
 }
 
 // GetSystemProgramAccount gets the "systemProgram" account.
 func (inst *PlaceOrder) GetSystemProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(8)
+	return inst.AccountMetaSlice.Get(13)
 }
 
 func (inst PlaceOrder) Build() *Instruction {
@@ -201,24 +266,39 @@ func (inst *PlaceOrder) Validate() error {
 			return errors.New("accounts.Order is not set")
 		}
 		if inst.AccountMetaSlice[2] == nil {
-			return errors.New("accounts.Buyer is not set")
+			return errors.New("accounts.Model1 is not set")
 		}
 		if inst.AccountMetaSlice[3] == nil {
-			return errors.New("accounts.BuyerAta is not set")
+			return errors.New("accounts.Model2 is not set")
 		}
 		if inst.AccountMetaSlice[4] == nil {
-			return errors.New("accounts.Vault is not set")
+			return errors.New("accounts.Model3 is not set")
 		}
 		if inst.AccountMetaSlice[5] == nil {
-			return errors.New("accounts.Mint is not set")
+			return errors.New("accounts.Model4 is not set")
 		}
 		if inst.AccountMetaSlice[6] == nil {
-			return errors.New("accounts.TokenProgram is not set")
+			return errors.New("accounts.Model5 is not set")
 		}
 		if inst.AccountMetaSlice[7] == nil {
-			return errors.New("accounts.AssociatedTokenProgram is not set")
+			return errors.New("accounts.Buyer is not set")
 		}
 		if inst.AccountMetaSlice[8] == nil {
+			return errors.New("accounts.BuyerAta is not set")
+		}
+		if inst.AccountMetaSlice[9] == nil {
+			return errors.New("accounts.Vault is not set")
+		}
+		if inst.AccountMetaSlice[10] == nil {
+			return errors.New("accounts.Mint is not set")
+		}
+		if inst.AccountMetaSlice[11] == nil {
+			return errors.New("accounts.TokenProgram is not set")
+		}
+		if inst.AccountMetaSlice[12] == nil {
+			return errors.New("accounts.AssociatedTokenProgram is not set")
+		}
+		if inst.AccountMetaSlice[13] == nil {
 			return errors.New("accounts.SystemProgram is not set")
 		}
 	}
@@ -241,16 +321,21 @@ func (inst *PlaceOrder) EncodeToTree(parent ag_treeout.Branches) {
 					})
 
 					// Accounts of the instruction:
-					instructionBranch.Child("Accounts[len=9]").ParentFunc(func(accountsBranch ag_treeout.Branches) {
+					instructionBranch.Child("Accounts[len=14]").ParentFunc(func(accountsBranch ag_treeout.Branches) {
 						accountsBranch.Child(ag_format.Meta("               machine", inst.AccountMetaSlice.Get(0)))
 						accountsBranch.Child(ag_format.Meta("                 order", inst.AccountMetaSlice.Get(1)))
-						accountsBranch.Child(ag_format.Meta("                 buyer", inst.AccountMetaSlice.Get(2)))
-						accountsBranch.Child(ag_format.Meta("              buyerAta", inst.AccountMetaSlice.Get(3)))
-						accountsBranch.Child(ag_format.Meta("                 vault", inst.AccountMetaSlice.Get(4)))
-						accountsBranch.Child(ag_format.Meta("                  mint", inst.AccountMetaSlice.Get(5)))
-						accountsBranch.Child(ag_format.Meta("          tokenProgram", inst.AccountMetaSlice.Get(6)))
-						accountsBranch.Child(ag_format.Meta("associatedTokenProgram", inst.AccountMetaSlice.Get(7)))
-						accountsBranch.Child(ag_format.Meta("         systemProgram", inst.AccountMetaSlice.Get(8)))
+						accountsBranch.Child(ag_format.Meta("                model1", inst.AccountMetaSlice.Get(2)))
+						accountsBranch.Child(ag_format.Meta("                model2", inst.AccountMetaSlice.Get(3)))
+						accountsBranch.Child(ag_format.Meta("                model3", inst.AccountMetaSlice.Get(4)))
+						accountsBranch.Child(ag_format.Meta("                model4", inst.AccountMetaSlice.Get(5)))
+						accountsBranch.Child(ag_format.Meta("                model5", inst.AccountMetaSlice.Get(6)))
+						accountsBranch.Child(ag_format.Meta("                 buyer", inst.AccountMetaSlice.Get(7)))
+						accountsBranch.Child(ag_format.Meta("              buyerAta", inst.AccountMetaSlice.Get(8)))
+						accountsBranch.Child(ag_format.Meta("                 vault", inst.AccountMetaSlice.Get(9)))
+						accountsBranch.Child(ag_format.Meta("                  mint", inst.AccountMetaSlice.Get(10)))
+						accountsBranch.Child(ag_format.Meta("          tokenProgram", inst.AccountMetaSlice.Get(11)))
+						accountsBranch.Child(ag_format.Meta("associatedTokenProgram", inst.AccountMetaSlice.Get(12)))
+						accountsBranch.Child(ag_format.Meta("         systemProgram", inst.AccountMetaSlice.Get(13)))
 					})
 				})
 		})
@@ -302,6 +387,11 @@ func NewPlaceOrderInstruction(
 	// Accounts:
 	machine ag_solanago.PublicKey,
 	order ag_solanago.PublicKey,
+	model1 ag_solanago.PublicKey,
+	model2 ag_solanago.PublicKey,
+	model3 ag_solanago.PublicKey,
+	model4 ag_solanago.PublicKey,
+	model5 ag_solanago.PublicKey,
 	buyer ag_solanago.PublicKey,
 	buyerAta ag_solanago.PublicKey,
 	vault ag_solanago.PublicKey,
@@ -315,6 +405,11 @@ func NewPlaceOrderInstruction(
 		SetMetadata(metadata).
 		SetMachineAccount(machine).
 		SetOrderAccount(order).
+		SetModel1Account(model1).
+		SetModel2Account(model2).
+		SetModel3Account(model3).
+		SetModel4Account(model4).
+		SetModel5Account(model5).
 		SetBuyerAccount(buyer).
 		SetBuyerAtaAccount(buyerAta).
 		SetVaultAccount(vault).

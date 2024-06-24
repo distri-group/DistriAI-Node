@@ -25,6 +25,14 @@ func GenMachine(machineOwner solana.PublicKey, machineUUID machine_uuid.MachineU
 	return seedMachine
 }
 
+func GenStatisticsOwner(machineOwner solana.PublicKey) [][]byte {
+	seedStatisticsOwner := [][]byte{
+		[]byte("statistics"),
+		machineOwner.Bytes(),
+	}
+	return seedStatisticsOwner
+}
+
 func GenVault() [][]byte {
 
 	ecpc := solana.MustPublicKeyFromBase58(pattern.DIST_TOKEN_ID)

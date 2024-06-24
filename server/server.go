@@ -1,6 +1,7 @@
 package server
 
 import (
+	"DistriAI-Node/api"
 	"DistriAI-Node/config"
 	"DistriAI-Node/middleware"
 	"DistriAI-Node/server/template"
@@ -17,14 +18,12 @@ import (
 )
 
 func StartServer(serverPort string) error {
-	logs.Normal("Start server")
-
 	r := gin.Default()
 	r.Use(middleware.Cors())
 	r.SetTrustedProxies([]string{"127.0.0.1"})
 	workspace := r.Group(template.WORKSPACE)
 	upload := r.Group(template.UPLOAD_file)
-	r.Any("/proxy/*proxyPath", proxyHandler)
+	// r.Any("/proxy/*proxyPath", proxyHandler)
 	workspace.GET("/debugToken/:signature", getDebugToken)
 	workspace.GET("/getToken/:signature", getToken)
 	upload.POST("/ipfs", uploadFile)
@@ -221,7 +220,7 @@ func uploadFile(c *gin.Context) {
 			}
 
 			for _, fileItem := range files {
-				cid, err := utils.UploadFileToIPFS(config.GlobalConfig.Console.IpfsNodeUrl, fileItem.Path, time.Until(timeout))
+				cid, err := api.UploadFileToIPFS(config.GlobalConfig.Console.IpfsNodeUrl, fileItem.Path, time.Until(timeout))
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("> UploadFileToIPFS fileItem %v", err.Error())})
 					return
@@ -232,12 +231,12 @@ func uploadFile(c *gin.Context) {
 					publicKey,
 					uploadFile.ModelName,
 					utils.EnsureLeadingSlash(utils.RemovePrefix(fileItem.Path, config.GlobalConfig.Console.WorkDirectory+"/ml-workspace")))
-				err = utils.RmFileInIPFS(config.GlobalConfig.Console.IpfsNodeUrl, destination)
+				err = api.RmFileInIPFS(config.GlobalConfig.Console.IpfsNodeUrl, destination)
 				if err != nil {
 					logs.Normal(fmt.Sprintf("> RmFileInIPFS fileItem %v", err.Error()))
 					return
 				}
-				err = utils.CopyFileInIPFS(
+				err = api.CopyFileInIPFS(
 					config.GlobalConfig.Console.IpfsNodeUrl,
 					"/ipfs/"+cid,
 					destination)
@@ -251,7 +250,7 @@ func uploadFile(c *gin.Context) {
 					ResUploadFile{Path: utils.RemovePrefix(fileItem.Path, config.GlobalConfig.Console.WorkDirectory+"/ml-workspace"), Cid: cid})
 			}
 		} else {
-			cid, err := utils.UploadFileToIPFS(config.GlobalConfig.Console.IpfsNodeUrl, file.Path, time.Until(timeout))
+			cid, err := api.UploadFileToIPFS(config.GlobalConfig.Console.IpfsNodeUrl, file.Path, time.Until(timeout))
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("> UploadFileToIPFS file %v", err.Error())})
 				return
@@ -262,12 +261,12 @@ func uploadFile(c *gin.Context) {
 				publicKey,
 				uploadFile.ModelName,
 				utils.EnsureLeadingSlash(utils.RemovePrefix(file.Path, config.GlobalConfig.Console.WorkDirectory+"/ml-workspace")))
-			err = utils.RmFileInIPFS(config.GlobalConfig.Console.IpfsNodeUrl, destination)
+			err = api.RmFileInIPFS(config.GlobalConfig.Console.IpfsNodeUrl, destination)
 			if err != nil {
 				logs.Normal(fmt.Sprintf("> RmFileInIPFS fileItem %v", err.Error()))
 				return
 			}
-			err = utils.CopyFileInIPFS(
+			err = api.CopyFileInIPFS(
 				config.GlobalConfig.Console.IpfsNodeUrl,
 				"/ipfs/"+cid,
 				destination)

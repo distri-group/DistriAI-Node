@@ -24,22 +24,24 @@ type Claim struct {
 	//
 	// [4] = [WRITE] ownerAta
 	//
-	// [5] = [WRITE] rewardPool
+	// [5] = [WRITE] statisticsOwner
 	//
-	// [6] = [] mint
+	// [6] = [WRITE] rewardPool
 	//
-	// [7] = [] tokenProgram
+	// [7] = [] mint
 	//
-	// [8] = [] associatedTokenProgram
+	// [8] = [] tokenProgram
 	//
-	// [9] = [] systemProgram
+	// [9] = [] associatedTokenProgram
+	//
+	// [10] = [] systemProgram
 	ag_solanago.AccountMetaSlice `bin:"-"`
 }
 
 // NewClaimInstructionBuilder creates a new `Claim` instruction builder.
 func NewClaimInstructionBuilder() *Claim {
 	nd := &Claim{
-		AccountMetaSlice: make(ag_solanago.AccountMetaSlice, 10),
+		AccountMetaSlice: make(ag_solanago.AccountMetaSlice, 11),
 	}
 	return nd
 }
@@ -105,59 +107,70 @@ func (inst *Claim) GetOwnerAtaAccount() *ag_solanago.AccountMeta {
 	return inst.AccountMetaSlice.Get(4)
 }
 
+// SetStatisticsOwnerAccount sets the "statisticsOwner" account.
+func (inst *Claim) SetStatisticsOwnerAccount(statisticsOwner ag_solanago.PublicKey) *Claim {
+	inst.AccountMetaSlice[5] = ag_solanago.Meta(statisticsOwner).WRITE()
+	return inst
+}
+
+// GetStatisticsOwnerAccount gets the "statisticsOwner" account.
+func (inst *Claim) GetStatisticsOwnerAccount() *ag_solanago.AccountMeta {
+	return inst.AccountMetaSlice.Get(5)
+}
+
 // SetRewardPoolAccount sets the "rewardPool" account.
 func (inst *Claim) SetRewardPoolAccount(rewardPool ag_solanago.PublicKey) *Claim {
-	inst.AccountMetaSlice[5] = ag_solanago.Meta(rewardPool).WRITE()
+	inst.AccountMetaSlice[6] = ag_solanago.Meta(rewardPool).WRITE()
 	return inst
 }
 
 // GetRewardPoolAccount gets the "rewardPool" account.
 func (inst *Claim) GetRewardPoolAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(5)
+	return inst.AccountMetaSlice.Get(6)
 }
 
 // SetMintAccount sets the "mint" account.
 func (inst *Claim) SetMintAccount(mint ag_solanago.PublicKey) *Claim {
-	inst.AccountMetaSlice[6] = ag_solanago.Meta(mint)
+	inst.AccountMetaSlice[7] = ag_solanago.Meta(mint)
 	return inst
 }
 
 // GetMintAccount gets the "mint" account.
 func (inst *Claim) GetMintAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(6)
+	return inst.AccountMetaSlice.Get(7)
 }
 
 // SetTokenProgramAccount sets the "tokenProgram" account.
 func (inst *Claim) SetTokenProgramAccount(tokenProgram ag_solanago.PublicKey) *Claim {
-	inst.AccountMetaSlice[7] = ag_solanago.Meta(tokenProgram)
+	inst.AccountMetaSlice[8] = ag_solanago.Meta(tokenProgram)
 	return inst
 }
 
 // GetTokenProgramAccount gets the "tokenProgram" account.
 func (inst *Claim) GetTokenProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(7)
+	return inst.AccountMetaSlice.Get(8)
 }
 
 // SetAssociatedTokenProgramAccount sets the "associatedTokenProgram" account.
 func (inst *Claim) SetAssociatedTokenProgramAccount(associatedTokenProgram ag_solanago.PublicKey) *Claim {
-	inst.AccountMetaSlice[8] = ag_solanago.Meta(associatedTokenProgram)
+	inst.AccountMetaSlice[9] = ag_solanago.Meta(associatedTokenProgram)
 	return inst
 }
 
 // GetAssociatedTokenProgramAccount gets the "associatedTokenProgram" account.
 func (inst *Claim) GetAssociatedTokenProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(8)
+	return inst.AccountMetaSlice.Get(9)
 }
 
 // SetSystemProgramAccount sets the "systemProgram" account.
 func (inst *Claim) SetSystemProgramAccount(systemProgram ag_solanago.PublicKey) *Claim {
-	inst.AccountMetaSlice[9] = ag_solanago.Meta(systemProgram)
+	inst.AccountMetaSlice[10] = ag_solanago.Meta(systemProgram)
 	return inst
 }
 
 // GetSystemProgramAccount gets the "systemProgram" account.
 func (inst *Claim) GetSystemProgramAccount() *ag_solanago.AccountMeta {
-	return inst.AccountMetaSlice.Get(9)
+	return inst.AccountMetaSlice.Get(10)
 }
 
 func (inst Claim) Build() *Instruction {
@@ -203,18 +216,21 @@ func (inst *Claim) Validate() error {
 			return errors.New("accounts.OwnerAta is not set")
 		}
 		if inst.AccountMetaSlice[5] == nil {
-			return errors.New("accounts.RewardPool is not set")
+			return errors.New("accounts.StatisticsOwner is not set")
 		}
 		if inst.AccountMetaSlice[6] == nil {
-			return errors.New("accounts.Mint is not set")
+			return errors.New("accounts.RewardPool is not set")
 		}
 		if inst.AccountMetaSlice[7] == nil {
-			return errors.New("accounts.TokenProgram is not set")
+			return errors.New("accounts.Mint is not set")
 		}
 		if inst.AccountMetaSlice[8] == nil {
-			return errors.New("accounts.AssociatedTokenProgram is not set")
+			return errors.New("accounts.TokenProgram is not set")
 		}
 		if inst.AccountMetaSlice[9] == nil {
+			return errors.New("accounts.AssociatedTokenProgram is not set")
+		}
+		if inst.AccountMetaSlice[10] == nil {
 			return errors.New("accounts.SystemProgram is not set")
 		}
 	}
@@ -235,17 +251,18 @@ func (inst *Claim) EncodeToTree(parent ag_treeout.Branches) {
 					})
 
 					// Accounts of the instruction:
-					instructionBranch.Child("Accounts[len=10]").ParentFunc(func(accountsBranch ag_treeout.Branches) {
+					instructionBranch.Child("Accounts[len=11]").ParentFunc(func(accountsBranch ag_treeout.Branches) {
 						accountsBranch.Child(ag_format.Meta("               machine", inst.AccountMetaSlice.Get(0)))
 						accountsBranch.Child(ag_format.Meta("                reward", inst.AccountMetaSlice.Get(1)))
 						accountsBranch.Child(ag_format.Meta("         rewardMachine", inst.AccountMetaSlice.Get(2)))
 						accountsBranch.Child(ag_format.Meta("                 owner", inst.AccountMetaSlice.Get(3)))
 						accountsBranch.Child(ag_format.Meta("              ownerAta", inst.AccountMetaSlice.Get(4)))
-						accountsBranch.Child(ag_format.Meta("            rewardPool", inst.AccountMetaSlice.Get(5)))
-						accountsBranch.Child(ag_format.Meta("                  mint", inst.AccountMetaSlice.Get(6)))
-						accountsBranch.Child(ag_format.Meta("          tokenProgram", inst.AccountMetaSlice.Get(7)))
-						accountsBranch.Child(ag_format.Meta("associatedTokenProgram", inst.AccountMetaSlice.Get(8)))
-						accountsBranch.Child(ag_format.Meta("         systemProgram", inst.AccountMetaSlice.Get(9)))
+						accountsBranch.Child(ag_format.Meta("       statisticsOwner", inst.AccountMetaSlice.Get(5)))
+						accountsBranch.Child(ag_format.Meta("            rewardPool", inst.AccountMetaSlice.Get(6)))
+						accountsBranch.Child(ag_format.Meta("                  mint", inst.AccountMetaSlice.Get(7)))
+						accountsBranch.Child(ag_format.Meta("          tokenProgram", inst.AccountMetaSlice.Get(8)))
+						accountsBranch.Child(ag_format.Meta("associatedTokenProgram", inst.AccountMetaSlice.Get(9)))
+						accountsBranch.Child(ag_format.Meta("         systemProgram", inst.AccountMetaSlice.Get(10)))
 					})
 				})
 		})
@@ -278,6 +295,7 @@ func NewClaimInstruction(
 	rewardMachine ag_solanago.PublicKey,
 	owner ag_solanago.PublicKey,
 	ownerAta ag_solanago.PublicKey,
+	statisticsOwner ag_solanago.PublicKey,
 	rewardPool ag_solanago.PublicKey,
 	mint ag_solanago.PublicKey,
 	tokenProgram ag_solanago.PublicKey,
@@ -290,6 +308,7 @@ func NewClaimInstruction(
 		SetRewardMachineAccount(rewardMachine).
 		SetOwnerAccount(owner).
 		SetOwnerAtaAccount(ownerAta).
+		SetStatisticsOwnerAccount(statisticsOwner).
 		SetRewardPoolAccount(rewardPool).
 		SetMintAccount(mint).
 		SetTokenProgramAccount(tokenProgram).

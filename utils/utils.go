@@ -6,8 +6,6 @@ import (
 	"DistriAI-Node/pattern"
 	logs "DistriAI-Node/utils/log_utils"
 	"archive/zip"
-	"bufio"
-	"bytes"
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/binary"
@@ -16,7 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"mime/multipart"
+	math "math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -122,34 +120,6 @@ func Zip(src, dest string) error {
 	return nil
 }
 
-func EnsureHttps(url string) string {
-	if !strings.HasPrefix(url, "https://") {
-		return "https://" + url
-	}
-	return url
-}
-
-func EnsureTrailingSlash(url string) string {
-	if !strings.HasSuffix(url, "/") {
-		url += "/"
-	}
-	return url
-}
-
-func RemoveTrailingSlash(s string) string {
-	if strings.HasSuffix(s, "/") {
-		return s[:len(s)-1]
-	}
-	return s
-}
-
-func EnsureLeadingSlash(s string) string {
-	if !strings.HasPrefix(s, "/") {
-		return "/" + s
-	}
-	return s
-}
-
 func Unzip(src string, dest string) ([]string, error) {
 	var filenames []string
 
@@ -210,6 +180,34 @@ func Unzip(src string, dest string) ([]string, error) {
 		}
 	}
 	return filenames, nil
+}
+
+func EnsureHttps(url string) string {
+	if !strings.HasPrefix(url, "https://") {
+		return "https://" + url
+	}
+	return url
+}
+
+func EnsureTrailingSlash(url string) string {
+	if !strings.HasSuffix(url, "/") {
+		url += "/"
+	}
+	return url
+}
+
+func RemoveTrailingSlash(s string) string {
+	if strings.HasSuffix(s, "/") {
+		return s[:len(s)-1]
+	}
+	return s
+}
+
+func EnsureLeadingSlash(s string) string {
+	if !strings.HasPrefix(s, "/") {
+		return "/" + s
+	}
+	return s
 }
 
 func GetFreeSpace(path string) (uint64, error) {
@@ -318,7 +316,7 @@ func DownloadFiles(dest string, urls []DownloadURL) error {
 		return errors.New("> DownloadFiles: no files to download")
 	}
 
-	logs.Normal(fmt.Sprintf("urls: %v", urls))
+	logs.Normal(fmt.Sprintf("DownloadFiles urls: %v", urls))
 
 	reqs := make([]*grab.Request, len(urls))
 
@@ -370,147 +368,6 @@ func DownloadFiles(dest string, urls []DownloadURL) error {
 		}
 	}
 	return errors.New("> DownloadFiles: unexpected exit")
-}
-
-type UploadCidItem struct {
-	Name string `json:"Name"`
-	Hash string `json:"Hash"`
-}
-
-func UploadFileToIPFS(ipfsNodeUrl, filePath string, timeout time.Duration) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", fmt.Errorf("> os.Open: %v", err)
-	}
-	defer file.Close()
-
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	part, err := writer.CreateFormFile("file", filePath)
-	if err != nil {
-		return "", fmt.Errorf("> writer.CreateFormFile: %v", err)
-	}
-
-	_, err = io.Copy(part, file)
-	if err != nil {
-		return "", fmt.Errorf("> io.Copy: %v", err)
-	}
-
-	err = writer.Close()
-	if err != nil {
-		return "", fmt.Errorf("> writer.Close: %v", err)
-	}
-
-	req, err := http.NewRequest("POST", ipfsNodeUrl+"/rpc/api/v0/add?stream-channels=true&progress=false", body)
-	if err != nil {
-		return "", fmt.Errorf("> http.NewRequest: %v", err)
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	client := &http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("> client.Do: %v", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("> io.ReadAll: %v", err)
-	}
-
-	scanner := bufio.NewScanner(bytes.NewReader(respBody))
-	for scanner.Scan() {
-		line := scanner.Text()
-		var item UploadCidItem
-		err := json.Unmarshal([]byte(line), &item)
-		if err != nil {
-			return "", fmt.Errorf("> json.Unmarshal: %v", err)
-		}
-		// 返回第一行的 Hash 值
-		return item.Hash, nil
-	}
-	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("> scanner.Err: %v", err)
-	}
-	return "", fmt.Errorf("no lines in response")
-}
-
-func CopyFileInIPFS(ipfsNodeUrl, source, destination string) error {
-	req, err := http.NewRequest("POST", ipfsNodeUrl+"/rpc/api/v0/files/cp?parents=true&arg="+source+"&arg="+destination, nil)
-	if err != nil {
-		return fmt.Errorf("> http.NewRequest: %v", err)
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("> client.Do: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		respBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("> io.ReadAll: %v", err)
-		}
-		jsonBody, err := json.Marshal(respBody)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("> unexpected status code: %v, boby: %s", resp.StatusCode, string(jsonBody))
-	}
-
-	return nil
-}
-
-func RmFileInIPFS(ipfsNodeUrl, destination string) error {
-	req, err := http.NewRequest("POST", ipfsNodeUrl+"/rpc/api/v0/files/rm?arg="+destination+"&recursive=true&force=true", nil)
-	if err != nil {
-		return fmt.Errorf("> http.NewRequest: %v", err)
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("> client.Do: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		respBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("> io.ReadAll: %v", err)
-		}
-		jsonBody, err := json.Marshal(respBody)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("> unexpected status code: %v, boby: %s", resp.StatusCode, string(jsonBody))
-	}
-
-	return nil
 }
 
 type CidItem struct {
@@ -571,4 +428,61 @@ func PathExists(path string) (bool, error) {
 
 func RemovePrefix(s, prefix string) string {
 	return strings.TrimPrefix(s, prefix)
+}
+
+func IsLateNight() bool {
+	hour := time.Now().Hour()
+	return hour < 6 || hour >= 23
+}
+
+func EnsureDirExists(dirPath string) error {
+	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+		err = os.MkdirAll(dirPath, 0755)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ListFiles(dirPath string) ([]string, error) {
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		return nil, err
+	}
+	fileNames := make([]string, len(files))
+	for i, file := range files {
+		fileNames[i] = file.Name()
+	}
+	return fileNames, nil
+}
+
+func FilterStrings(strs []string, substr string) []string {
+	var result []string
+	for _, str := range strs {
+		if strings.Contains(str, substr) {
+			result = append(result, str)
+		}
+	}
+	return result
+}
+
+func DiffStrings(a, b []string) []string {
+	m := make(map[string]bool)
+	for _, item := range b {
+		m[item] = true
+	}
+
+	var result []string
+	for _, item := range a {
+		if _, ok := m[item]; !ok {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
+func RandomInt(max int) int {
+	math.New(math.NewSource(time.Now().UnixNano()))
+	return math.Intn(max + 1)
 }

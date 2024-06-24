@@ -27,7 +27,6 @@ func GetGPUInfo() (InfoGPU, error) {
 	if err != nil {
 		// Easy debugging
 		return InfoGPU{Model: pattern.NO_GPU, Number: 0}, err
-		// return InfoGPU{Model: "NVIDIA Tesla V100 PCIe 16 GB", Number: 8}, err
 	}
 
 	result := strings.Split(strings.TrimSpace(out.String()), ", ")

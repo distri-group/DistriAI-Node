@@ -8,6 +8,266 @@ import (
 	ag_solanago "github.com/gagliardetto/solana-go"
 )
 
+type AiModel struct {
+	Owner      ag_solanago.PublicKey
+	Name       string
+	Framework  uint8
+	License    uint8
+	Type1      uint8
+	Type2      uint8
+	Tags       string
+	CreateTime int64
+	UpdateTime int64
+}
+
+var AiModelDiscriminator = [8]byte{42, 206, 111, 34, 42, 121, 50, 138}
+
+func (obj AiModel) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
+	// Write account discriminator:
+	err = encoder.WriteBytes(AiModelDiscriminator[:], false)
+	if err != nil {
+		return err
+	}
+	// Serialize `Owner` param:
+	err = encoder.Encode(obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Name` param:
+	err = encoder.Encode(obj.Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Framework` param:
+	err = encoder.Encode(obj.Framework)
+	if err != nil {
+		return err
+	}
+	// Serialize `License` param:
+	err = encoder.Encode(obj.License)
+	if err != nil {
+		return err
+	}
+	// Serialize `Type1` param:
+	err = encoder.Encode(obj.Type1)
+	if err != nil {
+		return err
+	}
+	// Serialize `Type2` param:
+	err = encoder.Encode(obj.Type2)
+	if err != nil {
+		return err
+	}
+	// Serialize `Tags` param:
+	err = encoder.Encode(obj.Tags)
+	if err != nil {
+		return err
+	}
+	// Serialize `CreateTime` param:
+	err = encoder.Encode(obj.CreateTime)
+	if err != nil {
+		return err
+	}
+	// Serialize `UpdateTime` param:
+	err = encoder.Encode(obj.UpdateTime)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (obj *AiModel) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
+	// Read and check account discriminator:
+	{
+		discriminator, err := decoder.ReadTypeID()
+		if err != nil {
+			return err
+		}
+		if !discriminator.Equal(AiModelDiscriminator[:]) {
+			return fmt.Errorf(
+				"wrong discriminator: wanted %s, got %s",
+				"[42 206 111 34 42 121 50 138]",
+				fmt.Sprint(discriminator[:]))
+		}
+	}
+	// Deserialize `Owner`:
+	err = decoder.Decode(&obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Name`:
+	err = decoder.Decode(&obj.Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Framework`:
+	err = decoder.Decode(&obj.Framework)
+	if err != nil {
+		return err
+	}
+	// Deserialize `License`:
+	err = decoder.Decode(&obj.License)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Type1`:
+	err = decoder.Decode(&obj.Type1)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Type2`:
+	err = decoder.Decode(&obj.Type2)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Tags`:
+	err = decoder.Decode(&obj.Tags)
+	if err != nil {
+		return err
+	}
+	// Deserialize `CreateTime`:
+	err = decoder.Decode(&obj.CreateTime)
+	if err != nil {
+		return err
+	}
+	// Deserialize `UpdateTime`:
+	err = decoder.Decode(&obj.UpdateTime)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type Dataset struct {
+	Owner      ag_solanago.PublicKey
+	Name       string
+	Scale      uint8
+	License    uint8
+	Type1      uint8
+	Type2      uint8
+	Tags       string
+	CreateTime int64
+	UpdateTime int64
+}
+
+var DatasetDiscriminator = [8]byte{242, 85, 87, 90, 234, 188, 241, 17}
+
+func (obj Dataset) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
+	// Write account discriminator:
+	err = encoder.WriteBytes(DatasetDiscriminator[:], false)
+	if err != nil {
+		return err
+	}
+	// Serialize `Owner` param:
+	err = encoder.Encode(obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Name` param:
+	err = encoder.Encode(obj.Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Scale` param:
+	err = encoder.Encode(obj.Scale)
+	if err != nil {
+		return err
+	}
+	// Serialize `License` param:
+	err = encoder.Encode(obj.License)
+	if err != nil {
+		return err
+	}
+	// Serialize `Type1` param:
+	err = encoder.Encode(obj.Type1)
+	if err != nil {
+		return err
+	}
+	// Serialize `Type2` param:
+	err = encoder.Encode(obj.Type2)
+	if err != nil {
+		return err
+	}
+	// Serialize `Tags` param:
+	err = encoder.Encode(obj.Tags)
+	if err != nil {
+		return err
+	}
+	// Serialize `CreateTime` param:
+	err = encoder.Encode(obj.CreateTime)
+	if err != nil {
+		return err
+	}
+	// Serialize `UpdateTime` param:
+	err = encoder.Encode(obj.UpdateTime)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (obj *Dataset) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
+	// Read and check account discriminator:
+	{
+		discriminator, err := decoder.ReadTypeID()
+		if err != nil {
+			return err
+		}
+		if !discriminator.Equal(DatasetDiscriminator[:]) {
+			return fmt.Errorf(
+				"wrong discriminator: wanted %s, got %s",
+				"[242 85 87 90 234 188 241 17]",
+				fmt.Sprint(discriminator[:]))
+		}
+	}
+	// Deserialize `Owner`:
+	err = decoder.Decode(&obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Name`:
+	err = decoder.Decode(&obj.Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Scale`:
+	err = decoder.Decode(&obj.Scale)
+	if err != nil {
+		return err
+	}
+	// Deserialize `License`:
+	err = decoder.Decode(&obj.License)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Type1`:
+	err = decoder.Decode(&obj.Type1)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Type2`:
+	err = decoder.Decode(&obj.Type2)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Tags`:
+	err = decoder.Decode(&obj.Tags)
+	if err != nil {
+		return err
+	}
+	// Deserialize `CreateTime`:
+	err = decoder.Decode(&obj.CreateTime)
+	if err != nil {
+		return err
+	}
+	// Deserialize `UpdateTime`:
+	err = decoder.Decode(&obj.UpdateTime)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 type Machine struct {
 	Owner                  ag_solanago.PublicKey
 	Uuid                   [16]uint8
@@ -357,18 +617,28 @@ func (obj *MachineNew) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err err
 }
 
 type Order struct {
-	OrderId    [16]uint8
-	Buyer      ag_solanago.PublicKey
-	Seller     ag_solanago.PublicKey
-	MachineId  [16]uint8
-	Price      uint64
-	Duration   uint32
-	Total      uint64
-	Metadata   string
-	Status     OrderStatus
-	OrderTime  int64
-	StartTime  int64
-	RefundTime int64
+	OrderId     [16]uint8
+	Buyer       ag_solanago.PublicKey
+	Seller      ag_solanago.PublicKey
+	MachineId   [16]uint8
+	Price       uint64
+	Duration    uint32
+	Total       uint64
+	Metadata    string
+	Status      OrderStatus
+	OrderTime   int64
+	StartTime   int64
+	RefundTime  int64
+	Model1Owner ag_solanago.PublicKey
+	Model1Name  string
+	Model2Owner ag_solanago.PublicKey
+	Model2Name  string
+	Model3Owner ag_solanago.PublicKey
+	Model3Name  string
+	Model4Owner ag_solanago.PublicKey
+	Model4Name  string
+	Model5Owner ag_solanago.PublicKey
+	Model5Name  string
 }
 
 var OrderDiscriminator = [8]byte{134, 173, 223, 185, 77, 86, 28, 51}
@@ -436,6 +706,56 @@ func (obj Order) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
 	}
 	// Serialize `RefundTime` param:
 	err = encoder.Encode(obj.RefundTime)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model1Owner` param:
+	err = encoder.Encode(obj.Model1Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model1Name` param:
+	err = encoder.Encode(obj.Model1Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model2Owner` param:
+	err = encoder.Encode(obj.Model2Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model2Name` param:
+	err = encoder.Encode(obj.Model2Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model3Owner` param:
+	err = encoder.Encode(obj.Model3Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model3Name` param:
+	err = encoder.Encode(obj.Model3Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model4Owner` param:
+	err = encoder.Encode(obj.Model4Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model4Name` param:
+	err = encoder.Encode(obj.Model4Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model5Owner` param:
+	err = encoder.Encode(obj.Model5Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model5Name` param:
+	err = encoder.Encode(obj.Model5Name)
 	if err != nil {
 		return err
 	}
@@ -516,22 +836,82 @@ func (obj *Order) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
 	if err != nil {
 		return err
 	}
+	// Deserialize `Model1Owner`:
+	err = decoder.Decode(&obj.Model1Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model1Name`:
+	err = decoder.Decode(&obj.Model1Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model2Owner`:
+	err = decoder.Decode(&obj.Model2Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model2Name`:
+	err = decoder.Decode(&obj.Model2Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model3Owner`:
+	err = decoder.Decode(&obj.Model3Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model3Name`:
+	err = decoder.Decode(&obj.Model3Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model4Owner`:
+	err = decoder.Decode(&obj.Model4Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model4Name`:
+	err = decoder.Decode(&obj.Model4Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model5Owner`:
+	err = decoder.Decode(&obj.Model5Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model5Name`:
+	err = decoder.Decode(&obj.Model5Name)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 type OrderNew struct {
-	OrderId    [16]uint8
-	Buyer      ag_solanago.PublicKey
-	Seller     ag_solanago.PublicKey
-	MachineId  [16]uint8
-	Price      uint64
-	Duration   uint32
-	Total      uint64
-	Metadata   string
-	Status     OrderStatus
-	OrderTime  int64
-	StartTime  int64
-	RefundTime int64
+	OrderId     [16]uint8
+	Buyer       ag_solanago.PublicKey
+	Seller      ag_solanago.PublicKey
+	MachineId   [16]uint8
+	Price       uint64
+	Duration    uint32
+	Total       uint64
+	Metadata    string
+	Status      OrderStatus
+	OrderTime   int64
+	StartTime   int64
+	RefundTime  int64
+	Model1Owner ag_solanago.PublicKey
+	Model1Name  string
+	Model2Owner ag_solanago.PublicKey
+	Model2Name  string
+	Model3Owner ag_solanago.PublicKey
+	Model3Name  string
+	Model4Owner ag_solanago.PublicKey
+	Model4Name  string
+	Model5Owner ag_solanago.PublicKey
+	Model5Name  string
 }
 
 var OrderNewDiscriminator = [8]byte{6, 203, 52, 103, 118, 10, 252, 19}
@@ -599,6 +979,56 @@ func (obj OrderNew) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
 	}
 	// Serialize `RefundTime` param:
 	err = encoder.Encode(obj.RefundTime)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model1Owner` param:
+	err = encoder.Encode(obj.Model1Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model1Name` param:
+	err = encoder.Encode(obj.Model1Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model2Owner` param:
+	err = encoder.Encode(obj.Model2Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model2Name` param:
+	err = encoder.Encode(obj.Model2Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model3Owner` param:
+	err = encoder.Encode(obj.Model3Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model3Name` param:
+	err = encoder.Encode(obj.Model3Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model4Owner` param:
+	err = encoder.Encode(obj.Model4Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model4Name` param:
+	err = encoder.Encode(obj.Model4Name)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model5Owner` param:
+	err = encoder.Encode(obj.Model5Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `Model5Name` param:
+	err = encoder.Encode(obj.Model5Name)
 	if err != nil {
 		return err
 	}
@@ -676,6 +1106,56 @@ func (obj *OrderNew) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error
 	}
 	// Deserialize `RefundTime`:
 	err = decoder.Decode(&obj.RefundTime)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model1Owner`:
+	err = decoder.Decode(&obj.Model1Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model1Name`:
+	err = decoder.Decode(&obj.Model1Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model2Owner`:
+	err = decoder.Decode(&obj.Model2Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model2Name`:
+	err = decoder.Decode(&obj.Model2Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model3Owner`:
+	err = decoder.Decode(&obj.Model3Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model3Name`:
+	err = decoder.Decode(&obj.Model3Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model4Owner`:
+	err = decoder.Decode(&obj.Model4Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model4Name`:
+	err = decoder.Decode(&obj.Model4Name)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model5Owner`:
+	err = decoder.Decode(&obj.Model5Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `Model5Name`:
+	err = decoder.Decode(&obj.Model5Name)
 	if err != nil {
 		return err
 	}
@@ -870,6 +1350,114 @@ func (obj *RewardMachine) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err 
 	}
 	// Deserialize `Claimed`:
 	err = decoder.Decode(&obj.Claimed)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type Statistics struct {
+	Owner                         ag_solanago.PublicKey
+	MachineRewardClaimed          uint64
+	MachineRewardClaimable        uint64
+	AiModelDatasetRewardClaimed   uint64
+	AiModelDatasetRewardClaimable uint64
+	MachineEarning                uint64
+	AiModelDatasetEarning         uint64
+}
+
+var StatisticsDiscriminator = [8]byte{51, 158, 85, 113, 41, 45, 37, 104}
+
+func (obj Statistics) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
+	// Write account discriminator:
+	err = encoder.WriteBytes(StatisticsDiscriminator[:], false)
+	if err != nil {
+		return err
+	}
+	// Serialize `Owner` param:
+	err = encoder.Encode(obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Serialize `MachineRewardClaimed` param:
+	err = encoder.Encode(obj.MachineRewardClaimed)
+	if err != nil {
+		return err
+	}
+	// Serialize `MachineRewardClaimable` param:
+	err = encoder.Encode(obj.MachineRewardClaimable)
+	if err != nil {
+		return err
+	}
+	// Serialize `AiModelDatasetRewardClaimed` param:
+	err = encoder.Encode(obj.AiModelDatasetRewardClaimed)
+	if err != nil {
+		return err
+	}
+	// Serialize `AiModelDatasetRewardClaimable` param:
+	err = encoder.Encode(obj.AiModelDatasetRewardClaimable)
+	if err != nil {
+		return err
+	}
+	// Serialize `MachineEarning` param:
+	err = encoder.Encode(obj.MachineEarning)
+	if err != nil {
+		return err
+	}
+	// Serialize `AiModelDatasetEarning` param:
+	err = encoder.Encode(obj.AiModelDatasetEarning)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (obj *Statistics) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error) {
+	// Read and check account discriminator:
+	{
+		discriminator, err := decoder.ReadTypeID()
+		if err != nil {
+			return err
+		}
+		if !discriminator.Equal(StatisticsDiscriminator[:]) {
+			return fmt.Errorf(
+				"wrong discriminator: wanted %s, got %s",
+				"[51 158 85 113 41 45 37 104]",
+				fmt.Sprint(discriminator[:]))
+		}
+	}
+	// Deserialize `Owner`:
+	err = decoder.Decode(&obj.Owner)
+	if err != nil {
+		return err
+	}
+	// Deserialize `MachineRewardClaimed`:
+	err = decoder.Decode(&obj.MachineRewardClaimed)
+	if err != nil {
+		return err
+	}
+	// Deserialize `MachineRewardClaimable`:
+	err = decoder.Decode(&obj.MachineRewardClaimable)
+	if err != nil {
+		return err
+	}
+	// Deserialize `AiModelDatasetRewardClaimed`:
+	err = decoder.Decode(&obj.AiModelDatasetRewardClaimed)
+	if err != nil {
+		return err
+	}
+	// Deserialize `AiModelDatasetRewardClaimable`:
+	err = decoder.Decode(&obj.AiModelDatasetRewardClaimable)
+	if err != nil {
+		return err
+	}
+	// Deserialize `MachineEarning`:
+	err = decoder.Decode(&obj.MachineEarning)
+	if err != nil {
+		return err
+	}
+	// Deserialize `AiModelDatasetEarning`:
+	err = decoder.Decode(&obj.AiModelDatasetEarning)
 	if err != nil {
 		return err
 	}

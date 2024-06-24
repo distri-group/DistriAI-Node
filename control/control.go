@@ -1,8 +1,10 @@
 package control
 
 import (
+	"DistriAI-Node/api"
 	"DistriAI-Node/chain"
 	"DistriAI-Node/chain/distri"
+	"DistriAI-Node/chain/distri/distri_ai"
 	"DistriAI-Node/config"
 	"DistriAI-Node/docker"
 	"DistriAI-Node/machine_info"
@@ -14,28 +16,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gagliardetto/solana-go"
 )
 
-func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, containerID string) error {
+func OrderComplete(distri *distri.WrapperDistri, order distri_ai.Order, isGPU bool, containerID string) error {
 	logs.Normal("Order is complete")
 
 	if err := docker.StopWorkspaceContainer(containerID); err != nil {
 		return err
 	}
 
-	var orderPlacedMetadata pattern.OrderPlacedMetadata
-
-	err := json.Unmarshal([]byte(metadata), &orderPlacedMetadata)
-	if err != nil {
-		return err
-	}
-
-	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
-
-	_, err = distri.OrderCompleted(orderPlacedMetadata, isGPU)
+	_, err := distri.OrderCompleted(order, isGPU)
 	if err != nil {
 		return err
 	}
@@ -44,8 +38,6 @@ func OrderComplete(distri *distri.WrapperDistri, metadata string, isGPU bool, co
 
 func OrderFailed(distri *distri.WrapperDistri, orderPlacedMetadata pattern.OrderPlacedMetadata, buyer solana.PublicKey) error {
 	logs.Normal("Order is failed")
-
-	orderPlacedMetadata.MachineAccounts = distri.ProgramDistriMachine.String()
 
 	_, err := distri.OrderFailed(buyer, orderPlacedMetadata)
 	if err != nil {
@@ -121,6 +113,7 @@ func GetDistri(longTime bool) (*distri.WrapperDistri, *machine_info.MachineInfo,
 	jsonData, _ := json.Marshal(hwInfo)
 	logs.Normal(fmt.Sprintf("Hardware Info : %v", string(jsonData)))
 
+	// Easy debugging
 	modleCreatePath := pattern.ModleCreatePath
 	err = os.MkdirAll(modleCreatePath, 0755)
 	if err != nil {
@@ -144,9 +137,6 @@ func GetDistri(longTime bool) (*distri.WrapperDistri, *machine_info.MachineInfo,
 
 	return distri.NewDistriWrapper(chainInfo), &hwInfo, nil
 }
-
-// var oldDuration time.Time
-// var orderTimer *time.Timer
 
 func OrderRefunded(containerID string) error {
 	logs.Normal("Order is refunded")
@@ -184,4 +174,119 @@ func StartHeartbeatTask(distri *distri.WrapperDistri, machineID machine_uuid.Mac
 			}
 		}
 	}()
+}
+
+func IdlePreload(ownerAddr string, machineUUID string, totalDiskSpace float64) error {
+	utils.EnsureDirExists(config.GlobalConfig.Console.WorkDirectory + "/" + pattern.IdlePreload)
+
+	resModelList, err := api.GetModelList()
+	if err != nil {
+		return err
+	}
+
+	if len(resModelList.Data.List) <= 0 {
+		logs.Warning("No model available")
+		return nil
+	}
+
+	fileNames, err := utils.ListFiles(config.GlobalConfig.Console.WorkDirectory + "/" + pattern.IdlePreload)
+	if err != nil {
+		return err
+	}
+	fileNames = utils.FilterStrings(fileNames, ".zip")
+
+	obsolete := resModelList.IsObsolete(fileNames)
+
+	var cachedModels []api.Cached
+	var cachedDatasets []api.Cached
+
+	if len(obsolete) != 0 {
+		for _, newFileName := range utils.DiffStrings(fileNames, obsolete) {
+			idx := strings.Index(newFileName, "-")
+			if idx != -1 {
+				cachedModels = append(cachedModels, api.Cached{
+					Owner: newFileName[:idx],
+					Name:  newFileName[idx+1:],
+				})
+			}
+		}
+
+		_, err = api.UpdateModelCached(ownerAddr, machineUUID, cachedModels, cachedDatasets)
+		if err != nil {
+			return err
+		}
+
+		for _, fileName := range obsolete {
+			err = os.Remove(config.GlobalConfig.Console.WorkDirectory + "/" + pattern.IdlePreload + "/" + fileName)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		for _, fileName := range fileNames {
+			idx := strings.Index(fileName, "-")
+			if idx != -1 {
+				cachedModels = append(cachedModels, api.Cached{
+					Owner: fileName[:idx],
+					Name:  fileName[idx+1:],
+				})
+			}
+		}
+	}
+
+	if len(cachedModels) >= 5 {
+		return nil
+	}
+
+	// resMode := resModelList.Data.List[utils.RandomInt(9)]
+	resMode := resModelList.Data.List[utils.RandomInt(len(resModelList.Data.List)-1)]
+	owner := resMode.Owner
+	name := resMode.Name
+	for _, model := range cachedModels {
+		if model.Owner == owner && model.Name == name {
+			return nil
+		}
+	}
+
+	resFileStat, err := api.FileStatInIPFS(config.GlobalConfig.Console.IpfsNodeUrl, "/distri.ai/model/"+owner+"/"+name)
+	if err != nil {
+		return fmt.Errorf("> FileStatInIPFS: %v", err)
+	}
+	diskInfo, err := disk.GetDiskInfo()
+	if err != nil {
+		return fmt.Errorf("> GetDiskInfo: %v", err)
+	}
+	downloadableSpace := diskInfo.TotalSpace - (resFileStat.CumulativeSize / 1024 / 1024 / 1024)
+	if downloadableSpace <= 100 {
+		return nil
+	}
+
+	modelDir := config.GlobalConfig.Console.WorkDirectory + "/" + pattern.IdlePreload + "/" + fmt.Sprintf("%s-%s", owner, name)
+	utils.EnsureDirExists(modelDir)
+
+	logs.Normal(fmt.Sprintf("Preloading modelOwner : %s , modelName : %s", owner, name))
+
+	err = api.DownloadProjectInIPFS(
+		config.GlobalConfig.Console.IpfsNodeUrl,
+		modelDir,
+		resFileStat.Hash)
+	if err != nil {
+		return fmt.Errorf("> DownloadProjectInIPFS: %v", err)
+	}
+
+	err = utils.Zip(modelDir, modelDir+".zip")
+	if err != nil {
+		return fmt.Errorf("> Zip: %v", err)
+	}
+
+	cachedModels = append(cachedModels, api.Cached{
+		Owner: owner,
+		Name:  name,
+	})
+
+	_, err = api.UpdateModelCached(ownerAddr, machineUUID, cachedModels, cachedDatasets)
+	if err != nil {
+		return fmt.Errorf("> UpdateModelCached: %v", err)
+	}
+	return nil
 }

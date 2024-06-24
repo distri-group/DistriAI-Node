@@ -56,6 +56,24 @@ var (
 
 	Instruction_RemoveOrder = ag_binary.TypeID([8]byte{118, 116, 244, 40, 144, 211, 242, 51})
 
+	Instruction_AdminRemoveOrder = ag_binary.TypeID([8]byte{120, 68, 51, 2, 103, 164, 213, 81})
+
+	Instruction_CreateAiModel = ag_binary.TypeID([8]byte{210, 121, 102, 94, 247, 85, 173, 215})
+
+	Instruction_RemoveAiModel = ag_binary.TypeID([8]byte{239, 39, 190, 250, 232, 8, 160, 106})
+
+	Instruction_CreateDataset = ag_binary.TypeID([8]byte{63, 151, 84, 132, 246, 167, 216, 122})
+
+	Instruction_RemoveDataset = ag_binary.TypeID([8]byte{114, 128, 121, 235, 46, 207, 76, 98})
+
+	Instruction_ReportAiModelDatasetReward = ag_binary.TypeID([8]byte{9, 222, 200, 183, 93, 189, 184, 14})
+
+	Instruction_ClaimAiModelDatasetReward = ag_binary.TypeID([8]byte{24, 8, 164, 205, 125, 162, 253, 163})
+
+	Instruction_AdminInitStatistics = ag_binary.TypeID([8]byte{15, 199, 115, 228, 40, 15, 96, 231})
+
+	Instruction_AdminCloseStatistics = ag_binary.TypeID([8]byte{247, 38, 164, 92, 71, 209, 62, 171})
+
 	Instruction_MigrateMachineNew = ag_binary.TypeID([8]byte{225, 152, 229, 88, 158, 61, 69, 125})
 
 	Instruction_MigrateMachineRename = ag_binary.TypeID([8]byte{188, 135, 117, 64, 94, 119, 3, 147})
@@ -96,6 +114,24 @@ func InstructionIDToName(id ag_binary.TypeID) string {
 		return "OrderFailed"
 	case Instruction_RemoveOrder:
 		return "RemoveOrder"
+	case Instruction_AdminRemoveOrder:
+		return "AdminRemoveOrder"
+	case Instruction_CreateAiModel:
+		return "CreateAiModel"
+	case Instruction_RemoveAiModel:
+		return "RemoveAiModel"
+	case Instruction_CreateDataset:
+		return "CreateDataset"
+	case Instruction_RemoveDataset:
+		return "RemoveDataset"
+	case Instruction_ReportAiModelDatasetReward:
+		return "ReportAiModelDatasetReward"
+	case Instruction_ClaimAiModelDatasetReward:
+		return "ClaimAiModelDatasetReward"
+	case Instruction_AdminInitStatistics:
+		return "AdminInitStatistics"
+	case Instruction_AdminCloseStatistics:
+		return "AdminCloseStatistics"
 	case Instruction_MigrateMachineNew:
 		return "MigrateMachineNew"
 	case Instruction_MigrateMachineRename:
@@ -165,6 +201,33 @@ var InstructionImplDef = ag_binary.NewVariantDefinition(
 		},
 		{
 			"remove_order", (*RemoveOrder)(nil),
+		},
+		{
+			"admin_remove_order", (*AdminRemoveOrder)(nil),
+		},
+		{
+			"create_ai_model", (*CreateAiModel)(nil),
+		},
+		{
+			"remove_ai_model", (*RemoveAiModel)(nil),
+		},
+		{
+			"create_dataset", (*CreateDataset)(nil),
+		},
+		{
+			"remove_dataset", (*RemoveDataset)(nil),
+		},
+		{
+			"report_ai_model_dataset_reward", (*ReportAiModelDatasetReward)(nil),
+		},
+		{
+			"claim_ai_model_dataset_reward", (*ClaimAiModelDatasetReward)(nil),
+		},
+		{
+			"admin_init_statistics", (*AdminInitStatistics)(nil),
+		},
+		{
+			"admin_close_statistics", (*AdminCloseStatistics)(nil),
 		},
 		{
 			"migrate_machine_new", (*MigrateMachineNew)(nil),
