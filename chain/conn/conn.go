@@ -31,12 +31,12 @@ func NewConn(cfg *config.SolanaConfig) (*Conn, error) {
 
 // SendAndConfirmTransaction sends a transaction via the RPC client and waits for its confirmation.
 func (conn *Conn) SendAndConfirmTransaction(tx *solana.Transaction) (string, error) {
-	 // Sends the transaction and acquires its signature
+	// Sends the transaction and acquires its signature
 	sig, err := conn.RpcClient.SendTransactionWithOpts(context.TODO(), tx, rpc.TransactionOpts{
 		SkipPreflight:       false,
 		PreflightCommitment: rpc.CommitmentFinalized})
 	if err != nil {
-		 // Returns an error if the transaction fails to send
+		// Returns an error if the transaction fails to send
 		return "", fmt.Errorf("> SendTransactionWithOpts, txSig: %s, err: %v", sig.String(), err)
 	}
 
