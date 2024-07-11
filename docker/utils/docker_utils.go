@@ -13,14 +13,18 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// ImageExists checks if the Docker image with the specified name exists.
 func ImageExist(ctx context.Context, cli *client.Client, imageName string) (bool, string) {
+	// Retrieve a list of images from Docker daemon
 	images, err := cli.ImageList(ctx, types.ImageListOptions{All: true})
 	if err != nil {
 		return false, ""
 	}
-
+	// Iterate through the list of images retrieved
 	for _, image := range images {
+		// Check each repo tag of the image
 		for _, name := range image.RepoTags {
+			// Check if the imageName (e.g., "my-image:latest") contains the current repo tag
 			if strings.Contains(imageName, name) {
 				logs.Normal(fmt.Sprintf("Image %s exists", imageName))
 				return true, image.ID
@@ -31,12 +35,14 @@ func ImageExist(ctx context.Context, cli *client.Client, imageName string) (bool
 	return false, ""
 }
 
+// ContainerExists checks if the Docker container with the specified name exists.
 func ContainerExists(ctx context.Context, cli *client.Client, containerName string) (bool, string) {
+	// Get the list of all containers
 	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
 		return false, ""
 	}
-
+	// Iterate through all containers to find the specified one
 	for _, container := range containers {
 		for _, name := range container.Names {
 			if name == "/"+containerName {
@@ -49,6 +55,7 @@ func ContainerExists(ctx context.Context, cli *client.Client, containerName stri
 }
 
 func PullImage(imageName string) error {
+	// Create a command object to execute the docker pull command
 	cmd := exec.Command("docker", "pull", imageName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
