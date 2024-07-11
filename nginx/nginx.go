@@ -9,11 +9,13 @@ import (
 
 func StartNginx(nginxPort, workPort, serverPort string) error {
 
+	// Generate Nginx configuration file
 	err := nginx_utils.GenNginxConfig(nginxPort, workPort, serverPort, pattern.ModleCreatePath)
 	if err != nil {
 		return fmt.Errorf("> gen nginx config: %v", err)
 	}
 
+	// Restart Nginx service
 	cmd := exec.Command("sudo", "service", "nginx", "restart")
 	err = cmd.Run()
 	if err != nil {
