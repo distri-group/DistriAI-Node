@@ -26,6 +26,7 @@ type WrapperDistri struct {
 func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %v", pattern.TX_HASHRATE_MARKET_REGISTER))
 
+	// Get the recent block hash
 	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
 	if err != nil {
 		return "", fmt.Errorf("> GetRecentBlockhash: %v", err.Error())
@@ -35,14 +36,17 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 	if err != nil {
 		return "", fmt.Errorf("> ParseMachineUUID: %v", err.Error())
 	}
-
+	
+	// Serialize machine information to JSON format
 	jsonData, err := json.Marshal(hardwareInfo)
 	if err != nil {
 		return "", fmt.Errorf("> json.Marshal: %v", err.Error())
 	}
 
+	// Set the program ID for the distributed smart contract
 	distri_ai.SetProgramID(chain.ProgramDistriID)
 
+	// Create Solana transaction
 	tx, err := solana.NewTransaction(
 		[]solana.Instruction{
 			distri_ai.NewAddMachineInstruction(
@@ -61,6 +65,7 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 		return "", fmt.Errorf("> NewAddMachineInstruction: %v", err.Error())
 	}
 
+	// Sign the transaction
 	_, err = tx.Sign(
 		func(key solana.PublicKey) *solana.PrivateKey {
 			if chain.Wallet.Wallet.PublicKey().Equals(key) {
@@ -76,6 +81,7 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 	logs.Normal("=============== AddMachine Transaction")
 	spew.Dump(tx)
 
+	// Send and confirm the transaction
 	sig, err := chain.Conn.SendAndConfirmTransaction(tx)
 	if err != nil {
 		return "", fmt.Errorf("> SendAndConfirmTransaction: %v", err.Error())
