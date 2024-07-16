@@ -77,17 +77,20 @@ func proxyHandler(c *gin.Context) {
 }
 
 func getDebugToken(c *gin.Context) {
+	// Retrieve the 'signature' parameter from the request context
 	signature := c.Param("signature")
 	logs.Normal(fmt.Sprintf("signature: %v", signature))
 
 	db := dbutils.GetDB()
 
+	// Retrieve the 'token' from the database
 	token, err := dbutils.Get(db, []byte("token"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Perform user authentication using the provided signature and other parameters
 	ok, err := UserAuthentication(db, 100, signature, "workspace/token")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
