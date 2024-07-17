@@ -24,14 +24,17 @@ func ImageExistOrPull(imageName string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Create a new Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
 	cli.NegotiateAPIVersion(ctx)
 
+	// Check if the image exists locally
 	isCreated, _ := docker_utils.ImageExist(ctx, cli, imageName)
 	if !isCreated {
+		// If image does not exist, pull it
 		if err := docker_utils.PullImage(imageName); err != nil {
 			return err
 		}
