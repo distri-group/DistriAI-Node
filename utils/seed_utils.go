@@ -9,7 +9,8 @@ import (
 )
 
 func GenMachine(machineOwner solana.PublicKey, machineUUID machine_uuid.MachineUUID) [][]byte {
-
+	
+	// Convert machineUUID from machine_uuid.MachineUUID to pattern.MachineUUID
 	var byteUUID pattern.MachineUUID
 	b, err := hex.DecodeString(string(machineUUID))
 	if err != nil {
@@ -17,6 +18,7 @@ func GenMachine(machineOwner solana.PublicKey, machineUUID machine_uuid.MachineU
 	}
 	copy(byteUUID[:], b[:16])
 
+	// Create seedMachine, a 2D slice of bytes
 	seedMachine := [][]byte{
 		[]byte("machine"),
 		machineOwner.Bytes(),
