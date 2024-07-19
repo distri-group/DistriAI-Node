@@ -48,12 +48,14 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Initialize Docker client
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return oldScore, err
 	}
 	cli.NegotiateAPIVersion(ctx)
 
+	// Configure host settings based on GPU availability
 	hostConfig := &container.HostConfig{
 		AutoRemove: true,
 	}
@@ -69,6 +71,7 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 		}
 	}
 
+	// Run Docker container with specified image name and configuration
 	containerID, err := docker_utils.RunContainer(ctx, cli, pattern.SCORE_CONTAINER,
 		&container.Config{
 			Image: pattern.SCORE_NAME,
@@ -78,6 +81,7 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 		return oldScore, err
 	}
 
+	// Open a stream to read logs from the running container
 	reader, err := cli.ContainerLogs(ctx, containerID, types.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -88,6 +92,7 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 	}
 	defer reader.Close()
 
+	// Scan through the log stream line by line
 	scanner1 := bufio.NewScanner(reader)
 	for scanner1.Scan() {
 		out := scanner1.Text()
