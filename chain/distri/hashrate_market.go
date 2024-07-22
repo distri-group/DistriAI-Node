@@ -92,15 +92,19 @@ func (chain WrapperDistri) AddMachine(hardwareInfo machine_info.MachineInfo) (st
 	return sig, nil
 }
 
+// RemoveMachine is a method of the WrapperDistri struct that removes a machine from the distribution program.
 func (chain WrapperDistri) RemoveMachine() (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %s", pattern.TX_HASHRATE_MARKET_REMOVE_MACHINE))
 
+	// Get the most recent blockhash from the Solana RPC client with a finalized commitment.
 	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
 	if err != nil {
 		panic(err)
 	}
 
+	// Set the program ID for the distribution AI to the one specified in the chain.
 	distri_ai.SetProgramID(chain.ProgramDistriID)
+	// Create a new Solana transaction with a single instruction to remove a machine.
 	tx, err := solana.NewTransaction(
 		[]solana.Instruction{
 			distri_ai.NewRemoveMachineInstruction(
@@ -116,6 +120,7 @@ func (chain WrapperDistri) RemoveMachine() (string, error) {
 		return "", fmt.Errorf("error creating transaction: %v", err)
 	}
 
+	// Sign the transaction with the wallet's private key if the public key matches.
 	_, err = tx.Sign(
 		func(key solana.PublicKey) *solana.PrivateKey {
 			if chain.Wallet.Wallet.PublicKey().Equals(key) {
