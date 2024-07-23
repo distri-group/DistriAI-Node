@@ -335,6 +335,11 @@ func RunDeployContainer(isGPU bool, downloadURL []string) (string, error) {
 	return outputStr, nil
 }
 
+// StopWorkspaceContainer stops and removes a Docker container and cleans up the associated workspace directory.
+// Parameters:
+// containerID - the ID of the Docker container to be stopped and removed
+// Returns:
+// error - any error encountered during the process
 func StopWorkspaceContainer(containerID string) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
