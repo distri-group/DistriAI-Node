@@ -16,6 +16,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// StartServer is a function that initializes and starts a web server on the specified port.
+// It takes a serverPort string as an argument and returns an error if one occurs during startup.
 func StartServer(serverPort string) error {
 	logs.Normal("Start server")
 
@@ -37,6 +39,8 @@ func StartServer(serverPort string) error {
 	return nil
 }
 
+// proxyHandler is a Gin middleware function that handles proxy requests.
+// It takes a Gin context as an argument, which contains the request details.
 func proxyHandler(c *gin.Context) {
 	path := c.Param("proxyPath")
 
