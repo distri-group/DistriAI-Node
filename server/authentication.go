@@ -9,6 +9,9 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
+// UserAuthentication authenticates a user by verifying a signature against a message and a public key.
+// It takes a Badger database, a validity period for the signature, the signature, and the message as inputs.
+// It returns a boolean indicating the authentication result and an error if any occurs.
 func UserAuthentication(db *badger.DB, validityPeriod int64, signature string, message string) (bool, error) {
 	buyerPublicKey, err := dbutils.Get(db, []byte("buyer"))
 	if err != nil {
