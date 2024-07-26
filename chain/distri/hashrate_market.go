@@ -146,15 +146,19 @@ func (chain WrapperDistri) RemoveMachine() (string, error) {
 	return sig, nil
 }
 
+// Define a method OrderStart for the WrapperDistri struct that initiates an order on the blockchain.
 func (chain WrapperDistri) OrderStart() (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %v", pattern.TX_HASHRATE_MARKET_ORDER_START))
 
+	// Retrieve the most recent blockhash from the blockchain using the RpcClient.
+        // The commitment level is set to Finalized, ensuring the blockhash is confirmed.
 	recent, err := chain.Conn.RpcClient.GetRecentBlockhash(context.TODO(), rpc.CommitmentFinalized)
 	if err != nil {
 		return "", fmt.Errorf("> GetRecentBlockhash: %v", err)
 	}
 
 	distri_ai.SetProgramID(chain.ProgramDistriID)
+	// Create a new Solana transaction with the StartOrderInstruction and other necessary parameters.
 	tx, err := solana.NewTransaction(
 		[]solana.Instruction{
 			distri_ai.NewStartOrderInstruction(
