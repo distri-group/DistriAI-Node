@@ -20,6 +20,7 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
+// ImageExistOrPull checks if a Docker image exists locally and pulls it if it does not.
 func ImageExistOrPull(imageName string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
