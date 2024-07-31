@@ -80,6 +80,7 @@ func proxyHandler(c *gin.Context) {
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), respBody)
 }
 
+// Function to handle the retrieval of a debug token
 func getDebugToken(c *gin.Context) {
 	// Retrieve the 'signature' parameter from the request context
 	signature := c.Param("signature")
