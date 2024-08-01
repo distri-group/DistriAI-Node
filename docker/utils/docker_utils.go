@@ -54,6 +54,8 @@ func ContainerExists(ctx context.Context, cli *client.Client, containerName stri
 	return false, ""
 }
 
+
+// PullImage is a function that pulls a Docker image from a repository.
 func PullImage(imageName string) error {
 	// Create a command object to execute the docker pull command
 	cmd := exec.Command("docker", "pull", imageName)
