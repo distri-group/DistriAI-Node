@@ -198,6 +198,7 @@ func (chain WrapperDistri) OrderStart() (string, error) {
 	return sig, nil
 }
 
+// OrderCompleted is a method of the WrapperDistri struct that handles the completion of an order in the distribution system.
 func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlacedMetadata, isGPU bool) (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %v", pattern.TX_HASHRATE_MARKET_ORDER_COMPLETED))
 
