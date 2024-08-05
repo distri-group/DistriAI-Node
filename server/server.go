@@ -115,6 +115,8 @@ func getDebugToken(c *gin.Context) {
 	}
 }
 
+// getToken is a handler function that retrieves a token after validating a signature.
+// It uses the Gin framework for handling HTTP requests.
 func getToken(c *gin.Context) {
 	signature := c.Param("signature")
 
