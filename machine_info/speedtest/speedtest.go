@@ -12,6 +12,7 @@ type InfoSpeed struct {
 	Upload   string `json:"Upload"`
 }
 
+// GetSpeedInfo retrieves the current network speed information using the speedtest-cli command.
 func GetSpeedInfo() (InfoSpeed, error) {
 	logs.Normal("Getting network speed info...")
 
