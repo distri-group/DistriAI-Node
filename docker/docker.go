@@ -43,6 +43,7 @@ func ImageExistOrPull(imageName string) error {
 	return nil
 }
 
+// RunScoreContainer runs a Docker container to compute a score, potentially utilizing GPU resources.
 func RunScoreContainer(isGPU bool) (float64, error) {
 	oldScore := 0.0
 
