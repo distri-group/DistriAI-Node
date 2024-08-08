@@ -296,6 +296,7 @@ func uploadFile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"resUploadFile": resUploadFile})
 }
 
+// RedirectWorkspace handles the redirection of the user to the workspace URL.
 func RedirectWorkspace(c *gin.Context, token string) {
 	workspaceURL := fmt.Sprintf("http://%v:%v?token=%v",
 		config.GlobalConfig.Console.PublicIP,
