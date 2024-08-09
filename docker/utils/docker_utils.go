@@ -71,6 +71,8 @@ func PullImage(imageName string) error {
 	return nil
 }
 
+// CreateContainer creates a new container with the specified name and configurations.
+// It returns the container ID and an error if the operation fails.
 func CreateContainer(ctx context.Context, cli *client.Client, containerName string, config *container.Config, hostConfig *container.HostConfig) (string, error) {
 	resp, err := cli.ContainerCreate(
 		ctx,
