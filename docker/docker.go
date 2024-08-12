@@ -111,6 +111,8 @@ func RunScoreContainer(isGPU bool) (float64, error) {
 	return oldScore, nil
 }
 
+// RunWorkspaceContainer starts a Docker container for a workspace with or without GPU support.
+// It returns the container ID and an error if any occurs.
 func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
