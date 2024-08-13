@@ -284,6 +284,7 @@ func (chain WrapperDistri) OrderCompleted(orderPlacedMetadata pattern.OrderPlace
 	return sig, nil
 }
 
+// OrderFailed handles the failure of an order by processing a transaction on the blockchain.
 func (chain WrapperDistri) OrderFailed(buyer solana.PublicKey, orderPlacedMetadata pattern.OrderPlacedMetadata) (string, error) {
 	logs.Normal(fmt.Sprintf("Extrinsic : %v", pattern.TX_HASHRATE_MARKET_ORDER_FAILED))
 
