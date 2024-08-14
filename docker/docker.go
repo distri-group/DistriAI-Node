@@ -212,6 +212,7 @@ func RunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 	return containerID, nil
 }
 
+// Tests running a workspace container with GPU support and sets up environment variables.
 func TestRunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
