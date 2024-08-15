@@ -7,6 +7,7 @@ import (
 	"os/exec"
 )
 
+// StartNginx configures and restarts Nginx with specified ports.
 func StartNginx(nginxPort, workPort, serverPort string) error {
 
 	// Generate Nginx configuration file
