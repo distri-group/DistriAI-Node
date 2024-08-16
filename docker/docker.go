@@ -276,6 +276,8 @@ func TestRunWorkspaceContainer(isGPU bool, mlToken string) (string, error) {
 	return outputStr, nil
 }
 
+// RunDeployContainer runs a deployment container with specified configurations.
+// It returns the container ID and an error if any occurs during the process.
 func RunDeployContainer(isGPU bool, downloadURL []string) (string, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
