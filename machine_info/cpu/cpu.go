@@ -13,6 +13,7 @@ type InfoCPU struct {
 	Mhz       float64 `json:"Mhz"`
 }
 
+// GetCPUInfo retrieves and returns the CPU information.
 func GetCPUInfo() (InfoCPU, error) {
 	logs.Normal("Getting CPU info...")
 
