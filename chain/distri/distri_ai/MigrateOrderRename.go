@@ -111,6 +111,7 @@ func (inst *MigrateOrderRename) Validate() error {
 	return nil
 }
 
+// MigrateOrderRename is a struct representing an instruction to rename an order.
 func (inst *MigrateOrderRename) EncodeToTree(parent ag_treeout.Branches) {
 	parent.Child(ag_format.Program(ProgramName, ProgramID)).
 		//
