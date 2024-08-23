@@ -88,6 +88,8 @@ func CreateContainer(ctx context.Context, cli *client.Client, containerName stri
 	return resp.ID, nil
 }
 
+// RunContainer runs a Docker container with the specified configuration.
+// It ensures the image exists, creates the container, and starts it.
 func RunContainer(ctx context.Context, cli *client.Client, containerName string, config *container.Config, hostConfig *container.HostConfig) (string, error) {
 	imageName := config.Image
 	isCreated, _ := ImageExist(ctx, cli, imageName)
