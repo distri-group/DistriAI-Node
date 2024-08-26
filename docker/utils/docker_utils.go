@@ -112,6 +112,8 @@ func RunContainer(ctx context.Context, cli *client.Client, containerName string,
 	return containerID, nil
 }
 
+// StopAndRemoveContainer stops and removes a Docker container given its ID.
+// It uses the Docker client to issue commands to stop and then remove the container.
 func StopAndRemoveContainer(ctx context.Context, cli *client.Client, containerID string) error {
 	logs.Normal("Stop and remove container")
 
