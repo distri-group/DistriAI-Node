@@ -140,6 +140,7 @@ func DeleteImage(ctx context.Context, cli *client.Client, imageName string) erro
 	return nil
 }
 
+// GetDockerImageDirSize retrieves the size of the Docker image directory.
 func GetDockerImageDirSize() (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
