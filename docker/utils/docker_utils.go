@@ -129,6 +129,7 @@ func StopAndRemoveContainer(ctx context.Context, cli *client.Client, containerID
 	return nil
 }
 
+// DeleteImage deletes an image from the Docker daemon if it exists.
 func DeleteImage(ctx context.Context, cli *client.Client, imageName string) error {
 	isCreated, imageId := ImageExist(ctx, cli, imageName)
 	if isCreated {
