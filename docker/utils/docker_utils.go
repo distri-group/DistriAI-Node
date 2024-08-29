@@ -164,6 +164,7 @@ func GetDockerImageDirSize() (string, error) {
 	return size, nil
 }
 
+// GetDirSize calculates the size of a directory and returns the size in a human-readable format.
 func GetDirSize(dirPath string) (string, error) {
 	cmd := exec.Command("du", "-sh", dirPath)
 	output, err := cmd.CombinedOutput()
