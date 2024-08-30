@@ -15,6 +15,9 @@ type InfoLocation struct {
 	IP      string `json:"query"`
 }
 
+
+// GetLocationInfo fetches location information for a given IP address.
+// It returns an InfoLocation struct with the details and an error if any occurs.
 func GetLocationInfo(ip string) (InfoLocation, error) {
 	logs.Normal("Getting location info...")
 
