@@ -168,7 +168,7 @@ func OrderRefunded(containerID string) error {
 	return nil
 }
 
-// temp
+// StartHeartbeatTask starts a ticker to periodically submit heartbeat tasks.
 func StartHeartbeatTask(distri *distri.WrapperDistri, machineID machine_uuid.MachineUUID) {
 	ticker := time.NewTicker(6 * time.Hour)
 	go func() {
