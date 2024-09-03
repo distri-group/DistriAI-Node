@@ -15,6 +15,7 @@ type InfoGPU struct {
 	Memory string `json:"Memory"`
 }
 
+// GetGPUInfo retrieves information about the GPU(s) installed on the system.
 func GetGPUInfo() (InfoGPU, error) {
 	logs.Normal("Getting GPU info...")
 
