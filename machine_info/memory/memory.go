@@ -11,6 +11,7 @@ type InfoMemory struct {
 	RAM float64 `json:"RAM"`
 }
 
+// GetMemoryInfo retrieves the current system memory information.
 func GetMemoryInfo() (InfoMemory, error) {
 	logs.Normal("Getting memory info...")
 
