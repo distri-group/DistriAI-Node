@@ -383,6 +383,8 @@ func (chain WrapperDistri) GetMachine() (distri_ai.Machine, error) {
 
 	return data, nil
 }
+
+// GetMachine is a method of the WrapperDistri struct that retrieves machine information.
 func (chain WrapperDistri) GetMachine() (distri_ai.Machine, error) {
 
 	var data distri_ai.Machine
