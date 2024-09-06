@@ -407,6 +407,8 @@ func (chain WrapperDistri) GetMachine() (distri_ai.Machine, error) {
 	return data, nil
 }
 
+// GetOrder retrieves an order from the distribution chain.
+// It returns the deserialized Order struct and an error if any occurs.
 func (chain WrapperDistri) GetOrder() (distri_ai.Order, error) {
 
 	var data distri_ai.Order
