@@ -25,6 +25,7 @@ func StartNginx(nginxPort, workPort, serverPort string) error {
 	return nil
 }
 
+// StopNginx attempts to stop the Nginx service using the 'service' command.
 func StopNginx() error {
 	cmd := exec.Command("sudo", "service", "nginx", "stop")
 	err := cmd.Run()
